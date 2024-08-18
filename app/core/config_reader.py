@@ -1,16 +1,29 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+import os
 
 
-class Settings(BaseSettings):
-    DATABASE: str
-    DATABASE_HOST: str
-    DATABASE_PORT: str
-    DATABASE_USER: str
-    DATABASE_USER_PASSWORD: str
+class Settings:
+    """
+    Класс для работы с переменными конфигурации. Требуется создать объект Settings
+    с аргументом path - путь к файлу .env относительно текущего каталога.
+    Получаем переменные с помощью метода getenv, передавая в него имя переменной.
+    """
 
-    model_config = SettingsConfigDict(env_file='../../.env', env_file_encoding='utf-8')
+    def __init__(self, path: str):
+        self.__dotenv_path = os.path.join(os.path.dirname(__file__), path)
+
+        if not os.path.exists(self.__dotenv_path):
+            raise Exception('incorrect path to .env file!')
+
+        load_dotenv(self.__dotenv_path)
+
+    @staticmethod
+    def getenv(var):
+        value = os.getenv(var)
+        if not value:
+            raise Exception("incorrect variable!")
+
+        return value
 
 
-def get_config():
-    return Settings()
-
+config = Settings('../../.env')
