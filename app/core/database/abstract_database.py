@@ -25,17 +25,17 @@ class AbstractDataBase(ABC):
         self.cursor.close()
 
     @abstractmethod
-    def create(self):
+    def create(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def read(self):
+    def read(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def update(self):
+    def update(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def delete(self):
+    def delete(self, *args, **kwargs):
         pass
