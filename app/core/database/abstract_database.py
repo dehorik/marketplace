@@ -11,12 +11,17 @@ class AbstractDataBase(ABC):
     def __init__(self, cursor):
         # если че, на данный момент развития курсоры берутся
         # из метода get_cursor класса BaseSession
+
         self.cursor = cursor
 
     def __del__(self):
         self.cursor.close()
 
     def close_cursor(self):
+        # Этот метод не рекомендую использовать, так как можно словить исключение
+        # из-за попытки закрыть курсор, который уже закрыт.
+        # Курсор сам закроется, когда все ссылки с объекта съест сборщик мусора
+
         self.cursor.close()
 
     @abstractmethod

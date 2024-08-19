@@ -26,8 +26,3 @@ class CRUDproduct(AbstractDataBase):
             """
         )
         return self.cursor.fetchall()
-
-
-
-
-

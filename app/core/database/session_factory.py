@@ -45,9 +45,20 @@ class BaseSession(Singleton):
         self.__connection.commit()
         self.__connection.close()
 
+    def commit(self):
+        self.__connection.commit()
+
     def close_connection(self) -> None:
+        # использование данного метода лучше избегать, так как
+        # сессия в любом случае будет закрыта, как только с объекта пропадут все ссылки
+        # (вызовется __del__)
+
         self.__connection.commit()
         self.__connection.close()
 
     def get_cursor(self):
+        # а вот с этой штукой поаккуратнее, курсоры тоже надо закрывать
+        # чтобы курсор сам закрылся, нужно прокидывать его в инициализатор
+        # конкретного класса для круд-операций с бд
+
         return self.__connection.cursor()

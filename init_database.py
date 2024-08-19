@@ -103,6 +103,7 @@ def init_database():
     )
 
     connection.commit()
+    cursor.close()
     connection.close()
 
 
