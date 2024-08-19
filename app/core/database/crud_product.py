@@ -1,8 +1,11 @@
-from app.core.database.abstract_database import AbstractDataBase
-from app.core.database.session_factory import BaseSession
+from core.database.abstract_database import AbstractDataBase
 
 
 class CRUDproduct(AbstractDataBase):
+    """
+    Класс для выполнения CRUD-операций с товарами
+    """
+
     def create(self):
         pass
 
@@ -16,16 +19,15 @@ class CRUDproduct(AbstractDataBase):
         pass
 
     def get_last_products(self) -> list:
-        self._cursor.execute(
+        self.cursor.execute(
             """
             SELECT * from product
             ORDER BY product_id DESC;
             """
         )
-        return self._cursor.fetchall()
+        return self.cursor.fetchall()
 
 
-session = BaseSession()
-obj = CRUDproduct(session)
-obj.get_last_products()
-obj.close_cursor()
+
+
+

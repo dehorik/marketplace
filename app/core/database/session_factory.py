@@ -1,17 +1,44 @@
 import psycopg2
 
-from . import singleton
-from ..config_reader import config
+from core.database.singleton import Singleton
+from core.config_reader import Settings
+from core.config_reader import config
 
 
-class BaseSession(singleton.Singleton):
-    def __init__(self):
+class ConnectorData:
+    """
+    Класс для извлечения из .env файла конфигурационных данных для БД
+    """
+
+    def __init__(self, data: Settings):
+        self.__data = data
+
+    def __call__(self) -> dict:
+        result = {
+            "DATABASE": config.getenv("DATABASE"),
+            "DATABASE_USER": config.getenv("DATABASE_USER"),
+            "DATABASE_USER_PASSWORD": config.getenv("DATABASE_USER_PASSWORD"),
+            "DATABASE_HOST": config.getenv("DATABASE_HOST"),
+            "DATABASE_PORT": config.getenv("DATABASE_PORT")
+        }
+        return result
+
+
+class BaseSession(Singleton):
+    """
+    Класс для создания сессий БД и курсоров - ручек,
+    с помощью которых производится работа с БД.
+    """
+
+    def __init__(self, data: ConnectorData):
+        connection_data = data()
+
         self.__connection = psycopg2.connect(
-            dbname=config.getenv("DATABASE"),
-            user=config.getenv("DATABASE_USER"),
-            password=config.getenv("DATABASE_USER_PASSWORD"),
-            host=config.getenv("DATABASE_HOST"),
-            port=config.getenv("DATABASE_PORT")
+            dbname=connection_data["DATABASE"],
+            user=connection_data["DATABASE_USER"],
+            password=connection_data["DATABASE_USER_PASSWORD"],
+            host=connection_data["DATABASE_HOST"],
+            port=connection_data["DATABASE_PORT"]
         )
 
     def __del__(self):
@@ -24,4 +51,3 @@ class BaseSession(singleton.Singleton):
 
     def get_cursor(self):
         return self.__connection.cursor()
-

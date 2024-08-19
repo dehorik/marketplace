@@ -1,5 +1,6 @@
-from app.core.config_reader import config
 import psycopg2
+
+from app.core.config_reader import config
 
 
 def init_database():
@@ -26,7 +27,6 @@ def init_database():
             user_password VARCHAR(255),
             user_email VARCHAR(255) DEFAULT NULL,
             user_photo VARCHAR(255) DEFAULT NULL,
-            user_card_data VARCHAR(255) DEFAULT NULL,
             
             FOREIGN KEY (role_id) REFERENCES role (role_id) ON UPDATE CASCADE
         );

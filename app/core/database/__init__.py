@@ -1,2 +1,2 @@
-from .session_factory import *
-from .crud_product import *
+from core.database.session_factory import *
+from core.database.crud_product import *
