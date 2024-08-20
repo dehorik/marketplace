@@ -30,7 +30,7 @@ class BaseSession(Singleton):
     с помощью которых производится работа с БД.
     """
 
-    def __init__(self, data: ConnectorData):
+    def __init__(self, data: ConnectorData = ConnectorData(config)):
         connection_data = data()
 
         self.__connection = psycopg2.connect(

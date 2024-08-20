@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, UploadFile, Form, status
 
-from services.product_service import ProductCreater
+from services.product_service import ProductCreater, LastProductLoader
 
 
 router = APIRouter(
@@ -10,8 +10,14 @@ router = APIRouter(
 
 
 @router.get('/load')
-def load_products_to_page(step: int):
-    pass
+def load_last_products(step: int):
+    service = LastProductLoader()
+    models = service(step)
+
+    return {
+        'status': status.HTTP_200_OK,
+        'objects': models
+    }
 
 
 @router.post('/create')
@@ -23,10 +29,10 @@ def create_product(
         product_photo: UploadFile
 ):
     service = ProductCreater()
-    obj = service(product_owner_id, product_name, product_price, product_description, product_photo)
+    model = service(product_owner_id, product_name, product_price, product_description, product_photo)
 
     return {
         'status': status.HTTP_201_CREATED,
-        'object': obj
+        'object': model
     }
 
