@@ -26,7 +26,7 @@ def init_database():
             user_name VARCHAR(255),
             user_password VARCHAR(255),
             user_email VARCHAR(255) DEFAULT NULL,
-            user_photo VARCHAR(255) DEFAULT NULL,
+            user_photo_path VARCHAR(255) DEFAULT NULL,
             
             FOREIGN KEY (role_id) REFERENCES role (role_id) ON UPDATE CASCADE
         );
@@ -37,9 +37,9 @@ def init_database():
             product_name VARCHAR(255),
             product_price DECIMAL(12, 2),
             product_description TEXT,
-            product_photo VARCHAR(255),
+            product_photo_path VARCHAR(255),
             
-            FOREIGN KEY product_owner_id REFERENCES users (user_id) ON DELETE SET NULL
+            FOREIGN KEY (product_owner_id) REFERENCES users (user_id) ON DELETE SET NULL
         );
         
         CREATE TABLE comment (
@@ -48,7 +48,7 @@ def init_database():
             product_id INT,
             comment_date DATE,
             comment_text VARCHAR(255),
-            comment_photo VARCHAR(255),
+            comment_photo_path VARCHAR(255),
         
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL,
             FOREIGN KEY (product_id) REFERENCES users (user_id) ON DELETE CASCADE

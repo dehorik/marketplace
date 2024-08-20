@@ -1,7 +1,7 @@
 from core.database.abstract_database import AbstractDataBase
 
 
-class Product(AbstractDataBase):
+class DataBaseProduct(AbstractDataBase):
     """
     Класс для выполнения CRUD-операций с товарами
     """
@@ -12,20 +12,27 @@ class Product(AbstractDataBase):
             product_name: str,
             product_price: float,
             product_description: str,
-            product_photo: str
-    ) -> None:
-        self.cursor.execute(
+            product_photo_path: str
+    ) -> list:
+        self._cursor.execute(
             """
-                INSERT INTO product 
-                    (product_owner_id, product_name, product_price, product_description, product_photo)
+                INSERT INTO product (
+                    product_owner_id, 
+                    product_name, 
+                    product_price, 
+                    product_description, 
+                    product_photo_path
+                )
                 VALUES
-                    (%s, %s, %s, %s, %s);
+                    (%s, %s, %s, %s, %s)
+                RETURNING *;
             """,
-            [product_owner_id, product_name, product_price, product_description, product_photo]
+            [product_owner_id, product_name, product_price, product_description, product_photo_path]
         )
+        return self._cursor.fetchall()
 
     def read(self, product_id: int) -> tuple:
-        self.cursor.execute(
+        self._cursor.execute(
             """
                 SELECT * 
                 FROM product
@@ -33,7 +40,7 @@ class Product(AbstractDataBase):
             """,
             [product_id]
         )
-        return self.cursor.fetchall()
+        return self._cursor.fetchall()
 
     def update(self, product_id: int, **kwargs) -> None:
         # модель передаваемых в kwargs данных:
@@ -49,10 +56,10 @@ class Product(AbstractDataBase):
             WHERE product_id = %s;
         """
 
-        self.cursor.execute(query_text, [product_id])
+        self._cursor.execute(query_text, [product_id])
 
     def delete(self, product_id: int) -> None:
-        self.cursor.execute(
+        self._cursor.execute(
             """"
                 DELETE 
                 FROM product
@@ -62,7 +69,7 @@ class Product(AbstractDataBase):
         )
 
     def get_last_products(self) -> list:
-        self.cursor.execute(
+        self._cursor.execute(
             """
                 SELECT * 
                 FROM product
@@ -70,5 +77,5 @@ class Product(AbstractDataBase):
                 LIMIT 50;
             """
         )
-        return self.cursor.fetchall()
+        return self._cursor.fetchall()
 
