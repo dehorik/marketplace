@@ -1,23 +1,30 @@
 from core.database.abstract_database import AbstractDataBase
 
 
-class CRUDproduct(AbstractDataBase):
+class Product(AbstractDataBase):
     """
     Класс для выполнения CRUD-операций с товарами
     """
 
-    def create(self, product_name, product_price, product_description, product_photo):
+    def create(
+            self,
+            product_owner_id: int,
+            product_name: str,
+            product_price: float,
+            product_description: str,
+            product_photo: str
+    ) -> None:
         self.cursor.execute(
             """
                 INSERT INTO product 
-                    (product_name, product_price, product_description, product_photo)
+                    (product_owner_id, product_name, product_price, product_description, product_photo)
                 VALUES
-                    (%s, %s, %s, %s);
+                    (%s, %s, %s, %s, %s);
             """,
-            [product_name, product_price, product_description, product_photo]
+            [product_owner_id, product_name, product_price, product_description, product_photo]
         )
 
-    def read(self, product_id):
+    def read(self, product_id: int) -> tuple:
         self.cursor.execute(
             """
                 SELECT * 
@@ -28,7 +35,7 @@ class CRUDproduct(AbstractDataBase):
         )
         return self.cursor.fetchone()
 
-    def update(self, product_id, **kwargs):
+    def update(self, product_id: int, **kwargs) -> None:
         # модель передаваемых в kwargs данных:
         # {имя_поля: новое значение...}
 
@@ -44,7 +51,7 @@ class CRUDproduct(AbstractDataBase):
 
         self.cursor.execute(query_text, [product_id])
 
-    def delete(self, product_id):
+    def delete(self, product_id: int) -> None:
         self.cursor.execute(
             """"
                 DELETE 
