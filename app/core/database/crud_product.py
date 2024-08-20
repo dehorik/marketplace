@@ -33,7 +33,7 @@ class Product(AbstractDataBase):
             """,
             [product_id]
         )
-        return self.cursor.fetchone()
+        return self.cursor.fetchall()
 
     def update(self, product_id: int, **kwargs) -> None:
         # модель передаваемых в kwargs данных:
