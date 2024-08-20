@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 from core.database.session_factory import BaseSession, ConnectorData
 from core.config_reader import config
+from routes.products_router import router as product_router
 
 
 @asynccontextmanager
@@ -25,7 +26,12 @@ async def lifespan(application: FastAPI):
     del session
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title='marketplace'
+)
+
+app.include_router(product_router)
 
 
 @app.get('/')
