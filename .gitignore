@@ -1,6 +1,5 @@
 .idea/
-.gitignore
 __pycache__/
 .venv/
-.env
 database_data/
+.env

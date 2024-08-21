@@ -1,0 +1,1 @@
+from routes.products_routes import product_router
