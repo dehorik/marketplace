@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 
 from core.database import Session
 from routes import product_router
@@ -18,10 +20,16 @@ app = FastAPI(
     title='marketplace',
 )
 
+templates = Jinja2Templates(directory='../frontend/templates')
+
+app.mount('/static', StaticFiles(directory='../frontend/static'), name='static')
+
 app.include_router(product_router)
 
 
-@app.get('/', response_class=FileResponse)
-def root():
-    return "../frontend/templates/catalog.html"
-
+@app.get("/", response_class=HTMLResponse)
+def root(request: Request):
+    return templates.TemplateResponse(
+        name='catalog.html',
+        context={'request': request}
+    )
