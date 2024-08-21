@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from core.database import Session
 from routes import product_router
@@ -14,14 +15,13 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title='marketplace'
+    title='marketplace',
 )
 
 app.include_router(product_router)
 
 
-@app.get('/')
+@app.get('/', response_class=FileResponse)
 def root():
-    return {
-        'message': 'hello world!'
-    }
+    return "../frontend/templates/catalog.html"
+
