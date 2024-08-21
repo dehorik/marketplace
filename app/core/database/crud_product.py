@@ -48,6 +48,7 @@ class ProductDataBase(InterfaceDataBase):
                 product_photo_path
             ]
         )
+
         return self.__cursor.fetchall()
 
     def read(self, product_id: int) -> tuple:
@@ -59,6 +60,7 @@ class ProductDataBase(InterfaceDataBase):
             """,
             [product_id]
         )
+
         return self.__cursor.fetchall()
 
     def update(self, product_id: int, **kwargs) -> None:
@@ -71,7 +73,8 @@ class ProductDataBase(InterfaceDataBase):
         set_data = set_data[:-2]
 
         query_text = f"""
-            UPDATE product SET {set_data}
+            UPDATE product 
+            SET {set_data}
             WHERE product_id = %s;
         """
 
@@ -86,3 +89,16 @@ class ProductDataBase(InterfaceDataBase):
             """,
             [product_id]
         )
+
+    def get_catalog(self, last_product_id: int, amount: int) -> list:
+        self.__cursor.execute(
+            """
+            SELECT product_id, product_name, product_price, product_photo_path
+            FROM product
+            WHERE product_id > %s
+            LIMIT %s;
+            """,
+            [last_product_id, amount]
+        )
+
+        return self.__cursor.fetchall()

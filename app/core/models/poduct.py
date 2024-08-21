@@ -1,3 +1,4 @@
+from fastapi import status
 from pydantic import BaseModel, Field
 
 
@@ -8,3 +9,8 @@ class ProductModel(BaseModel):
     product_price: float = Field(gt=0, le=1000000)
     product_description: str = Field(min_length=2, max_length=300)
     product_photo_path: str
+
+
+class CreateProductResponseModel(BaseModel):
+    status: int = status.HTTP_201_CREATED
+    product: ProductModel

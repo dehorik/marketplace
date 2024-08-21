@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, UploadFile, Form, status
 
 from core.database import Session, ProductDataBase
-from core.models import ProductModel
+from core.models import ProductModel, CreateProductResponseModel
 from utils import FileWriter, ProductConverter
 
 
@@ -12,7 +12,7 @@ product_router = APIRouter(
 )
 
 
-@product_router.post('/create')
+@product_router.post('/create', response_model=CreateProductResponseModel)
 def create_product(
         product_owner_id: Annotated[int, Form()],
         product_name: Annotated[str, Form(min_length=2, max_length=30)],
@@ -39,6 +39,6 @@ def create_product(
 
     return {
         'status': status.HTTP_201_CREATED,
-        'object': model
+        'product': model
     }
 
