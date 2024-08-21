@@ -2,9 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, UploadFile, Form, status
 
 from core.database import Session, ProductDataBase
-from core.models.poduct import ProductModel
-from utils.converters import ProductConverter
-from utils.uuid_generator import IDGenerator
+from core.models import ProductModel
+from utils import FileWriter, ProductConverter
 
 
 product_router = APIRouter(
@@ -21,25 +20,22 @@ def create_product(
         product_description: Annotated[str, Form(min_length=2, max_length=300)],
         product_photo: UploadFile
 ):
-    product_photo_path = f'database_data/product_photo/{IDGenerator()()}'
-    relative_path = '../' + product_photo_path
-    with open(relative_path, 'wb') as photo:
-        photo.write(product_photo.file.read())
-
+    converter = ProductConverter(ProductModel)
+    writer = FileWriter(FileWriter.product)
     session = Session()
     db = ProductDataBase(session)
-    new_obj = db.create(
+
+    product_photo_path = writer(product_photo.file.read())
+    new_product = db.create(
         product_owner_id,
         product_name,
         product_price,
         product_description,
         product_photo_path
     )
+    model = converter.serialization(new_product)[0]
 
-    converter = ProductConverter(ProductModel)
-    model = converter.serialization(new_obj)[0]
-
-    session.commit()
+    db.close()
 
     return {
         'status': status.HTTP_201_CREATED,
