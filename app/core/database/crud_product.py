@@ -82,15 +82,17 @@ class ProductDataBase(InterfaceDataBase):
         self.__cursor.execute(query_text, [product_id])
         return self.__cursor.fetchall()
 
-    def delete(self, product_id: int) -> None:
+    def delete(self, product_id: int) -> list:
         self.__cursor.execute(
             """"
                 DELETE 
                 FROM product
-                WHERE product_id = %s;   
+                WHERE product_id = %s
+                RETURNING *;
             """,
             [product_id]
         )
+        return self.__cursor.fetchall()
 
     def update_catalog(self, amount: int, last_product_id: int) -> list:
         self.__cursor.execute(

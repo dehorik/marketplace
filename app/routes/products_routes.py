@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from core.database import Session, ProductDataBase
 from core.models import ProductModel, UpdateCatalogResponseModel
-from utils import FileWriter, Converter
+from utils import FileWriter, Converter, FileDeleter
 from main import templates
 
 
@@ -24,7 +24,7 @@ def create_product(
         product_name: Annotated[str, Form(min_length=2, max_length=30)],
         product_price: Annotated[float, Form(gt=0, le=1000000)],
         product_description: Annotated[str, Form(min_length=2, max_length=300)],
-        product_photo: UploadFile
+        product_photo: UploadFile,
 ):
     converter = Converter(ProductModel)
     writer = FileWriter(FileWriter.product)
@@ -78,11 +78,11 @@ def partly_update_product(
         product_photo: UploadFile
 ):
     converter = Converter(ProductModel)
-    writer = FileWriter(FileWriter.product)
+    file_writer = FileWriter(FileWriter.product)
     session = Session()
     db = ProductDataBase(session)
 
-    product_photo_path = writer(product_photo.file.read())
+    product_photo_path = file_writer(product_photo.file.read())
     product = db.update(
         product_id,
         product_name=product_name,
@@ -97,8 +97,10 @@ def partly_update_product(
 
 @product_router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(product_id: int):
+    file_deleter = FileDeleter()
     session = Session()
     db = ProductDataBase(session)
 
-    db.delete(product_id)
+    deleted_product_path = db.delete(product_id)[0][-1]
+    file_deleter(deleted_product_path)
     db.close()

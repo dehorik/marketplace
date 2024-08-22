@@ -1,3 +1,5 @@
+import os
+
 from utils.uuid_generator import IDGenerator
 
 
@@ -27,3 +29,9 @@ class FileWriter:
             photo.write(file)
 
         return path
+
+
+class FileDeleter:
+    def __call__(self, path):
+        relative_path = f"../{path}"
+        os.remove(relative_path)
