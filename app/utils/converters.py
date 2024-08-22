@@ -18,7 +18,7 @@ class InterfaceConverter(ABC):
         pass
 
 
-class ProductConverter(InterfaceConverter):
+class Converter(InterfaceConverter):
     def __init__(self, model):
         self.__model = model
 

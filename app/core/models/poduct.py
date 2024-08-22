@@ -1,6 +1,5 @@
 from typing import List
 
-from fastapi import status
 from pydantic import BaseModel, Field
 
 

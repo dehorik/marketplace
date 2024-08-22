@@ -95,11 +95,11 @@ class ProductDataBase(InterfaceDataBase):
     def update_catalog(self, amount: int, last_product_id: int) -> list:
         self.__cursor.execute(
             """
-            SELECT product_id, product_name, product_price, product_photo_path
-            FROM product
-            WHERE product_id < %s
-            ORDER BY product_id DESC
-            LIMIT %s;
+                SELECT product_id, product_name, product_price, product_photo_path
+                FROM product
+                WHERE product_id < %s
+                ORDER BY product_id DESC
+                LIMIT %s;
             """,
             [last_product_id, amount]
         )
