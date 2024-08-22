@@ -63,7 +63,7 @@ class ProductDataBase(InterfaceDataBase):
 
         return self.__cursor.fetchall()
 
-    def update(self, product_id: int, **kwargs) -> None:
+    def update(self, product_id: int, **kwargs) -> list:
         # модель передаваемых в kwargs данных:
         # {имя_поля: новое значение...}
 
@@ -75,10 +75,12 @@ class ProductDataBase(InterfaceDataBase):
         query_text = f"""
             UPDATE product 
             SET {set_data}
-            WHERE product_id = %s;
+            WHERE product_id = %s
+            RETURNING *;
         """
 
         self.__cursor.execute(query_text, [product_id])
+        return self.__cursor.fetchall()
 
     def delete(self, product_id: int) -> None:
         self.__cursor.execute(
@@ -90,12 +92,13 @@ class ProductDataBase(InterfaceDataBase):
             [product_id]
         )
 
-    def get_catalog(self, last_product_id: int, amount: int) -> list:
+    def update_catalog(self, amount: int, last_product_id: int) -> list:
         self.__cursor.execute(
             """
             SELECT product_id, product_name, product_price, product_photo_path
             FROM product
-            WHERE product_id > %s
+            WHERE product_id < %s
+            ORDER BY product_id DESC
             LIMIT %s;
             """,
             [last_product_id, amount]

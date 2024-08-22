@@ -48,6 +48,7 @@ def init_database():
             product_id INT,
             comment_date DATE,
             comment_text VARCHAR(255),
+            comment_rating INT,
             comment_photo_path VARCHAR(255),
         
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL,

@@ -12,7 +12,7 @@ class FileWriter:
     comment = "database_data/comment_photo"
 
     def __init__(self, path):
-        if path not in [self.photo, self.user, self.comment]:
+        if path not in [self.product, self.user, self.comment]:
             raise Exception('unavailable path!')
 
         self.__path = path

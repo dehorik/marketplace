@@ -20,9 +20,20 @@ app = FastAPI(
     title='marketplace',
 )
 
-templates = Jinja2Templates(directory='../frontend/templates')
+templates = Jinja2Templates(
+    directory='../frontend/templates'
+)
 
-app.mount('/static', StaticFiles(directory='../frontend/static'), name='static')
+app.mount(
+    '/static',
+    StaticFiles(directory='../frontend/static'),
+    name='static'
+)
+app.mount(
+    '/database_data',
+    StaticFiles(directory='../database_data'),
+    name='user_photos'
+)
 
 app.include_router(product_router)
 
@@ -31,5 +42,5 @@ app.include_router(product_router)
 def root(request: Request):
     return templates.TemplateResponse(
         name='catalog.html',
-        context={'request': request}
+        request=request
     )

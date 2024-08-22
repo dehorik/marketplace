@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import status
 from pydantic import BaseModel, Field
 
@@ -11,6 +13,6 @@ class ProductModel(BaseModel):
     product_photo_path: str
 
 
-class CreateProductResponseModel(BaseModel):
-    status: int = status.HTTP_201_CREATED
-    product: ProductModel
+class UpdateCatalogResponseModel(BaseModel):
+    products: List[ProductModel]
+
