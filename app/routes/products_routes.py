@@ -70,7 +70,7 @@ def get_product(product_id: int, request: Request):
     )
 
 @product_router.put("/{product_id}", response_model=ProductModel)
-def partly_update_product(
+def update_product(
         product_id: int,
         product_name: Annotated[str, Form(min_length=2, max_length=30)],
         product_price: Annotated[float, Form(gt=0, le=1000000)],

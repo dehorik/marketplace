@@ -44,18 +44,55 @@ class CommentDataBase(InterfaceDataBase):
         )
         return self.__cursor.fetchall()
 
-    def read(self):
-        pass
+    def read(self, product_id):
+        self.__cursor.execute(
+            """
+                SELECT 
+                    user_name, 
+                    user_photo_path, 
+                    comment_date, 
+                    comment_text, 
+                    comment_rating, 
+                    comment_photo_path
+                FROM product
+                    INNER JOIN comment USING(product_id)
+                    INNER JOIN user USING(user_id)
+                WHERE product_id = %s
+                ORDER BY comment_date DESC;
+            """,
+            [product_id]
+        )
+        return self.__cursor.fetchall()
 
-    def upadte(self):
-        pass
+    def update(
+            self,
+            comment_id: int,
+            comment_text: str,
+            comment_rating: int,
+            comment_photo_path: str | None = None
+    ):
+        self.__cursor.execute(
+            """
+                UPDATE product 
+                SET
+                    comment_date = CURRENT DATE,
+                    comment_text = %s,
+                    comment_rating = %s,
+                    comment_photo_path = %s
+                WHERE comment_id = %s
+                RETURNING *;
+            """,
+            [comment_text, comment_rating, comment_photo_path, comment_id]
+        )
+        return self.__cursor.fetchall()
 
     def delete(self, comment_id):
         self.__cursor.execute(
             """
                 DELETE 
                 FROM comment
-                WHERE comment_id = %s;
+                WHERE comment_id = %s
+                RETURNING *;
             """,
             [comment_id]
         )
