@@ -75,7 +75,7 @@ class ProductDataBase(InterfaceDataBase):
             """
                 UPDATE product
                 SET
-                    product_name = %,
+                    product_name = %s,
                     product_price = %s,
                     product_description = %s,
                     product_photo_path = %s

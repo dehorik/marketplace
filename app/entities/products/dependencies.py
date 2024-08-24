@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Form, UploadFile
 
 from core import Session, ProductDataBase
-from entities.products.models import ProductModel
+from entities.products.models import ProductModel, ProductCatalogCardModel
 from utils import Converter, FileWriter, FileReWriter, FileDeleter
 
 
@@ -34,8 +34,8 @@ class CreateProduct:
 
 
 class UpdateCatalog:
-    def __init__(self, amount: int, last_product_id: int):
-        converter = Converter(ProductModel)
+    def __init__(self, amount: int, last_product_id: int | None = None):
+        converter = Converter(ProductCatalogCardModel)
         session = Session()
         db = ProductDataBase(session)
 
@@ -78,6 +78,7 @@ class UpdateProduct:
 class DeleteProduct:
     def __init__(self, product_id: int):
         file_deleter = FileDeleter()
+        converter = Converter(ProductModel)
         session = Session()
         db = ProductDataBase(session)
 
@@ -86,5 +87,5 @@ class DeleteProduct:
         deleted_product_path = product[-1]
         file_deleter(deleted_product_path)
 
-        self.product = product
+        self.product = converter.serialization(product)[0]
 

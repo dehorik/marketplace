@@ -37,7 +37,7 @@ class CommentDataBase(InterfaceDataBase):
                     comment_rating,
                     comment_photo_path
                 )
-                VALUES (%s, %s, CURRENT DATE, %s, %s, %s)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s)
                 RETURNING *;
             """,
             [user_id, product_id, comment_text, comment_rating, comment_photo_path]
@@ -120,7 +120,7 @@ class CommentDataBase(InterfaceDataBase):
             """
                 UPDATE product 
                 SET
-                    comment_date = CURRENT DATE,
+                    comment_date = CURRENT_DATE,
                     comment_text = %s,
                     comment_rating = %s,
                     comment_photo_path = %s

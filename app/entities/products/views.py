@@ -22,6 +22,12 @@ templates = Jinja2Templates(
 )
 
 
+@router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
+def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
+    return {
+        'products': obj.products
+    }
+
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(product_id: int, request: Request):
     return templates.TemplateResponse(
@@ -37,12 +43,6 @@ def get_product(product_id: int, request: Request):
 def create_product(obj: Annotated[CreateProduct, Depends(CreateProduct)]):
     return obj.product
 
-@router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
-def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
-    return {
-        'products': obj.products
-    }
-
 @router.put("/{product_id}", response_model=ProductModel)
 def update_product(obj: Annotated[UpdateProduct, Depends(UpdateProduct)]):
     return obj.product
@@ -50,4 +50,3 @@ def update_product(obj: Annotated[UpdateProduct, Depends(UpdateProduct)]):
 @router.delete("/{product_id}", response_model=ProductModel)
 def delete_product(obj: Annotated[DeleteProduct, Depends(DeleteProduct)]):
     return obj.product
-
