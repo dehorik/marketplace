@@ -1,5 +1,4 @@
 from typing import List
-
 from pydantic import BaseModel, Field
 
 
@@ -14,4 +13,3 @@ class ProductModel(BaseModel):
 
 class UpdateCatalogResponseModel(BaseModel):
     products: List[ProductModel]
-

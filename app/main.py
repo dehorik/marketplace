@@ -4,8 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
+import entities
 from core.database import Session
-from routes import product_router, comment_router, order_router, role_router, user_router
 
 
 @asynccontextmanager
@@ -35,11 +35,11 @@ app.mount(
     name='database_data'
 )
 
-app.include_router(product_router)
-app.include_router(comment_router)
-app.include_router(user_router)
-app.include_router(order_router)
-app.include_router(role_router)
+app.include_router(entities.products_router)
+app.include_router(entities.comments_router)
+app.include_router(entities.users_router)
+app.include_router(entities.orders_router)
+app.include_router(entities.roles_router)
 
 
 @app.get("/", response_class=HTMLResponse)

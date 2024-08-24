@@ -5,4 +5,3 @@ router = APIRouter(
     prefix='/orders',
     tags=['orders']
 )
-

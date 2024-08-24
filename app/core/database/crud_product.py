@@ -89,7 +89,7 @@ class ProductDataBase(InterfaceDataBase):
 
     def delete(self, product_id: int) -> list:
         self._cursor.execute(
-            """"
+            """
                 DELETE 
                 FROM product
                 WHERE product_id = %s
