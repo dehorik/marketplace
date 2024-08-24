@@ -9,4 +9,3 @@ class IDGenerator:
 
     def __call__(self):
         return str(self.__func_generator())
-

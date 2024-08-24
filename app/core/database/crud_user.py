@@ -1,21 +1,21 @@
-from core.database import Session
+from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
 class UserDataBase(InterfaceDataBase):
-    """Класс для выполнения CRUD-операций с пользователями"""
+    """Класс для выполнения CRUD операций с пользователями"""
 
     def __init__(self, session: Session):
         self.__session = session
-        self.__cursor = session.get_cursor()
+        self._cursor = session.get_cursor()
 
     def __del__(self):
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         self.__session.commit()
-        self.__cursor.close()
+        self._cursor.close()
 
-    def commit(self):
+    def commit(self) -> None:
         self.__session.commit()
 
     def create(self):

@@ -1,28 +1,12 @@
-from abc import ABC, abstractmethod
+class Converter:
+    """Класс-конвертер данных из строк БД в Pydantic модели и наоборот"""
 
-
-class InterfaceConverter(ABC):
-    """
-    Интерфейс для классов-конвертеров данных
-    из строк БД в pydantic-модели и наоборот
-    """
-
-    @abstractmethod
-    def serialization(self, *args, **kwargs):
-        # из вида [(), ()...] в Pydantic модель
-        pass
-
-    @abstractmethod
-    def deserialization(self, *args, **kwargs):
-        # из Pydantic модели в вид [(), ()...]
-        pass
-
-
-class Converter(InterfaceConverter):
     def __init__(self, model):
         self.__model = model
 
     def serialization(self, rows: list) -> list:
+        # из вида [(), ()...] в Pydantic модель
+
         lst = []
 
         for row in rows:
@@ -37,7 +21,10 @@ class Converter(InterfaceConverter):
 
         return lst
 
-    def deserialization(self, lst_obj: list) -> list:
+    @staticmethod
+    def deserialization(lst_obj: list) -> list:
+        # из Pydantic модели в вид [(), ()...]
+
         lst_rows = []
 
         for obj in lst_obj:

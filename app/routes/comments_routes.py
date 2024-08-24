@@ -3,16 +3,16 @@ from fastapi import APIRouter, Form, UploadFile, status
 
 from core.database import Session, CommentDataBase
 from core.models import CommentModel
-from utils import Converter, FileWriter, FileReWriter, FileDeleter
+from utils import FileWriter, FileReWriter, FileDeleter, Converter
 
 
-comment_router = APIRouter(
+router = APIRouter(
     prefix='/comments',
     tags=['comments']
 )
 
 
-@comment_router.post(
+@router.post(
     '/create',
     response_model=CommentModel,
     status_code=status.HTTP_201_CREATED
@@ -20,8 +20,8 @@ comment_router = APIRouter(
 def create_comment(
         user_id: int,
         product_id: int,
-        comment_text: Annotated[str, Form(min_length=3, max_length=200)],
         comment_rating: Annotated[int, Form(ge=1, le=5)],
+        comment_text: Annotated[str | None, Form(min_length=3, max_length=200)] = None,
         comment_photo: UploadFile | None = None
 ):
     converter = Converter(CommentModel)
@@ -45,7 +45,7 @@ def create_comment(
     db.close()
     return model
 
-@comment_router.put('/{comment_id}', response_model=CommentModel)
+@router.put('/{comment_id}', response_model=CommentModel)
 def update_comment(
         comment_id: int,
         comment_text: str,
@@ -59,24 +59,32 @@ def update_comment(
 
     if comment_photo:
         file_writer = FileWriter()
-        file_writer(FileWriter.comment_path, comment_photo.file.read())
+        comment_photo_path = file_writer(FileWriter.comment_path, comment_photo.file.read())
 
     elif comment_photo_path and comment_photo:
         file_rewriter = FileReWriter()
         file_rewriter(comment_photo_path, comment_photo.file.read())
 
-    comment = db.update(comment_id, comment_text, comment_rating, comment_photo_path)
+    comment = db.update(
+        comment_id,
+        comment_text,
+        comment_rating,
+        comment_photo_path
+    )
     model = converter.serialization(comment)[0]
 
     db.close()
     return model
 
-@comment_router.delete('/{comment_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{comment_id}', response_model=CommentModel)
 def delete_comment(comment_id: int):
     file_deleter = FileDeleter()
     session = Session()
     db = CommentDataBase(session)
 
-    path = db.delete(comment_id)[0][-1]
-    file_deleter(path)
+    comment = db.delete(comment_id)[0]
+    deleted_comment_path = comment[-1]
+    file_deleter(deleted_comment_path)
+
     db.close()
+    return comment

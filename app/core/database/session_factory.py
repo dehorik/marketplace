@@ -1,23 +1,22 @@
 from psycopg2 import InterfaceError, connect
 
 from core.database.singleton import Singleton
-from core.config_reader import Settings
-from core.config_reader import config
+from core.config_reader import Settings, config
 
 
 class ConnectionData:
     """Класс для извлечения из .env файла конфигурационных данных для БД"""
 
-    def __init__(self, data: Settings):
-        self.__data = data
+    def __init__(self, config_database: Settings):
+        self.__config_database = config_database
 
     def __call__(self) -> dict:
         data = {
-            "DATABASE": config.getenv("DATABASE"),
-            "DATABASE_USER": config.getenv("DATABASE_USER"),
-            "DATABASE_USER_PASSWORD": config.getenv("DATABASE_USER_PASSWORD"),
-            "DATABASE_HOST": config.getenv("DATABASE_HOST"),
-            "DATABASE_PORT": config.getenv("DATABASE_PORT")
+            "DATABASE": self.__config_database.getenv("DATABASE"),
+            "DATABASE_USER": self.__config_database.getenv("DATABASE_USER"),
+            "DATABASE_USER_PASSWORD": self.__config_database.getenv("DATABASE_USER_PASSWORD"),
+            "DATABASE_HOST": self.__config_database.getenv("DATABASE_HOST"),
+            "DATABASE_PORT": self.__config_database.getenv("DATABASE_PORT")
         }
         return data
 
@@ -43,13 +42,17 @@ class Session(Singleton):
         try:
             self.close_connection()
         except InterfaceError:
-            pass
+            return
 
     def close_connection(self) -> None:
+        # закрытие подключения к БД (сессии)
+
         self.__connection.commit()
         self.__connection.close()
 
     def commit(self) -> None:
+        # запись в базу данных
+
         self.__connection.commit()
 
     def get_cursor(self):

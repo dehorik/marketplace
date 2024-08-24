@@ -1,7 +1,8 @@
 from core.database.session_factory import *
-from core.database.crud_product import *
-from core.database.crud_user import *
-from core.database.crud_comment import *
+
+from core.database.crud_product import ProductDataBase
+from core.database.crud_user import UserDataBase
+from core.database.crud_comment import CommentDataBase
 
 
 # Инструкция для работы со всем этим добром, если я когда-нибудь всё же решусь
@@ -14,4 +15,4 @@ from core.database.crud_comment import *
 # 4. В конце работы не забываем вызвать close() у объекта БД,
 #    созданного на шаге 2.
 #
-# Сессия закроется автоматически, как только с объекта сессии пропадут все ссылки.
+# Сессия закроется автоматически, как только с объекта сессии пропадут все ссылки (__del__).

@@ -4,17 +4,24 @@ from fastapi.responses import HTMLResponse
 
 from core.database import Session, ProductDataBase
 from core.models import ProductModel, UpdateCatalogResponseModel
-from utils import FileWriter, Converter, FileDeleter
+from utils import FileWriter, FileDeleter, FileReWriter, Converter
 from main import templates
 
 
-product_router = APIRouter(
+router = APIRouter(
     prefix='/products',
     tags=['prodcuts']
 )
 
 
-@product_router.post(
+@router.get("/{product_id}", response_class=HTMLResponse)
+def get_product(product_id: int, request: Request):
+    return templates.TemplateResponse(
+        name='cart.html',
+        request=request
+    )
+
+@router.post(
     '/create',
     response_model=ProductModel,
     status_code=status.HTTP_201_CREATED
@@ -27,11 +34,11 @@ def create_product(
         product_photo: UploadFile,
 ):
     converter = Converter(ProductModel)
-    writer = FileWriter(FileWriter.product)
+    file_writer = FileWriter()
     session = Session()
     db = ProductDataBase(session)
 
-    product_photo_path = writer(product_photo.file.read())
+    product_photo_path = file_writer(FileWriter.product_path, product_photo.file.read())
     new_product = db.create(
         product_owner_id,
         product_name,
@@ -44,17 +51,13 @@ def create_product(
     db.close()
     return model
 
-@product_router.get(
-    "/update-catalog",
-    response_model=UpdateCatalogResponseModel,
-    status_code=status.HTTP_200_OK
-)
+@router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
 def update_catalog(amount: int, last_product_id: int):
     converter = Converter(ProductModel)
     session = Session()
     db = ProductDataBase(session)
 
-    products = db.update_catalog(amount, last_product_id)
+    products = db.get_catalog(amount, last_product_id)
     models = converter.serialization(products)
 
     db.close()
@@ -62,45 +65,44 @@ def update_catalog(amount: int, last_product_id: int):
         'products': models
     }
 
-@product_router.get("/{product_id}", response_class=HTMLResponse)
-def get_product(product_id: int, request: Request):
-    return templates.TemplateResponse(
-        name='cart.html',
-        request=request
-    )
-
-@product_router.put("/{product_id}", response_model=ProductModel)
+@router.put("/{product_id}", response_model=ProductModel)
 def update_product(
         product_id: int,
         product_name: Annotated[str, Form(min_length=2, max_length=30)],
         product_price: Annotated[float, Form(gt=0, le=1000000)],
         product_description: Annotated[str, Form(min_length=2, max_length=300)],
-        product_photo: UploadFile
+        product_photo_path: str,
+        product_photo: UploadFile | None = None
 ):
     converter = Converter(ProductModel)
-    file_writer = FileWriter(FileWriter.product)
     session = Session()
     db = ProductDataBase(session)
 
-    product_photo_path = file_writer(product_photo.file.read())
+    if product_photo:
+        file_rewriter = FileReWriter()
+        file_rewriter(product_photo_path, product_photo.file.read())
+
     product = db.update(
         product_id,
-        product_name=product_name,
-        product_price=product_price,
-        product_description=product_description,
-        product_photo_path=product_photo_path
+        product_name,
+        product_price,
+        product_description,
+        product_photo_path
     )
     model = converter.serialization(product)[0]
 
     db.close()
     return model
 
-@product_router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{product_id}", response_model=ProductModel)
 def delete_product(product_id: int):
     file_deleter = FileDeleter()
     session = Session()
     db = ProductDataBase(session)
 
-    deleted_product_path = db.delete(product_id)[0][-1]
+    product = db.delete(product_id)[0]
+    deleted_product_path = product[-1]
     file_deleter(deleted_product_path)
+
     db.close()
+    return product

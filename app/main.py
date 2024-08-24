@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
 from core.database import Session
-from routes import product_router
+from routes import product_router, comment_router, order_router, role_router, user_router
 
 
 @asynccontextmanager
@@ -17,7 +17,7 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title='marketplace',
+    title='marketplace'
 )
 
 templates = Jinja2Templates(
@@ -32,15 +32,19 @@ app.mount(
 app.mount(
     '/database_data',
     StaticFiles(directory='../database_data'),
-    name='user_photos'
+    name='database_data'
 )
 
 app.include_router(product_router)
+app.include_router(comment_router)
+app.include_router(user_router)
+app.include_router(order_router)
+app.include_router(role_router)
 
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
     return templates.TemplateResponse(
-        name='catalog.html',
+        name='index.html',
         request=request
     )
