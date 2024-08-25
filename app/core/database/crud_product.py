@@ -21,7 +21,7 @@ class ProductDataBase(InterfaceDataBase):
 
     def create(
             self,
-            product_owner_id: int,
+            user_id: int,
             product_name: str,
             product_price: float,
             product_description: str,
@@ -30,7 +30,7 @@ class ProductDataBase(InterfaceDataBase):
         self._cursor.execute(
             """
                 INSERT INTO product (
-                    product_owner_id, 
+                    user_id, 
                     product_name, 
                     product_price, 
                     product_description, 
@@ -41,7 +41,7 @@ class ProductDataBase(InterfaceDataBase):
                 RETURNING *;
             """,
             [
-                product_owner_id,
+                user_id,
                 product_name,
                 product_price,
                 product_description,

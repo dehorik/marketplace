@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import Form, UploadFile, HTTPException, status
+from psycopg2.errors import ForeignKeyViolation
 
 from core import Session, ProductDataBase, CommentDataBase
 from utils import Converter, FileWriter, FileReWriter, FileDeleter
@@ -21,7 +22,7 @@ class UpdateCatalog:
 class CreateProduct:
     def __init__(
             self,
-            product_owner_id: int,
+            user_id: int,
             product_name: Annotated[str, Form(min_length=2, max_length=30)],
             product_price: Annotated[float, Form(gt=0, le=1000000)],
             product_description: Annotated[str, Form(min_length=2, max_length=300)],
@@ -39,16 +40,27 @@ class CreateProduct:
         product_db = ProductDataBase(session)
 
         product_photo_path = file_writer(FileWriter.product_path, product_photo.file.read())
-        new_product = product_db.create(
-            product_owner_id,
-            product_name,
-            product_price,
-            product_description,
-            product_photo_path
-        )
 
-        product_db.close()
-        self.product = converter.serialization(new_product)[0]
+        try:
+            new_product = product_db.create(
+                user_id,
+                product_name,
+                product_price,
+                product_description,
+                product_photo_path
+            )
+        except ForeignKeyViolation:
+            file_deleter = FileDeleter()
+            file_deleter(product_photo_path)
+
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='incorrect user_id'
+            )
+        else:
+            self.product = converter.serialization(new_product)[0]
+        finally:
+            product_db.close()
 
 
 class UpdateProduct:
@@ -80,6 +92,8 @@ class UpdateProduct:
         product = product_db.update(product_id, **params)
 
         if not product:
+            product_db.close()
+
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='incorrect product_id'
@@ -111,6 +125,9 @@ class DeleteProduct:
 
         product = product_db.delete(product_id)
         if not product:
+            product_db.close()
+            comment_db.close()
+
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='incorrect product_id'

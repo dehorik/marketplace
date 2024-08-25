@@ -19,7 +19,7 @@ router = APIRouter(
 def create_comment(obj: Annotated[CreateComment, Depends(CreateComment)]):
     return obj.comment
 
-@router.put('/{comment_id}', response_model=CommentModel)
+@router.patch('/{comment_id}', response_model=CommentModel)
 def update_comment(obj: Annotated[UpdateComment, Depends(UpdateComment)]):
     return obj.comment
 

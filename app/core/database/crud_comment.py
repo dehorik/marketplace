@@ -23,9 +23,9 @@ class CommentDataBase(InterfaceDataBase):
             self,
             user_id: int,
             product_id: int,
-            comment_text: str | None,
             comment_rating: int,
-            comment_photo_path: str | None
+            comment_text: str | None = None,
+            comment_photo_path: str | None = None
     ) -> list:
         self._cursor.execute(
             """
@@ -57,89 +57,36 @@ class CommentDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    # def read(
-    #         self,
-    #         product_id: int,
-    #         amount: int,
-    #         last_comment_id: int | None = None
-    # ) -> list:
-    #     """
-    #     Для получения последних отзывов под товаром
-    #
-    #     :param product_id: id товара
-    #     :param amount: количество отдаваемых отзывов
-    #     :param last_comment_id: comment_id последнего отзыва из прошлой подгрузки;
-    #            если это первый запрос на подгрузку отзывов, то не передавать ничего
-    #     :return: список отзывов
-    #     """
-    #
-    #     if last_comment_id:
-    #         self._cursor.execute(
-    #             """
-    #                 SELECT
-    #                     comment.user_id,
-    #                     user_name,
-    #                     user_photo_path,
-    #                     comment_id,
-    #                     comment_date,
-    #                     comment_text,
-    #                     comment_rating,
-    #                     comment_photo_path
-    #                 FROM product
-    #                     INNER JOIN comment USING(product_id)
-    #                     INNER JOIN user USING(user_id)
-    #                 WHERE product_id = %s AND comment_id < %s
-    #                 ORDER BY comment_id DESC
-    #                 LIMIT %s;
-    #             """,
-    #             [product_id, last_comment_id, amount]
-    #         )
-    #
-    #         return self._cursor.fetchall()
-    #
-    #     else:
-    #         self._cursor.execute(
-    #             """
-    #                 SELECT
-    #                     comment.user_id,
-    #                     user_name,
-    #                     user_photo_path,
-    #                     comment_id,
-    #                     comment_date,
-    #                     comment_text,
-    #                     comment_rating,
-    #                     comment_photo_path
-    #                 FROM product
-    #                     INNER JOIN comment USING(product_id)
-    #                     INNER JOIN user USING(user_id)
-    #                 WHERE product_id = %s
-    #                 ORDER BY comment_id DESC
-    #                 LIMIT %s;
-    #             """,
-    #             [product_id, amount]
-    #         )
-    #
-    #         return self._cursor.fetchall()
-
     def update(
             self,
             comment_id: int,
-            comment_text: str,
-            comment_rating: int,
-            comment_photo_path: str | None
+            comment_text: str | None = None,
+            comment_rating: int | None = None,
+            comment_photo_path: str | None = None
     ) -> list:
+        params = {
+            "comment_text": comment_text,
+            "comment_rating": comment_rating,
+            "comment_photo_path": comment_photo_path
+        }
+        params = {key: value for key, value in params.items() if value is not None}
+
+        set_values = ""
+        for key, value in params.items():
+            if type(value) is str:
+                set_values = set_values + f"{key} = '{value}', "
+            else:
+                set_values = set_values + f"{key} = {value}, "
+        set_values = set_values[:-2]
+
         self._cursor.execute(
-            """
-                UPDATE product 
-                SET
-                    comment_date = CURRENT_DATE,
-                    comment_text = %s,
-                    comment_rating = %s,
-                    comment_photo_path = %s
+            f"""
+                UPDATE comment 
+                    SET {set_values}
                 WHERE comment_id = %s
                 RETURNING *;
             """,
-            [comment_text, comment_rating, comment_photo_path, comment_id]
+            [comment_id]
         )
 
         return self._cursor.fetchall()

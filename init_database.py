@@ -33,13 +33,13 @@ def init_database():
         
         CREATE TABLE product (
             product_id SERIAL PRIMARY KEY,
-            product_owner_id INT,
+            user_id INT,
             product_name VARCHAR(255),
             product_price DECIMAL(12, 2),
             product_description TEXT,
             product_photo_path VARCHAR(255),
             
-            FOREIGN KEY (product_owner_id) REFERENCES users (user_id) ON DELETE SET NULL
+            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL
         );
         
         CREATE TABLE comment (
