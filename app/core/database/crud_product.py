@@ -66,23 +66,33 @@ class ProductDataBase(InterfaceDataBase):
     def update(
             self,
             product_id: int,
-            product_name: str,
-            product_price: float,
-            product_description: str,
-            product_photo_path: str
+            product_name: str | None = None,
+            product_price: float | None = None,
+            product_description: str | None = None
     ) -> list:
+        params = {
+            'product_name': product_name,
+            'product_price': product_price,
+            'product_description': product_description
+        }
+        params = {key: value for key, value in params.items() if value is not None}
+
+        set_values = ""
+        for key, value in params.items():
+            if type(value) is str:
+                set_values = set_values + f"{key} = '{value}', "
+            else:
+                set_values = set_values + f"{key} = {value}, "
+        set_values = set_values[:-2]
+
         self._cursor.execute(
-            """
-                UPDATE product
-                SET
-                    product_name = %s,
-                    product_price = %s,
-                    product_description = %s,
-                    product_photo_path = %s
+            f"""
+                UPDATE product 
+                    SET {set_values}                
                 WHERE product_id = %s
                 RETURNING *;
             """,
-            [product_name, product_price, product_description, product_photo_path, product_id]
+            [product_id]
         )
 
         return self._cursor.fetchall()
@@ -111,28 +121,19 @@ class ProductDataBase(InterfaceDataBase):
         """
 
         if last_product_id:
-            self._cursor.execute(
-                """
-                    SELECT product_id, product_name, product_price, product_photo_path
-                    FROM product
-                    WHERE product_id < %s
-                    ORDER BY product_id DESC
-                    LIMIT %s;
-                """,
-                [last_product_id, amount]
-            )
-
-            return self._cursor.fetchall()
-
+            condition = f"WHERE product_id < {last_product_id}"
         else:
-            self._cursor.execute(
-                """
-                    SELECT product_id, product_name, product_price, product_photo_path
-                    FROM product
-                    ORDER BY product_id DESC
-                    LIMIT %s;
-                """,
-                [amount]
-            )
+            condition = ""
 
-            return self._cursor.fetchall()
+        self._cursor.execute(
+            f"""
+                SELECT product_id, product_name, product_price, product_photo_path
+                FROM product
+                {condition}
+                ORDER BY product_id DESC
+                LIMIT %s;
+            """,
+            [amount]
+        )
+
+        return self._cursor.fetchall()

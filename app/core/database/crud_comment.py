@@ -45,69 +45,81 @@ class CommentDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def read(
-            self,
-            product_id: int,
-            amount: int,
-            last_comment_id: int | None = None
-    ) -> list:
-        """
-        Для получения последних отзывов под товаром
+    def read(self, product_id):
+        self._cursor.execute(
+            """
+                SELECT * 
+                FROM comment 
+                WHERE product_id = %s;
+            """,
+            [product_id]
+        )
 
-        :param product_id: id товара
-        :param amount: количество отдаваемых отзывов
-        :param last_comment_id: comment_id последнего отзыва из прошлой подгрузки;
-               если это первый запрос на подгрузку отзывов, то не передавать ничего
-        :return: список отзывов
-        """
+        return self._cursor.fetchall()
 
-        if last_comment_id:
-            self._cursor.execute(
-                """
-                    SELECT 
-                        comment.user_id,
-                        user_name, 
-                        user_photo_path,
-                        comment_id, 
-                        comment_date, 
-                        comment_text, 
-                        comment_rating, 
-                        comment_photo_path
-                    FROM product
-                        INNER JOIN comment USING(product_id)
-                        INNER JOIN user USING(user_id)
-                    WHERE product_id = %s AND comment_id < %s
-                    ORDER BY comment_id DESC
-                    LIMIT %s;
-                """,
-                [product_id, last_comment_id, amount]
-            )
-
-            return self._cursor.fetchall()
-
-        else:
-            self._cursor.execute(
-                """
-                    SELECT 
-                        comment.user_id,
-                        user_name, 
-                        user_photo_path,
-                        comment_id, 
-                        comment_date, 
-                        comment_text, 
-                        comment_rating, 
-                        comment_photo_path
-                    FROM product
-                        INNER JOIN comment USING(product_id)
-                        INNER JOIN user USING(user_id)
-                    WHERE product_id = %s 
-                    ORDER BY comment_id DESC
-                    LIMIT %s;
-                """,
-                [product_id, amount]
-            )
-
-            return self._cursor.fetchall()
+    # def read(
+    #         self,
+    #         product_id: int,
+    #         amount: int,
+    #         last_comment_id: int | None = None
+    # ) -> list:
+    #     """
+    #     Для получения последних отзывов под товаром
+    #
+    #     :param product_id: id товара
+    #     :param amount: количество отдаваемых отзывов
+    #     :param last_comment_id: comment_id последнего отзыва из прошлой подгрузки;
+    #            если это первый запрос на подгрузку отзывов, то не передавать ничего
+    #     :return: список отзывов
+    #     """
+    #
+    #     if last_comment_id:
+    #         self._cursor.execute(
+    #             """
+    #                 SELECT
+    #                     comment.user_id,
+    #                     user_name,
+    #                     user_photo_path,
+    #                     comment_id,
+    #                     comment_date,
+    #                     comment_text,
+    #                     comment_rating,
+    #                     comment_photo_path
+    #                 FROM product
+    #                     INNER JOIN comment USING(product_id)
+    #                     INNER JOIN user USING(user_id)
+    #                 WHERE product_id = %s AND comment_id < %s
+    #                 ORDER BY comment_id DESC
+    #                 LIMIT %s;
+    #             """,
+    #             [product_id, last_comment_id, amount]
+    #         )
+    #
+    #         return self._cursor.fetchall()
+    #
+    #     else:
+    #         self._cursor.execute(
+    #             """
+    #                 SELECT
+    #                     comment.user_id,
+    #                     user_name,
+    #                     user_photo_path,
+    #                     comment_id,
+    #                     comment_date,
+    #                     comment_text,
+    #                     comment_rating,
+    #                     comment_photo_path
+    #                 FROM product
+    #                     INNER JOIN comment USING(product_id)
+    #                     INNER JOIN user USING(user_id)
+    #                 WHERE product_id = %s
+    #                 ORDER BY comment_id DESC
+    #                 LIMIT %s;
+    #             """,
+    #             [product_id, amount]
+    #         )
+    #
+    #         return self._cursor.fetchall()
 
     def update(
             self,

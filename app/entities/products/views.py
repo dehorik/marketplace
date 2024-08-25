@@ -28,13 +28,6 @@ def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
         'products': obj.products
     }
 
-@router.get("/{product_id}", response_class=HTMLResponse)
-def get_product(product_id: int, request: Request):
-    return templates.TemplateResponse(
-        name='cart.html',
-        request=request
-    )
-
 @router.post(
     '/create',
     response_model=ProductModel,
@@ -43,7 +36,14 @@ def get_product(product_id: int, request: Request):
 def create_product(obj: Annotated[CreateProduct, Depends(CreateProduct)]):
     return obj.product
 
-@router.put("/{product_id}", response_model=ProductModel)
+@router.get("/{product_id}", response_class=HTMLResponse)
+def get_product(product_id: int, request: Request):
+    return templates.TemplateResponse(
+        name='cart.html',
+        request=request
+    )
+
+@router.patch("/{product_id}", response_model=ProductModel)
 def update_product(obj: Annotated[UpdateProduct, Depends(UpdateProduct)]):
     return obj.product
 
