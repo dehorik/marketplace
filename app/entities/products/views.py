@@ -22,6 +22,13 @@ templates = Jinja2Templates(
 )
 
 
+@router.get("/catalog", response_class=HTMLResponse)
+def get_catalog(request: Request):
+    return templates.TemplateResponse(
+        name='catalog.html',
+        request=request
+    )
+
 @router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
 def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
     return {
