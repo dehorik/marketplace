@@ -11,7 +11,7 @@ class HashPassword:
     def __init__(self, user_password: str):
         self.__hashed_password = pwd_context.hash(user_password)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.__hashed_password
 
     @property
@@ -25,7 +25,7 @@ class SessionIdGenerator:
     def __init__(self):
         self.__session_id = uuid4().hex
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.__session_id
 
     @property
