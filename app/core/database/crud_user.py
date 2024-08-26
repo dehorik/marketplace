@@ -18,8 +18,19 @@ class UserDataBase(InterfaceDataBase):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self):
-        pass
+    def create(self, user_name: str, user_password: str):
+        self._cursor.execute(
+            """
+                INSERT INTO users
+                    (user_name, user_password)
+                VALUES
+                    (%s, %s)
+                RETURNING *;
+            """,
+            [user_name, user_password]
+        )
+
+        self._cursor.fetchall()
 
     def read(self):
         pass
@@ -29,3 +40,15 @@ class UserDataBase(InterfaceDataBase):
 
     def delete(self):
         pass
+
+    def check_user_name(self, user_name: str):
+        self._cursor.execute(
+            """
+                SELECT *
+                FROM users
+                WHERE user_name = %s;
+            """,
+            [user_name]
+        )
+
+        return self._cursor.fetchall()
