@@ -1,8 +1,7 @@
 from typing import Annotated
 from fastapi import Form, UploadFile, HTTPException, status
-from psycopg2.errors import ForeignKeyViolation
 
-from core import Session, ProductDataBase, CommentDataBase
+from core.database import Session, ProductDataBase, CommentDataBase
 from utils import Converter, FileWriter, FileReWriter, FileDeleter
 from entities.products.models import ProductModel, ProductCatalogCardModel
 
@@ -31,36 +30,25 @@ class CreateProduct:
         if not product_photo.content_type.split('/')[0] == 'image':
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail='incorrect product_photo file type!'
+                detail='invalid file type'
             )
 
-        file_writer = FileWriter()
         converter = Converter(ProductModel)
         session = Session()
         product_db = ProductDataBase(session)
 
-        product_photo_path = file_writer(FileWriter.product_path, product_photo.file.read())
+        product_photo_path = str(FileWriter(FileWriter.product_path, product_photo.file.read()))
 
-        try:
-            new_product = product_db.create(
-                user_id,
-                product_name,
-                product_price,
-                product_description,
-                product_photo_path
-            )
-        except ForeignKeyViolation:
-            file_deleter = FileDeleter()
-            file_deleter(product_photo_path)
+        product = product_db.create(
+            user_id,
+            product_name,
+            product_price,
+            product_description,
+            product_photo_path
+        )
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='incorrect user_id'
-            )
-        else:
-            self.product = converter.serialization(new_product)[0]
-        finally:
-            product_db.close()
+        product_db.close()
+        self.product = converter.serialization(product)[0]
 
 
 class UpdateProduct:
@@ -76,7 +64,7 @@ class UpdateProduct:
             if not product_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail='incorrect product_photo file type!'
+                    detail='invalid file type'
                 )
 
         converter = Converter(ProductModel)
@@ -100,8 +88,7 @@ class UpdateProduct:
             )
 
         if product_photo:
-            file_rewriter = FileReWriter()
-            file_rewriter(product[0][-1], product_photo.file.read())
+            FileReWriter(product[0][-1], product_photo.file.read())
 
         product_db.close()
         self.product = converter.serialization(product)[0]
@@ -109,7 +96,6 @@ class UpdateProduct:
 
 class DeleteProduct:
     def __init__(self, product_id: int):
-        file_deleter = FileDeleter()
         converter = Converter(ProductModel)
         session = Session()
         product_db = ProductDataBase(session)
@@ -121,7 +107,7 @@ class DeleteProduct:
             deleted_comment_photo_path = deleted_comment[0][-1]
 
             if deleted_comment_photo_path:
-                file_deleter(deleted_comment_photo_path)
+                FileDeleter(deleted_comment_photo_path)
 
         product = product_db.delete(product_id)
         if not product:
@@ -134,7 +120,7 @@ class DeleteProduct:
             )
 
         deleted_product_path = product[0][-1]
-        file_deleter(deleted_product_path)
+        FileDeleter(deleted_product_path)
 
         product_db.close()
         comment_db.close()

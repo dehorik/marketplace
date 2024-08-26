@@ -1,10 +1,9 @@
 from typing import Annotated
 from fastapi import Form, UploadFile, HTTPException, status
-from psycopg2.errors import ForeignKeyViolation
 
 from core.database import Session, CommentDataBase
-from entities.comments.models import CommentModel
 from utils import FileWriter, FileReWriter, FileDeleter, Converter
+from entities.comments.models import CommentModel
 
 
 class CreateComment:
@@ -20,7 +19,7 @@ class CreateComment:
             if not comment_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail='incorrect comment_photo file type!'
+                    detail='invalid file type'
                 )
 
         converter = Converter(CommentModel)
@@ -28,28 +27,20 @@ class CreateComment:
         comment_db = CommentDataBase(session)
 
         if comment_photo:
-            file_writer = FileWriter()
-            comment_photo_path = file_writer(FileWriter.comment_path, comment_photo.file.read())
+            comment_photo_path = str(FileWriter(FileWriter.comment_path, comment_photo.file.read()))
         else:
             comment_photo_path = None
 
-        try:
-            comment = comment_db.create(
-                user_id,
-                product_id,
-                comment_rating,
-                comment_text,
-                comment_photo_path
-            )
-        except ForeignKeyViolation:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='incorrect user_id or product_id'
-            )
-        else:
-            self.comment = converter.serialization(comment)[0]
-        finally:
-            comment_db.close()
+        comment = comment_db.create(
+            user_id,
+            product_id,
+            comment_rating,
+            comment_text,
+            comment_photo_path
+        )
+
+        comment_db.close()
+        self.comment = converter.serialization(comment)[0]
 
 
 class UpdateComment:
@@ -64,7 +55,7 @@ class UpdateComment:
             if not comment_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail='incorrect comment_photo file type!'
+                    detail='invalid file type'
                 )
 
         session = Session()
@@ -88,11 +79,9 @@ class UpdateComment:
 
         if comment_photo:
             if comment[0][-1]:
-                file_rewriter = FileReWriter()
-                file_rewriter(comment[0][-1], comment_photo.file.read())
+                FileReWriter(comment[0][-1], comment_photo.file.read())
             else:
-                file_writer = FileWriter()
-                comment_photo_path = file_writer(FileWriter.comment_path, comment_photo.file.read())
+                comment_photo_path = str(FileWriter(FileWriter.comment_path, comment_photo.file.read()))
                 comment = comment_db.update(comment_id, comment_photo_path=comment_photo_path)
 
         comment_db.close()
@@ -115,8 +104,7 @@ class DeleteComment:
             )
 
         if comment[0][-1]:
-            file_deleter = FileDeleter()
-            file_deleter(comment[0][-1])
+            FileDeleter(comment[0][-1])
 
         comment_db.close()
         self.comment = converter.serialization(comment)[0]

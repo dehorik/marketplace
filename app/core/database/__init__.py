@@ -1,4 +1,4 @@
-from core.database.session_factory import *
+from core.database.session_factory import Session, ConnectionData
 
 from core.database.crud_product import ProductDataBase
 from core.database.crud_user import UserDataBase
