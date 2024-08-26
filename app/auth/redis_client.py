@@ -20,6 +20,8 @@ class ConnectionData:
 
 
 class RedisClient(Singleton):
+    """Класс для сохранения сессий в памяти с помощью redis"""
+
     def __init__(self, data: ConnectionData = ConnectionData(config)):
         if self.__dict__:
             return
@@ -32,12 +34,21 @@ class RedisClient(Singleton):
             decode_responses=True
         )
 
-    def set(self, key: str, value: str) -> None:
-        self.__client.set(key, value)
+    def set(self, session_id: str, user_id: int) -> None:
+        self.__client.set(session_id, user_id)
 
-    def get(self, key: str) -> str:
-        return self.__client.get(key)
+    def get(self, session_id: str) -> str:
+        data = self.__client.get(session_id)
+        if not data:
+            raise ValueError('incorrect session_id')
+        else:
+            return str(data)
 
-    def delete(self, key: str) -> None:
-        pass
+    def delete(self, session_id: str) -> None:
+        if self.__client.exists(session_id):
+            self.__client.delete(session_id)
+        else:
+            raise ValueError('incorrect session_id')
 
+    def exists(self, session_id: str) -> bool:
+        return self.__client.exists(session_id)
