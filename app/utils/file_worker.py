@@ -32,7 +32,7 @@ class FileWriter(IntefaceFileWorker):
 
         generator = IDGenerator()
 
-        path = f"{path}/{generator()}"
+        path = f"{path}/{str(generator())}"
         relative_path = f"../{path}"
 
         with open(relative_path, 'wb') as photo:

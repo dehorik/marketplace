@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 
 class IDGenerator:
@@ -7,5 +7,5 @@ class IDGenerator:
     def __init__(self, func=uuid4):
         self.__func_generator = func
 
-    def __call__(self):
-        return str(self.__func_generator())
+    def __call__(self) -> UUID:
+        return self.__func_generator()
