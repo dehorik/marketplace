@@ -5,12 +5,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
 import entities
+from auth.redis_client import RedisClient
 from core.database import Session
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     session = Session()
+    redis = RedisClient()
     yield
     session.close_connection()
 

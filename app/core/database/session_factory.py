@@ -18,6 +18,7 @@ class ConnectionData:
             "DATABASE_HOST": self.__config_database.getenv("DATABASE_HOST"),
             "DATABASE_PORT": self.__config_database.getenv("DATABASE_PORT")
         }
+
         return data
 
 
@@ -28,6 +29,9 @@ class Session(Singleton):
     """
 
     def __init__(self, data: ConnectionData = ConnectionData(config)):
+        if self.__dict__:
+            return
+
         connection_data = data()
 
         self.__connection = connect(
@@ -59,3 +63,4 @@ class Session(Singleton):
         # фабрика курсоров
 
         return self.__connection.cursor()
+

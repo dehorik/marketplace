@@ -105,6 +105,7 @@ def init_database():
         
         
         # database setup
+        
         INSERT INTO order_status
             (order_status_name)
         VALUES
@@ -118,16 +119,6 @@ def init_database():
             ('user'),
             ('admin'),
             ('owner');
-            
-        
-        # auth
-        CREATE TABLE session (
-            session_id SERIAL PRIMARY KEY,
-            session_key VARCHAR(255),
-            user_id INT,
-            
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
-        );
         """
     )
 

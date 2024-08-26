@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Response, status, Cookie
 
-from auth.manage_sessions_database import ManageSessionsDataBase
+from auth.redis_client import ManageSessionsDataBase
 from auth.security import HashPassword, SessionIdGenerator
 from auth.models import Credentials
 from core.database import Session, UserDataBase
