@@ -22,17 +22,26 @@ class ConnectionData:
 class RedisClient(Singleton):
     """Класс для сохранения сессий в памяти с помощью redis"""
 
-    def __init__(self, data: ConnectionData = ConnectionData(config)):
+    def __init__(self, data: ConnectionData | dict = ConnectionData(config)):
         if self.__dict__:
             return
 
-        connection_data = data()
+        if type(data) is ConnectionData:
+            connection_data = data()
 
-        self.__client = Redis(
-            host=connection_data["REDIS_HOST"],
-            port=connection_data["REDIS_PORT"],
-            decode_responses=True
-        )
+            self.__client = Redis(
+                host=connection_data["REDIS_HOST"],
+                port=connection_data["REDIS_PORT"],
+                decode_responses=True
+            )
+        elif type(data) is dict:
+            self.__client = Redis(
+                host=data["REDIS_HOST"],
+                port=data["REDIS_PORT"],
+                decode_responses=True
+            )
+        else:
+            raise ValueError("invalid database data object")
 
     def close(self) -> None:
         self.__client.flushall()
