@@ -7,6 +7,15 @@ from utils import Converter, FileWriter, FileReWriter, FileDeleter
 from entities.products.models import ProductModel, ProductCatalogCardModel
 
 
+class Catalog:
+    def __init__(self):
+        converter = Converter(ProductCatalogCardModel)
+
+        with ProductDataBase() as product_db:
+            products = product_db.get_catalog(amount=9)
+            self.products = converter.serialization(products)
+
+
 class UpdateCatalog:
     def __init__(self, amount: int, last_product_id: int | None = None):
         converter = Converter(ProductCatalogCardModel)
