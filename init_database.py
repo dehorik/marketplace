@@ -22,7 +22,7 @@ def init_database():
         
         CREATE TABLE users (
             user_id SERIAL PRIMARY KEY,
-            role_id INT,
+            role_id INT DEFAULT 1,
             user_name VARCHAR(255),
             user_password VARCHAR(255),
             user_email VARCHAR(255) DEFAULT NULL,
@@ -33,13 +33,13 @@ def init_database():
         
         CREATE TABLE product (
             product_id SERIAL PRIMARY KEY,
-            product_owner_id INT,
+            user_id INT,
             product_name VARCHAR(255),
             product_price DECIMAL(12, 2),
             product_description TEXT,
             product_photo_path VARCHAR(255),
             
-            FOREIGN KEY (product_owner_id) REFERENCES users (user_id) ON DELETE SET NULL
+            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL
         );
         
         CREATE TABLE comment (
@@ -47,8 +47,9 @@ def init_database():
             user_id INT,
             product_id INT,
             comment_date DATE,
-            comment_text VARCHAR(255),
-            comment_photo_path VARCHAR(255),
+            comment_text VARCHAR(255) DEFAULT NULL,
+            comment_rating INT,
+            comment_photo_path VARCHAR(255) DEFAULT NULL,
         
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL,
             FOREIGN KEY (product_id) REFERENCES users (user_id) ON DELETE CASCADE
@@ -102,6 +103,22 @@ def init_database():
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
         );
         
+        
+        # database setup
+        
+        INSERT INTO order_status
+            (order_status_name)
+        VALUES
+            ('В доставке'),
+            ('Доставлено'),
+            ('Отменено');
+        
+        INSERT INTO role 
+            (role_name)
+        VALUES
+            ('user'),
+            ('admin'),
+            ('owner');
         """
     )
 
