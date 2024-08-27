@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from entities.products.models import ProductModel, UpdateCatalogResponseModel
 from entities.products.dependencies import (
+    Catalog,
     CreateProduct,
     UpdateCatalog,
     UpdateProduct,
@@ -23,10 +24,11 @@ templates = Jinja2Templates(
 
 
 @router.get("/catalog", response_class=HTMLResponse)
-def get_catalog(request: Request):
+def get_catalog(request: Request, obj: Annotated[Catalog, Depends(Catalog)]):
     return templates.TemplateResponse(
         name='catalog.html',
-        request=request
+        request=request,
+        context={"products": obj.products}
     )
 
 @router.get("/update-catalog", response_model=UpdateCatalogResponseModel)

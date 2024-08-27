@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <title>ItemHub</title>
 </head>
 <body>
@@ -14,12 +14,12 @@
     <nav class="navbar">
         <div class="container">
             <div class="logo">
-                <a href="index.html"><img src="../static/img/favicon.svg"></a>
+                <a href="/"><img src="/static/img/favicon.svg"></a>
             </div>
             <div class="navbar-wrap">
                 <ul class="navbar-menu">
                     <li class="menu-item">
-                        <a data-link="home" href="index.html">Home</a>
+                        <a data-link="home" href="/">Home</a>
                     </li>
                     <li class="menu-item">
                         <a data-link="merchants" title="Catalog">Catalog</a>
@@ -54,77 +54,31 @@
 <section class="merchants " id="merchants">
     <div class="container">
         <div class="merchants-items">
+
+            {% macro merchants_item(product) -%}
             <div class="merchants-item">
                 <div class="merchants-item-image">
-                    <img src="../static/img/Frame%201.png" alt="burger 2">
+                    <img src="{{ product.product_photo_path }}" alt="burger 2">
                 </div>
                 <div class="merchants-item-text">
-                    <a class="" href="products/">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus amet beatae, dolorum eos eveniet exercitationem, illo impedit iure laudantium maiores molestias nam nemo odio perspiciatis quia saepe voluptas voluptatibus! Natus.</a>
+                    <a class="" href="products/{{ product.product_id }}">{{ product.product_name }}</a>
                 </div>
                 <div class="merchants-item-extra">
                     <div class="merchants-item-info">
                         <div class="merchants-item-price" data-base-price="7">
-                            7 $
+                            {{ product.product_price }}
                         </div>
                     </div>
-
                 </div>
             </div>
-            <div class="merchants-item">
-                <div class="merchants-item-image">
-                    <img src="../static/img/Frame%201.png" alt="burger 2">
-                </div>
-                <div class="merchants-item-text">
-                    <a class="" href="products/">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus amet beatae, dolorum eos eveniet exercitationem, illo impedit iure laudantium maiores molestias nam nemo odio perspiciatis quia saepe voluptas voluptatibus! Natus.</a>
-                </div>
-                <div class="merchants-item-extra">
-                    <div class="merchants-item-info">
-                        <div class="merchants-item-price" data-base-price="7">
-                            7 $
-                        </div>
-                    </div>
+            {%- endmacro %}
 
-                </div>
-            </div>
-            <div class="merchants-item">
-                <div class="merchants-item-image">
-                    <img src="../static/img/Frame%201.png" alt="burger 2">
-                </div>
-                <div class="merchants-item-text">
-                    <a class="" href="products/">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus amet beatae, dolorum eos eveniet exercitationem, illo impedit iure laudantium maiores molestias nam nemo odio perspiciatis quia saepe voluptas voluptatibus! Natus.</a>
-                </div>
-                <div class="merchants-item-extra">
-                    <div class="merchants-item-info">
-                        <div class="merchants-item-price" data-base-price="7">
-                            7 $
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-            <div class="merchants-item">
-                <div class="merchants-item-image">
-                    <img src="../static/img/Frame%201.png" alt="burger 2">
-                </div>
-                <div class="merchants-item-text">
-                    <a class="" href="products/">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus amet beatae, dolorum eos eveniet exercitationem, illo impedit iure laudantium maiores molestias nam nemo odio perspiciatis quia saepe voluptas voluptatibus! Natus.</a>
-                </div>
-                <div class="merchants-item-extra">
-                    <div class="merchants-item-info">
-                        <div class="merchants-item-price" data-base-price="7">
-                            7 $
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+            {% for product in products -%}
+                {{ merchants_item(product) }}
+            {% endfor -%}
         </div>
     </div>
-
-
-
 </section>
-
 
 </body>
 </html>
