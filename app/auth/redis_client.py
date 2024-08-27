@@ -1,7 +1,7 @@
 from redis import Redis
 
+from utils import Singleton
 from core.config_reader import Settings, config
-from core.database.singleton import Singleton
 
 
 class ConnectionData:
@@ -33,6 +33,9 @@ class RedisClient(Singleton):
             port=connection_data["REDIS_PORT"],
             decode_responses=True
         )
+
+    def close(self) -> None:
+        self.__client.flushall()
 
     def set(self, session_id: str, user_id: int) -> None:
         self.__client.set(session_id, user_id)

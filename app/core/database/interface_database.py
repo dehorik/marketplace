@@ -9,6 +9,16 @@ class InterfaceDataBase(ABC):
     """
 
     @abstractmethod
+    def __enter__(self):
+        # отдавать созданный объект
+        pass
+
+    @abstractmethod
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # вызывать у объекта метод close()
+        pass
+
+    @abstractmethod
     def close(self):
         # вызывать этот метод при завершении работы с объектом
         pass

@@ -1,13 +1,16 @@
 from psycopg2 import InterfaceError, connect
 
-from core.database.singleton import Singleton
 from core.config_reader import Settings, config
+from utils import Singleton
 
 
 class ConnectionData:
     """Класс для извлечения из .env файла конфигурационных данных для БД"""
 
-    def __init__(self, config_database: Settings):
+    def __init__(self, config_database: Settings = config):
+        if type(config_database) is not Settings:
+            raise ValueError("invalid config_database type")
+
         self.__config_database = config_database
 
     def __call__(self) -> dict:
@@ -28,39 +31,48 @@ class Session(Singleton):
     с помощью которых производится работа с БД.
     """
 
-    def __init__(self, data: ConnectionData = ConnectionData(config)):
+    def __init__(self, data: ConnectionData | dict = ConnectionData()):
         if self.__dict__:
             return
 
-        connection_data = data()
+        if type(data) is ConnectionData:
+            connection_data = data()
 
-        self.__connection = connect(
-            dbname=connection_data["DATABASE"],
-            user=connection_data["DATABASE_USER"],
-            password=connection_data["DATABASE_USER_PASSWORD"],
-            host=connection_data["DATABASE_HOST"],
-            port=connection_data["DATABASE_PORT"]
-        )
+            self.__connection = connect(
+                dbname=connection_data["DATABASE"],
+                user=connection_data["DATABASE_USER"],
+                password=connection_data["DATABASE_USER_PASSWORD"],
+                host=connection_data["DATABASE_HOST"],
+                port=connection_data["DATABASE_PORT"]
+            )
+
+        elif type(data) is dict:
+            self.__connection = connect(
+                dbname=data["DATABASE"],
+                user=data["DATABASE_USER"],
+                password=data["DATABASE_USER_PASSWORD"],
+                host=data["DATABASE_HOST"],
+                port=data["DATABASE_PORT"]
+            )
+
+        else:
+            raise ValueError("invalid database data object")
 
     def __del__(self):
         try:
-            self.close_connection()
+            self.close()
         except InterfaceError:
             return
 
-    def close_connection(self) -> None:
+    def close(self) -> None:
         # закрытие подключения к БД (сессии)
-
         self.__connection.commit()
         self.__connection.close()
 
     def commit(self) -> None:
         # запись в базу данных
-
         self.__connection.commit()
 
     def get_cursor(self):
         # фабрика курсоров
-
         return self.__connection.cursor()
-

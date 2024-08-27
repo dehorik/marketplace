@@ -1,5 +1,8 @@
 import os
 from uuid import uuid4
+from abc import ABC, abstractmethod
+
+from core.config_reader import config
 
 
 class FileNameGenerator:
@@ -14,14 +17,27 @@ class FileNameGenerator:
         return str(self.__file_name)
 
 
-class FileWriter:
-    user_path = '/database_data/user_photo'
-    product_path = '/database_data/product_photo'
-    comment_path = '/database_data/comment_photo'
+class InterfaceFileWorker(ABC):
+    @abstractmethod
+    def __str__(self):
+        # return path to file
+        pass
 
+    @property
+    @abstractmethod
+    def path(self):
+        # return path to file
+        pass
+
+
+class FileWriter(InterfaceFileWorker):
     def __init__(self, path: str, file: bytes):
-        if path not in [self.user_path, self.product_path, self.comment_path]:
-            raise ValueError('incorrect path!')
+        if path not in [
+            config.getenv('USER_PHOTO_PATH'),
+            config.getenv("PRODUCT_PHOTO_PATH"),
+            config.getenv("COMMENT_PHOTO_PATH")
+        ]:
+            raise ValueError('invalid path!')
 
         file_name = str(FileNameGenerator())
         self.__path = f"{path}/{file_name}"

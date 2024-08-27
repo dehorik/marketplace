@@ -5,11 +5,17 @@ from core.database.interface_database import InterfaceDataBase
 class CommentDataBase(InterfaceDataBase):
     """Класс для выполнения CRUD операций с отзывами под товарами"""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session = Session()):
         self.__session = session
         self._cursor = session.get_cursor()
 
     def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
     def close(self) -> None:
