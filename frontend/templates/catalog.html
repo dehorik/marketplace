@@ -51,14 +51,14 @@
 
 </header>
 
-<section class="merchants " id="merchants">
+<section class="merchants" id="merchants">
     <div class="container">
-        <div class="merchants-items">
+        <div class="merchants-items" id="grid"> <!-- do not touch id -->
 
             {% macro merchants_item(product) -%}
-            <div class="merchants-item">
+            <div class="merchants-item" data-product-id="{{ product.product_id }}"> <!-- do not touch data-product-id -->
                 <div class="merchants-item-image">
-                    <img src="{{ product.product_photo_path }}" alt="burger 2">
+                    <img src="{{ product.product_photo_path }}">
                 </div>
                 <div class="merchants-item-text">
                     <a class="" href="products/{{ product.product_id }}">{{ product.product_name }}</a>
@@ -80,5 +80,7 @@
     </div>
 </section>
 
+
+<script src="/static/js/infinite_grid.js"></script>
 </body>
 </html>

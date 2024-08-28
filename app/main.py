@@ -23,10 +23,6 @@ app = FastAPI(
     title='marketplace'
 )
 
-templates = Jinja2Templates(
-    directory='../frontend/templates'
-)
-
 app.mount(
     '/static',
     StaticFiles(directory='../frontend/static'),
@@ -43,6 +39,11 @@ app.include_router(entities.comments_router)
 app.include_router(entities.users_router)
 app.include_router(entities.orders_router)
 app.include_router(entities.roles_router)
+
+
+templates = Jinja2Templates(
+    directory='../frontend/templates'
+)
 
 
 @app.get("/", response_class=HTMLResponse)
