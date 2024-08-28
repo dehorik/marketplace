@@ -8,6 +8,7 @@ class ProductModel(BaseModel):
     product_name: str = Field(min_length=2, max_length=30)
     product_price: float = Field(gt=0, le=1000000)
     product_description: str = Field(min_length=2, max_length=300)
+    product_ratig: float = Field(ge=1, le=5)
     product_photo_path: str
 
 
@@ -15,6 +16,7 @@ class ProductCatalogCardModel(BaseModel):
     product_id: int
     product_name: str = Field(min_length=2, max_length=30)
     product_price: float = Field(gt=0, le=1000000)
+    product_rating: float = Field(ge=1, le=5)
     product_photo_path: str
 
 
