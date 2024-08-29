@@ -20,7 +20,7 @@ class ConnectionData:
 
 
 class RedisClient(Singleton):
-    """Класс для сохранения сессий в памяти с помощью redis"""
+    """Класс для работы с redis"""
 
     def __init__(self, data: ConnectionData | dict = ConnectionData(config)):
         if self.__dict__:
@@ -44,23 +44,29 @@ class RedisClient(Singleton):
             raise ValueError("invalid database data object")
 
     def close(self) -> None:
+        # сброс всех данных
         self.__client.flushall()
 
-    def set(self, session_id: str, user_id: int) -> None:
-        self.__client.set(session_id, user_id)
+    def push_token(self, user_id: str, token: str) -> None:
+        # добавление токена в список или создание списка и добавление в него токена
+        self.__client.rpush(user_id, token)
 
-    def get(self, session_id: str) -> str:
-        data = self.__client.get(session_id)
-        if not data:
-            raise ValueError('incorrect session_id')
+    def delete_token(self, user_id: str, token: str) -> None:
+        # удаление токена из списка
+
+        if not self.__client.exists(user_id):
+            raise ValueError('user_id does not exist')
         else:
-            return str(data)
+            self.__client.lrem(user_id, 1, token)
 
-    def delete(self, session_id: str) -> None:
-        if self.__client.exists(session_id):
-            self.__client.delete(session_id)
+    def get_tokens(self, user_id: str) -> list:
+        # получение всех токенов пользователя
+
+        if not self.__client.exists(user_id):
+            raise ValueError('user_id does not exist')
         else:
-            raise ValueError('incorrect session_id')
+            return self.__client.lrange(user_id, 0, -1)
 
-    def exists(self, session_id: str) -> bool:
-        return self.__client.exists(session_id)
+    def delete_user(self, user_id: str) -> None:
+        # удаление пользователя (сброс всех его токенов)
+        self.__client.delete(user_id)

@@ -15,12 +15,12 @@ def init_database():
 
     cursor.execute(
         """
-        CREATE TABLE role (
+        CREATE TABLE IF NOT EXISTS role (
             role_id SERIAL PRIMARY KEY,
             role_name VARCHAR(255)
         );
         
-        CREATE TABLE users (
+        CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
             role_id INT DEFAULT 1,
             user_name VARCHAR(255),
@@ -31,7 +31,7 @@ def init_database():
             FOREIGN KEY (role_id) REFERENCES role (role_id) ON UPDATE CASCADE
         );
         
-        CREATE TABLE product (
+        CREATE TABLE IF NOT EXISTS product (
             product_id SERIAL PRIMARY KEY,
             user_id INT,
             product_name VARCHAR(255),
@@ -42,7 +42,7 @@ def init_database():
             FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL
         );
         
-        CREATE TABLE comment (
+        CREATE TABLE IF NOT EXISTS comment (
             comment_id SERIAL PRIMARY KEY,
             user_id INT,
             product_id INT,
@@ -51,16 +51,16 @@ def init_database():
             comment_rating INT,
             comment_photo_path VARCHAR(255) DEFAULT NULL,
         
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL,
-            FOREIGN KEY (product_id) REFERENCES users (user_id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES product (product_id) ON DELETE CASCADE
         );
         
-        CREATE TABLE order_status (
+        CREATE TABLE IF NOT EXISTS order_status (
             order_status_id SERIAL PRIMARY KEY,
             order_status_name VARCHAR(255)
         );
         
-        CREATE TABLE orders (
+        CREATE TABLE IF NOT EXISTS orders (
             order_id SERIAL PRIMARY KEY,
             product_id INT,
             user_id INT,
@@ -77,7 +77,7 @@ def init_database():
             FOREIGN KEY (order_status_id) REFERENCES order_status (order_status_id) ON UPDATE CASCADE
         );
         
-        CREATE TABLE orders_archive (
+        CREATE TABLE IF NOT EXISTS orders_archive (
             order_archive_id SERIAL PRIMARY KEY,
             product_id INT,
             user_id INT,
@@ -94,7 +94,7 @@ def init_database():
             FOREIGN KEY (order_status_id) REFERENCES order_status (order_status_id) ON UPDATE CASCADE
         );
         
-        CREATE TABLE shopping_bag (
+        CREATE TABLE IF NOT EXISTS shopping_bag (
             shopping_bag_id SERIAL PRIMARY KEY,
             product_id INT,
             user_id INT,
@@ -104,7 +104,7 @@ def init_database():
         );
         
         
-        # database setup
+        /* database setup */
         
         INSERT INTO order_status
             (order_status_name)
