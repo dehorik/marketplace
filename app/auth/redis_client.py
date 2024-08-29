@@ -52,12 +52,15 @@ class RedisClient(Singleton):
         self.__client.rpush(user_id, token)
 
     def delete_token(self, user_id: str, token: str) -> None:
-        # удаление токена из списка
+        # удаление токена из списка токенов пользователя
 
         if not self.__client.exists(user_id):
             raise ValueError('user_id does not exist')
-        else:
-            self.__client.lrem(user_id, 1, token)
+
+        operation = self.__client.lrem(user_id, 1, token)
+
+        if not operation:
+            raise ValueError('token does not exist')
 
     def get_tokens(self, user_id: str) -> list:
         # получение всех токенов пользователя
@@ -68,5 +71,9 @@ class RedisClient(Singleton):
             return self.__client.lrange(user_id, 0, -1)
 
     def delete_user(self, user_id: str) -> None:
-        # удаление пользователя (сброс всех его токенов)
-        self.__client.delete(user_id)
+        # удаление пользователя и его токенов
+
+        operation = self.__client.delete(user_id)
+
+        if not operation:
+            raise ValueError('user_id does not exist')
