@@ -17,4 +17,4 @@ def register(obj: Annotated[Register, Depends(Register)]):
 
 @router.post('/login', response_model=SuccessfulAuthModel)
 def login(obj: Annotated[Login, Depends(Login)]):
-    return obj.data
+    return obj.successful_login_data
