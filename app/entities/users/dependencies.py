@@ -5,7 +5,7 @@ from core.database import UserDataBase
 from utils import Converter
 from auth import (
     RedisClient,
-    EncodeJWT, DecodeJWT,
+    CreateTokensModel,
     UserCredentialsModel, SuccessfulAuthModel, TokensModel,
     get_password_hash, verify_password
 )
@@ -15,7 +15,7 @@ class Register:
     def __init__(self, response: Response, credentials: UserCredentialsModel):
         redis = RedisClient()
         converter = Converter(UserModel)
-        jwt_encoder = EncodeJWT()
+        tokens_model_creator = CreateTokensModel(TokensModel)
 
         with UserDataBase() as user_db:
             if user_db.get_user_by_user_name(credentials.user_name):
@@ -30,29 +30,22 @@ class Register:
             )
             user_model = converter.serialization(user)[0]
 
-            access_token_paylaod = {
-                "user_id": user_model.user_id,
-                "role_id": user_model.role_id,
-                "user_name": user_model.user_name
-            }
-            refresh_token_payload = {
-                "user_id": user_model.user_id
-            }
-            tokens = {
-                "access_token": jwt_encoder(access_token_paylaod),
-                "refresh_token": jwt_encoder(refresh_token_payload)
-            }
-            tokens_model = TokensModel(**tokens)
+            tokens_model = tokens_model_creator(
+                user_model.user_id,
+                user_model.role_id,
+                user_model.user_name
+            )
 
-            successful_reg_data = {
-                "user": user_model,
-                "tokens": tokens_model
-            }
             redis.push_token(user_model.user_id, tokens_model.refresh_token)
             response.set_cookie(
                 key="refresh_token",
                 value=tokens_model.refresh_token
             )
+
+            successful_reg_data = {
+                "user": user_model,
+                "tokens": tokens_model
+            }
             self.successful_reg_data = SuccessfulAuthModel(**successful_reg_data)
 
 
@@ -60,7 +53,7 @@ class Login:
     def __init__(self, response: Response, credentials: UserCredentialsModel):
         redis = RedisClient()
         converter = Converter(UserModel)
-        jwt_encoder = EncodeJWT()
+        tokens_model_creator = CreateTokensModel(TokensModel)
 
         with UserDataBase() as user_db:
             user = user_db.get_user_by_user_name(credentials.user_name)
@@ -74,27 +67,20 @@ class Login:
             user[0].pop(3)
             user_model = converter.serialization(user)[0]
 
-            access_token_paylaod = {
-                "user_id": user_model.user_id,
-                "role_id": user_model.role_id,
-                "user_name": user_model.user_name
-            }
-            refresh_token_payload = {
-                "user_id": user_model.user_id
-            }
-            tokens = {
-                "access_token": jwt_encoder(access_token_paylaod),
-                "refresh_token": jwt_encoder(refresh_token_payload)
-            }
-            tokens_model = TokensModel(**tokens)
+            tokens_model = tokens_model_creator(
+                user_model.user_id,
+                user_model.role_id,
+                user_model.user_name
+            )
 
-            successful_login_data = {
-                "user": user_model,
-                "tokens": tokens_model
-            }
             redis.push_token(user_model.user_id, tokens_model.refresh_token)
             response.set_cookie(
                 key="refresh_token",
                 value=tokens_model.refresh_token
             )
+
+            successful_login_data = {
+                "user": user_model,
+                "tokens": tokens_model
+            }
             self.successful_login_data = SuccessfulAuthModel(**successful_login_data)

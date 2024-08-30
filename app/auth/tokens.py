@@ -41,3 +41,45 @@ class DecodeJWT:
         )
 
         return dt
+
+
+class CreateRefreshToken:
+    def __init__(self, jwt_encoder: EncodeJWT = EncodeJWT()):
+        self.__jwt_encoder = jwt_encoder
+
+    def __call__(self, user_id: int) -> str:
+        payload = {
+            "user_id": user_id
+        }
+
+        return self.__jwt_encoder(payload)
+
+
+class CreateAccessToken:
+    def __init__(self, jwt_encoder: EncodeJWT = EncodeJWT()):
+        self.__jwt_encoder = jwt_encoder
+
+    def __call__(self, user_id: int, role_id: int, user_name: str) -> str:
+        paylaod = {
+            "user_id": user_id,
+            "role_id": role_id,
+            "user_name": user_name
+        }
+
+        return self.__jwt_encoder(paylaod)
+
+
+class CreateTokensModel:
+    def __init__(self, tokens_model):
+        self.__tokens_model = tokens_model
+
+    def __call__(self, user_id: int, role_id: int, user_name: str):
+        refresh_token_creator = CreateRefreshToken()
+        access_token_creator = CreateAccessToken()
+
+        tokens = {
+            "refresh_token": refresh_token_creator(user_id),
+            "access_token": access_token_creator(user_id, role_id, user_name)
+        }
+
+        return self.__tokens_model(**tokens)

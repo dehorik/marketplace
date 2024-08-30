@@ -4,8 +4,8 @@ from entities.users.models import UserModel
 
 
 class TokensModel(BaseModel):
-    access_token: str
     refresh_token: str
+    access_token: str
 
 
 class UserCredentialsModel(BaseModel):
