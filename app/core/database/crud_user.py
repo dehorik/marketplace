@@ -24,13 +24,13 @@ class UserDataBase(InterfaceDataBase):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self, user_name: str, user_password: str) -> list:
+    def create(self, user_name: str, user_hashed_password: str) -> list:
         self._cursor.execute(
             """
                 INSERT INTO users
-                    (user_name, user_password)
+                    (role_id, user_name, user_hashed_password)
                 VALUES
-                    (%s, %s)
+                    (1, %s, %s)
                 RETURNING 
                     user_id,
                     role_id, 
@@ -38,7 +38,7 @@ class UserDataBase(InterfaceDataBase):
                     user_email,
                     user_photo_path;
             """,
-            [user_name, user_password]
+            [user_name, user_hashed_password]
         )
 
         return self._cursor.fetchall()
@@ -46,7 +46,12 @@ class UserDataBase(InterfaceDataBase):
     def read(self, user_id: int) -> list:
         self._cursor.execute(
             """
-                SELECT user_id, role_id, user_name, user_email, user_photo_path
+                SELECT 
+                    user_id, 
+                    role_id, 
+                    user_name, 
+                    user_email, 
+                    user_photo_path
                 FROM users
                 WHERE user_id = %s;
             """,
@@ -61,7 +66,9 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def check_user_name(self, user_name: str) -> list:
+    def get_user_by_user_name(self, user_name: str) -> list:
+        # использовать для аутентификации (вытаскиваем хеш пароля!)
+
         self._cursor.execute(
             """
                 SELECT *
@@ -69,18 +76,6 @@ class UserDataBase(InterfaceDataBase):
                 WHERE user_name = %s;
             """,
             [user_name]
-        )
-
-        return self._cursor.fetchall()
-
-    def login_user(self, user_name: str, hashed_user_password: str) -> list:
-        self._cursor.execute(
-            """
-                SELECT user_id, role_id, user_name, user_email, user_photo_path
-                FROM users
-                WHERE user_name = %s AND user_password = %s;
-            """,
-            [user_name, hashed_user_password]
         )
 
         return self._cursor.fetchall()
