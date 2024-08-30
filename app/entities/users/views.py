@@ -12,9 +12,9 @@ router = APIRouter(
 
 
 @router.post('/register', response_model=SuccessfulAuthModel)
-def register(obj: Annotated[Register, Depends(Register)]):
-    return obj.successful_reg_data
+def register(response: Annotated[SuccessfulAuthModel, Depends(Register())]):
+    return response
 
 @router.post('/login', response_model=SuccessfulAuthModel)
-def login(obj: Annotated[Login, Depends(Login)]):
-    return obj.successful_login_data
+def login(response: Annotated[SuccessfulAuthModel, Depends(Login())]):
+    return response
