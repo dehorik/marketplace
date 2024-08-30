@@ -6,13 +6,19 @@ from core.database import UserDataBase
 from utils import Converter
 from auth import (
     RedisClient,
-    EncodeJWT, DecodeJWT, CreateTokensModel,
-    UserCredentialsModel, SuccessfulAuthModel, TokensModel,
+    EncodeJWT, DecodeJWT,
+    CreateTokensModel, UserCredentialsModel, SuccessfulAuthModel, TokensModel,
     get_password_hash, verify_password
 )
 
 
 class BaseDependency:
+    """
+    Базовый класс для других классов-зависимостей,
+    предоставляющий объектам дочерних классов ссылки на экземпляры
+    RedisClient, UserDataBase и т.д.
+    """
+
     def __init__(
             self,
             redis: RedisClient = RedisClient(),

@@ -44,26 +44,38 @@ class DecodeJWT:
 
 
 class CreateRefreshToken:
-    def __init__(self, jwt_encoder: EncodeJWT = EncodeJWT()):
+    def __init__(
+            self,
+            jwt_encoder: EncodeJWT = EncodeJWT(),
+            exp_minutes: int = config.getenv('REFRESH_TOKEN_EXPIRE_MINUTES')
+    ):
         self.__jwt_encoder = jwt_encoder
+        self.__exp_minutes = exp_minutes
 
     def __call__(self, user_id: int) -> str:
         payload = {
-            "user_id": user_id
+            "user_id": user_id,
+            "exp": self.__exp_minutes
         }
 
         return self.__jwt_encoder(payload)
 
 
 class CreateAccessToken:
-    def __init__(self, jwt_encoder: EncodeJWT = EncodeJWT()):
+    def __init__(
+            self,
+            jwt_encoder: EncodeJWT = EncodeJWT(),
+            exp_minutes: int = config.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')
+    ):
         self.__jwt_encoder = jwt_encoder
+        self.__exp_minutes = exp_minutes
 
     def __call__(self, user_id: int, role_id: int, user_name: str) -> str:
         paylaod = {
             "user_id": user_id,
             "role_id": role_id,
-            "user_name": user_name
+            "user_name": user_name,
+            "exp": self.__exp_minutes
         }
 
         return self.__jwt_encoder(paylaod)
