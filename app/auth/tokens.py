@@ -3,6 +3,7 @@ from typing import Any
 from pathlib import Path
 
 from core.config_reader import config
+from entities.users.models import UserModel
 
 
 class EncodeJWT:
@@ -43,25 +44,7 @@ class DecodeJWT:
         return dt
 
 
-class CreateRefreshToken:
-    def __init__(
-            self,
-            jwt_encoder: EncodeJWT = EncodeJWT(),
-            exp_minutes: int = config.getenv('REFRESH_TOKEN_EXPIRE_MINUTES')
-    ):
-        self.__jwt_encoder = jwt_encoder
-        self.__exp_minutes = exp_minutes
-
-    def __call__(self, user_id: int) -> str:
-        payload = {
-            "user_id": user_id,
-            "exp": self.__exp_minutes
-        }
-
-        return self.__jwt_encoder(payload)
-
-
-class CreateAccessToken:
+class AccessTokenCreator:
     def __init__(
             self,
             jwt_encoder: EncodeJWT = EncodeJWT(),
@@ -70,28 +53,32 @@ class CreateAccessToken:
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_minutes
 
-    def __call__(self, user_id: int, role_id: int, user_name: str) -> str:
+    def __call__(self, user: UserModel) -> str:
         paylaod = {
-            "user_id": user_id,
-            "role_id": role_id,
-            "user_name": user_name,
+            "sub": user.user_id,
+            "user_id": user.user_id,
+            "role_id": user.role_id,
+            "user_name": user.user_name,
             "exp": self.__exp_minutes
         }
 
         return self.__jwt_encoder(paylaod)
 
 
-class CreateTokensModel:
-    def __init__(self, tokens_model):
-        self.__tokens_model = tokens_model
+class RefreshTokenCreator:
+    def __init__(
+            self,
+            jwt_encoder: EncodeJWT = EncodeJWT(),
+            exp_minutes: int = config.getenv('REFRESH_TOKEN_EXPIRE_MINUTES')
+    ):
+        self.__jwt_encoder = jwt_encoder
+        self.__exp_minutes = exp_minutes
 
-    def __call__(self, user_id: int, role_id: int, user_name: str):
-        refresh_token_creator = CreateRefreshToken()
-        access_token_creator = CreateAccessToken()
-
-        tokens = {
-            "refresh_token": refresh_token_creator(user_id),
-            "access_token": access_token_creator(user_id, role_id, user_name)
+    def __call__(self, user: UserModel) -> str:
+        payload = {
+            "sub": user.user_id,
+            "user_id": user.user_id,
+            "exp": self.__exp_minutes
         }
 
-        return self.__tokens_model(**tokens)
+        return self.__jwt_encoder(payload)
