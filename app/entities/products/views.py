@@ -18,23 +18,24 @@ router = APIRouter(
     tags=['prodcuts']
 )
 
+
 templates = Jinja2Templates(
     directory='../frontend/templates'
 )
 
 
 @router.get("/catalog", response_class=HTMLResponse)
-def get_catalog(request: Request, obj: Annotated[Catalog, Depends(Catalog)]):
+def get_catalog(request: Request, products: Annotated[list, Depends(Catalog())]):
     return templates.TemplateResponse(
         name='catalog.html',
         request=request,
-        context={"products": obj.products}
+        context={"products": products}
     )
 
 @router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
-def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
+def update_catalog(products: Annotated[list, Depends(UpdateCatalog())]):
     return {
-        'products': obj.products
+        'products': products
     }
 
 @router.post(
@@ -42,20 +43,22 @@ def update_catalog(obj: Annotated[UpdateCatalog, Depends(UpdateCatalog)]):
     response_model=ProductModel,
     status_code=status.HTTP_201_CREATED
 )
-def create_product(obj: Annotated[CreateProduct, Depends(CreateProduct)]):
-    return obj.product
+def create_product(product: Annotated[ProductModel, Depends(CreateProduct())]):
+    return product
 
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(product_id: int, request: Request):
+    # work work work
+
     return templates.TemplateResponse(
         name='cart.html',
         request=request
     )
 
 @router.patch("/{product_id}", response_model=ProductModel)
-def update_product(obj: Annotated[UpdateProduct, Depends(UpdateProduct)]):
-    return obj.product
+def update_product(product: Annotated[ProductModel, Depends(UpdateProduct())]):
+    return product
 
 @router.delete("/{product_id}", response_model=ProductModel)
-def delete_product(obj: Annotated[DeleteProduct, Depends(DeleteProduct)]):
-    return obj.product
+def delete_product(product: Annotated[ProductModel, Depends(DeleteProduct())]):
+    return product
