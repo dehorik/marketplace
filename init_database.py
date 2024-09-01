@@ -1,6 +1,6 @@
 import psycopg2
 
-from app.core.config_reader import config
+from app.core.settings import config
 
 
 def init_database():
@@ -24,7 +24,7 @@ def init_database():
             user_id SERIAL PRIMARY KEY,
             role_id INT DEFAULT 1,
             user_name VARCHAR(255),
-            user_password VARCHAR(255),
+            user_hashed_password VARCHAR(255),
             user_email VARCHAR(255) DEFAULT NULL,
             user_photo_path VARCHAR(255) DEFAULT NULL,
             

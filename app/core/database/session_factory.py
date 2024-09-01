@@ -1,6 +1,6 @@
 from psycopg2 import InterfaceError, connect
 
-from core.config_reader import Settings, config
+from core.settings import Settings, config
 from utils import Singleton
 
 
@@ -9,17 +9,17 @@ class ConnectionData:
 
     def __init__(self, config_database: Settings = config):
         if type(config_database) is not Settings:
-            raise ValueError("invalid config_database type")
+            raise ValueError("invalid config_database object type")
 
         self.__config_database = config_database
 
     def __call__(self) -> dict:
         data = {
-            "DATABASE": self.__config_database.getenv("DATABASE"),
-            "DATABASE_USER": self.__config_database.getenv("DATABASE_USER"),
-            "DATABASE_USER_PASSWORD": self.__config_database.getenv("DATABASE_USER_PASSWORD"),
-            "DATABASE_HOST": self.__config_database.getenv("DATABASE_HOST"),
-            "DATABASE_PORT": self.__config_database.getenv("DATABASE_PORT")
+            "DATABASE": self.__config_database.DATABASE,
+            "DATABASE_USER": self.__config_database.DATABASE_USER,
+            "DATABASE_USER_PASSWORD": self.__config_database.DATABASE_USER_PASSWORD,
+            "DATABASE_HOST": self.__config_database.DATABASE_HOST,
+            "DATABASE_PORT": self.__config_database.DATABASE_PORT
         }
 
         return data

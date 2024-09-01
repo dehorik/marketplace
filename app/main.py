@@ -4,8 +4,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
-import entities
-from auth import RedisClient
+from entities import (
+    products_router,
+    comments_router,
+    users_router,
+    orders_router
+)
+from auth import RedisClient, auth_router
 from core.database import Session
 
 
@@ -34,11 +39,11 @@ app.mount(
     name='database_data'
 )
 
-app.include_router(entities.products_router)
-app.include_router(entities.comments_router)
-app.include_router(entities.users_router)
-app.include_router(entities.orders_router)
-app.include_router(entities.roles_router)
+app.include_router(auth_router)
+app.include_router(products_router)
+app.include_router(comments_router)
+app.include_router(users_router)
+app.include_router(orders_router)
 
 
 templates = Jinja2Templates(

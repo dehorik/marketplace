@@ -16,13 +16,13 @@ router = APIRouter(
     response_model=CommentModel,
     status_code=status.HTTP_201_CREATED
 )
-def create_comment(obj: Annotated[CreateComment, Depends(CreateComment)]):
-    return obj.comment
+def create_comment(comment: Annotated[CommentModel, Depends(CreateComment())]):
+    return comment
 
 @router.patch('/{comment_id}', response_model=CommentModel)
-def update_comment(obj: Annotated[UpdateComment, Depends(UpdateComment)]):
-    return obj.comment
+def update_comment(comment: Annotated[CommentModel, Depends(UpdateComment())]):
+    return comment
 
 @router.delete('/{comment_id}', response_model=CommentModel)
-def delete_comment(obj: Annotated[DeleteComment, Depends(DeleteComment)]):
-    return obj.comment
+def delete_comment(comment: Annotated[CommentModel, Depends(DeleteComment())]):
+    return comment

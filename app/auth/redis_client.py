@@ -1,19 +1,19 @@
 from redis import Redis
 
 from utils import Singleton
-from core.config_reader import Settings, config
+from core.settings import Settings, config
 
 
 class ConnectionData:
     """Класс для извлечения из .env файла конфигурационных данных для БД redis"""
 
-    def __init__(self, config_database: Settings):
+    def __init__(self, config_database: Settings = config):
         self.__config_database = config_database
 
     def __call__(self) -> dict:
         data = {
-            "REDIS_HOST": self.__config_database.getenv("REDIS_HOST"),
-            "REDIS_PORT": self.__config_database.getenv("REDIS_PORT")
+            "REDIS_HOST": self.__config_database.REDIS_HOST,
+            "REDIS_PORT": self.__config_database.REDIS_PORT
         }
 
         return data
@@ -22,7 +22,7 @@ class ConnectionData:
 class RedisClient(Singleton):
     """Класс для работы с redis"""
 
-    def __init__(self, data: ConnectionData | dict = ConnectionData(config)):
+    def __init__(self, data: ConnectionData | dict = ConnectionData()):
         if self.__dict__:
             return
 
@@ -47,33 +47,37 @@ class RedisClient(Singleton):
         # сброс всех данных
         self.__client.flushall()
 
-    def push_token(self, user_id: str, token: str) -> None:
+    def push_token(self, user_id: str | int, token: str) -> None:
         # добавление токена в список или создание списка и добавление в него токена
+        user_id = str(user_id)
         self.__client.rpush(user_id, token)
 
-    def delete_token(self, user_id: str, token: str) -> None:
+    def delete_token(self, user_id: str | int, token: str) -> None:
         # удаление токена из списка токенов пользователя
+
+        user_id = str(user_id)
 
         if not self.__client.exists(user_id):
             raise ValueError('user_id does not exist')
 
         operation = self.__client.lrem(user_id, 1, token)
-
         if not operation:
             raise ValueError('token does not exist')
 
-    def get_tokens(self, user_id: str) -> list:
+    def get_tokens(self, user_id: str | int) -> list:
         # получение всех токенов пользователя
 
+        user_id = str(user_id)
         if not self.__client.exists(user_id):
             raise ValueError('user_id does not exist')
         else:
             return self.__client.lrange(user_id, 0, -1)
 
-    def delete_user(self, user_id: str) -> None:
+    def delete_user(self, user_id: str | int) -> None:
         # удаление пользователя и его токенов
 
-        operation = self.__client.delete(user_id)
+        user_id = str(user_id)
 
+        operation = self.__client.delete(user_id)
         if not operation:
             raise ValueError('user_id does not exist')

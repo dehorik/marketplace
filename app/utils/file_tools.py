@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 from abc import ABC, abstractmethod
 
-from core.config_reader import config
+from core.settings import config
 
 
 class FileNameGenerator:
@@ -33,9 +33,9 @@ class InterfaceFileWorker(ABC):
 class FileWriter(InterfaceFileWorker):
     def __init__(self, path: str, file: bytes):
         if path not in [
-            config.getenv('USER_PHOTO_PATH'),
-            config.getenv("PRODUCT_PHOTO_PATH"),
-            config.getenv("COMMENT_PHOTO_PATH")
+            config.USER_PHOTO_PATH,
+            config.PRODUCT_PHOTO_PATH,
+            config.COMMENT_PHOTO_PATH
         ]:
             raise ValueError('invalid path!')
 
