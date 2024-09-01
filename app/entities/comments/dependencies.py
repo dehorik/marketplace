@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Form, UploadFile, HTTPException, status
 
-from core.config_reader import config
+from core.settings import config
 from core.database import CommentDataBase
 from utils import FileWriter, FileReWriter, FileDeleter, Converter
 from entities.comments.models import CommentModel
@@ -48,7 +48,7 @@ class CreateComment(BaseDependency):
                 )
 
             comment_photo_path = self.file_writer(
-                config.getenv("COMMENT_PHOTO_PATH"),
+                config.COMMENT_PHOTO_PATH,
                 comment_photo.file.read()
             ).path
         else:
@@ -109,7 +109,7 @@ class UpdateComment(BaseDependency):
                     )
                 else:
                     comment_photo_path = self.file_writer(
-                        config.getenv("COMMENT_PHOTO_PATH"),
+                        config.COMMENT_PHOTO_PATH,
                         comment_photo.file.read()
                     ).path
 

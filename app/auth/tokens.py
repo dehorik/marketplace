@@ -1,16 +1,16 @@
 import jwt
-from typing import Any
+import datetime
 from pathlib import Path
 
-from core.config_reader import config
+from core.settings import config
 from entities.users.models import UserModel
 
 
-class EncodeJWT:
+class JWTEncoder:
     def __init__(
             self,
-            private_key: str = Path(config.getenv('PRIVATE_KEY_PATH')).read_text(),
-            algorithm: str = config.getenv('ALGORITHM')
+            private_key: str = Path(f"../../{config.PRIVATE_KEY_PATH}").read_text(),
+            algorithm: str = config.ALGORITHM
     ):
         self.__private_key = private_key
         self.__algorithm = algorithm
@@ -25,16 +25,16 @@ class EncodeJWT:
         return token
 
 
-class DecodeJWT:
+class JWTDecoder:
     def __init__(
             self,
-            public_key: str = Path(config.getenv('PUBLIC_KEY_PATH')).read_text(),
-            algorithm: str = config.getenv('ALGORITHM')
+            public_key: str = Path(f'../../{config.PUBLIC_KEY_PATH}').read_text(),
+            algorithm: str = config.ALGORITHM
     ):
         self.__public_key = public_key
         self.__algorithm = algorithm
 
-    def __call__(self, token: str | bytes) -> Any:
+    def __call__(self, token: str | bytes) -> dict:
         dt = jwt.decode(
             jwt=token,
             key=self.__public_key,
@@ -47,38 +47,42 @@ class DecodeJWT:
 class AccessTokenCreator:
     def __init__(
             self,
-            jwt_encoder: EncodeJWT = EncodeJWT(),
-            exp_minutes: int = config.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')
+            jwt_encoder: JWTEncoder = JWTEncoder(),
+            exp_minutes: float = config.ACCESS_TOKEN_EXPIRE_MINUTES
     ):
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_minutes
 
     def __call__(self, user: UserModel) -> str:
-        paylaod = {
+        now = datetime.datetime.now(datetime.UTC)
+        payload = {
+            "type": "access",
             "sub": user.user_id,
-            "user_id": user.user_id,
             "role_id": user.role_id,
             "user_name": user.user_name,
-            "exp": self.__exp_minutes
+            "iat": now,
+            "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
 
-        return self.__jwt_encoder(paylaod)
+        return self.__jwt_encoder(payload)
 
 
 class RefreshTokenCreator:
     def __init__(
             self,
-            jwt_encoder: EncodeJWT = EncodeJWT(),
-            exp_minutes: int = config.getenv('REFRESH_TOKEN_EXPIRE_MINUTES')
+            jwt_encoder: JWTEncoder = JWTEncoder(),
+            exp_days: float = config.REFRESH_TOKEN_EXPIRE_DAYS
     ):
         self.__jwt_encoder = jwt_encoder
-        self.__exp_minutes = exp_minutes
+        self.__exp_minutes = exp_days * 24 * 60
 
     def __call__(self, user: UserModel) -> str:
+        now = datetime.datetime.now(datetime.UTC)
         payload = {
+            "type": "refresh",
             "sub": user.user_id,
-            "user_id": user.user_id,
-            "exp": self.__exp_minutes
+            "iat": now,
+            "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
 
         return self.__jwt_encoder(payload)

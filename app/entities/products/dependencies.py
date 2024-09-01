@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Form, UploadFile, HTTPException, status
 
-from core.config_reader import config
+from core.settings import config
 from core.database import ProductDataBase, CommentDataBase
 from utils import Converter, FileWriter, FileReWriter, FileDeleter
 from entities.products.models import ProductModel, ProductCatalogCardModel
@@ -90,7 +90,7 @@ class CreateProduct(BaseDependency):
 
         with self.product_database() as product_db:
             product_photo_path = self.file_writer(
-                config.getenv("PRODUCT_PHOTO_PATH"),
+                config.PRODUCT_PHOTO_PATH,
                 product_photo.file.read()
             ).path
 

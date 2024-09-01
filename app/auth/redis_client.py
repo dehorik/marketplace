@@ -1,19 +1,19 @@
 from redis import Redis
 
 from utils import Singleton
-from core.config_reader import Settings, config
+from core.settings import Settings, config
 
 
 class ConnectionData:
     """Класс для извлечения из .env файла конфигурационных данных для БД redis"""
 
-    def __init__(self, config_database: Settings):
+    def __init__(self, config_database: Settings = config):
         self.__config_database = config_database
 
     def __call__(self) -> dict:
         data = {
-            "REDIS_HOST": self.__config_database.getenv("REDIS_HOST"),
-            "REDIS_PORT": self.__config_database.getenv("REDIS_PORT")
+            "REDIS_HOST": self.__config_database.REDIS_HOST,
+            "REDIS_PORT": self.__config_database.REDIS_PORT
         }
 
         return data
@@ -22,7 +22,7 @@ class ConnectionData:
 class RedisClient(Singleton):
     """Класс для работы с redis"""
 
-    def __init__(self, data: ConnectionData | dict = ConnectionData(config)):
+    def __init__(self, data: ConnectionData | dict = ConnectionData()):
         if self.__dict__:
             return
 

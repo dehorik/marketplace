@@ -1,19 +1,19 @@
-from pydantic import BaseModel, Field
+from fastapi import Form
+from pydantic import BaseModel
 
 from entities.users.models import UserModel
 
 
-class TokensModel(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "Bearer"
-
-
 class UserCredentialsModel(BaseModel):
-    user_name: str = Field(min_length=6, max_length=14)
-    user_password: str = Field(min_length=8, max_length=18)
+    user_name: str = Form(min_length=6, max_length=14)
+    user_password: str = Form(min_length=8, max_length=18)
 
 
-class SuccessfulAuthModel(BaseModel):
+class AccessTokenModel(BaseModel):
+    access_token: str
+    type: str = "Bearer"
+
+
+class AuthorizationModel(BaseModel):
     user: UserModel
-    tokens: TokensModel
+    access_token: AccessTokenModel

@@ -1,129 +1,101 @@
-from typing import Annotated
-from fastapi import Response, HTTPException, Depends, status
+from typing import Annotated, Tuple
+from fastapi import HTTPException, Depends, Response, status
+from fastapi.security import HTTPBearer
 
+from auth.tokens import (
+    JWTEncoder,
+    JWTDecoder,
+    AccessTokenCreator,
+    RefreshTokenCreator
+)
+from auth.models import (
+    UserCredentialsModel,
+    AuthorizationModel,
+    AccessTokenModel,
+    UserModel
+)
 from auth.redis_client import RedisClient
-from auth.tokens import AccessTokenCreator, RefreshTokenCreator
-from auth.hashing_psw import get_password_hash, verify_password
-from auth.models import TokensModel, UserCredentialsModel, SuccessfulAuthModel
-from entities.users.models import UserModel
+from auth.hashing_psw import get_password_hash
+from core.settings import config
 from core.database import UserDataBase
 from utils import Converter
 
 
-# class BaseDependency:
-#     """
-#     Базовый класс для других классов-зависимостей,
-#     предоставляющий объектам дочерних классов ссылки на экземпляры
-#     RedisClient, EncodeJWT и т.д.
-#     """
-#
-#     def __init__(
-#             self,
-#             redis: RedisClient = RedisClient(),
-#             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
-#             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
-#             user_database: Annotated[type, UserDataBase] = UserDataBase
-#     ):
-#         """
-#         :param redis: объект для работы с redis
-#         :param jwt_encoder: объект для выпуска jwt
-#         :param jwt_decoder: объект для расшифровки jwt
-#         :param user_database: ссылка на класс для работы с БД (не объект!)
-#         """
-#
-#         self.redis = redis
-#         self.jwt_encoder = jwt_encoder
-#         self.jwt_decoder = jwt_decoder
-#         self.user_database = user_database
-#
-#         self.tokens_model_creator = CreateTokensModel(TokensModel)
-#
-#
-# class CreateUser(BaseDependency):
-#     def __init__(self, converter: Converter = Converter(UserModel)):
-#         super().__init__()
-#         self.converter = converter
-#
-#     def __call__(self, credentials: UserCredentialsModel) -> UserModel:
-#         with self.user_database() as user_db:
-#             if user_db.get_user_by_user_name(credentials.user_name):
-#                 raise HTTPException(
-#                     status_code=status.HTTP_400_BAD_REQUEST,
-#                     detail='username is already taken'
-#                 )
-#
-#             user = user_db.create(
-#                 credentials.user_name,
-#                 get_password_hash(credentials.user_password)
-#             )
-#
-#             return self.converter.serialization(user)[0]
-#
-#
-# class Register(BaseDependency):
-#     def __call__(
-#             self,
-#             response: Response,
-#             user: Annotated[UserModel, Depends(CreateUser())]
-#     ) -> SuccessfulAuthModel:
-#         tokens = self.tokens_model_creator(
-#             user.user_id,
-#             user.role_id,
-#             user.user_name
-#         )
-#
-#         self.redis.push_token(user.user_id, tokens.refresh_token)
-#         response.set_cookie(
-#             key="refresh_token",
-#             value=tokens.refresh_token
-#         )
-#
-#         successful_reg_data = {
-#             "user": user,
-#             "tokens": tokens
-#         }
-#         return SuccessfulAuthModel(**successful_reg_data)
-#
-#
-# class VerifyUserCredentials(BaseDependency):
-#     def __init__(self, converter: Converter = Converter(UserModel)):
-#         super().__init__()
-#         self.converter = converter
-#
-#     def __call__(self, credentials: UserCredentialsModel) -> UserModel:
-#         with self.user_database() as user_db:
-#             user = user_db.get_user_by_user_name(credentials.user_name)
-#
-#             if not user or not verify_password(credentials.user_password, user[0][3]):
-#                 raise HTTPException(
-#                     status_code=status.HTTP_400_BAD_REQUEST,
-#                     detail="incorrect username or password"
-#                 )
-#
-#             user[0].pop(3)
-#             return self.converter.serialization(user)[0]
-#
-#
-# class Login(BaseDependency):
-#     def __call__(
-#             self,
-#             response: Response,
-#             user: Annotated[UserModel, Depends(VerifyUserCredentials())]
-#     ) -> SuccessfulAuthModel:
-#         tokens = self.tokens_model_creator(
-#             user.user_id,
-#             user.role_id,
-#             user.user_name
-#         )
-#
-#         self.redis.push_token(user.user_id, tokens.refresh_token)
-#         response.set_cookie(
-#             key="refresh_token",
-#             value=tokens.refresh_token
-#         )
-#
-#         successful_login_data = {
-#             "user": user,
-#             "tokens": tokens
-#         }
-#         return SuccessfulAuthModel(**successful_login_data)
+http_bearer = HTTPBearer()
+
+
+class BaseDependency:
+    def __init__(
+            self,
+            jwt_encoder: JWTEncoder = JWTEncoder(),
+            jwt_decoder: JWTDecoder = JWTDecoder(),
+            access_token_creator: AccessTokenCreator = AccessTokenCreator(),
+            refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
+            redis_client: RedisClient = RedisClient(),
+            user_database: Annotated[type, UserDataBase] = UserDataBase
+    ):
+        self.jwt_encoder = jwt_encoder
+        self.jwt_decoder = jwt_decoder
+        self.access_token_creator = access_token_creator
+        self.refresh_token_creator = refresh_token_creator
+        self.redis_client = redis_client
+        self.user_database = user_database
+
+
+class VerifyUser(BaseDependency):
+    def __init__(self, converter: Converter = Converter(UserModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(
+            self,
+            credentilas: UserCredentialsModel
+    ) -> UserModel:
+        with self.user_database() as user_db:
+            user = user_db.get_user_by_credentials(
+                credentilas.user_name,
+                get_password_hash(credentilas.user_password)
+            )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="incorrect username or password"
+                )
+
+            return self.converter.serialization(user)[0]
+
+
+class GenerateTokens(BaseDependency):
+    def __call__(
+            self,
+            response: Response,
+            user: Annotated[UserModel, Depends(VerifyUser())]
+    ) -> Tuple[UserModel, str]:
+        access_token = self.access_token_creator(user)
+        refresh_token = self.refresh_token_creator(user)
+
+        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            max_age=cookie_max_age,
+            httponly=True
+        )
+
+        self.redis_client.push_token(user.user_id, refresh_token)
+
+        return user, access_token
+
+
+class Login(BaseDependency):
+    def __call__(
+            self,
+            tp: Annotated[tuple, Depends(GenerateTokens())]
+    ) -> AuthorizationModel:
+        user, access_token = tp
+        access_token = AccessTokenModel(access_token=access_token)
+        auth_model = AuthorizationModel(user=user, access_token=access_token)
+
+        return auth_model
+

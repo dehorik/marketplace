@@ -1,6 +1,6 @@
 import psycopg2
 
-from app.core.config_reader import config
+from app.core.settings import config
 
 
 def init_database():

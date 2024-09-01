@@ -1,6 +1,7 @@
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
+
 class UserDataBase(InterfaceDataBase):
     """Класс для выполнения CRUD операций с пользователями"""
 
@@ -66,16 +67,25 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def get_user_by_user_name(self, user_name: str) -> list:
-        # использовать для аутентификации (вытаскиваем хеш пароля!)
+    def get_user_by_credentials(
+            self,
+            user_name: str,
+            user_hashed_password: str
+    ) -> list:
+        #  для аутентификации
 
         self._cursor.execute(
             """
-                SELECT *
+                SELECT 
+                    user_id,
+                    role_id, 
+                    user_name,
+                    user_email,
+                    user_photo_path
                 FROM users
-                WHERE user_name = %s;
+                WHERE user_name = %s AND user_hashed_password = %s;
             """,
-            [user_name]
+            [user_name, user_hashed_password]
         )
 
         return self._cursor.fetchall()

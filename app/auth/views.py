@@ -1,7 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
-from auth.models import SuccessfulAuthModel
+from auth.dependencies import Login
+from auth.models import AuthorizationModel
 
 
 router = APIRouter(
@@ -10,10 +11,6 @@ router = APIRouter(
 )
 
 
-# @router.post('/register', response_model=SuccessfulAuthModel)
-# def register(response: Annotated[SuccessfulAuthModel, Depends(Register())]):
-#     return response
-#
-# @router.post('/login', response_model=SuccessfulAuthModel)
-# def login(response: Annotated[SuccessfulAuthModel, Depends(Login())]):
-#     return response
+@router.post("/login", response_model=AuthorizationModel)
+def login(auth_model: Annotated[AuthorizationModel, Depends(Login())]):
+    return auth_model
