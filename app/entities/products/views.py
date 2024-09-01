@@ -7,6 +7,7 @@ from entities.products.models import ProductModel, UpdateCatalogResponseModel
 from entities.products.dependencies import (
     Catalog,
     CreateProduct,
+    GetProduct,
     UpdateCatalog,
     UpdateProduct,
     DeleteProduct
@@ -47,12 +48,14 @@ def create_product(product: Annotated[ProductModel, Depends(CreateProduct())]):
     return product
 
 @router.get("/{product_id}", response_class=HTMLResponse)
-def get_product(product_id: int, request: Request):
-    # work work work
-
+def get_product(
+        request: Request,
+        product: Annotated[ProductModel, Depends(GetProduct())]
+):
     return templates.TemplateResponse(
-        name='cart.html',
-        request=request
+        name='merchan.html',
+        request=request,
+        context={"product": product}
     )
 
 @router.patch("/{product_id}", response_model=ProductModel)

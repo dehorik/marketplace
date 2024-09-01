@@ -9,7 +9,7 @@ from entities.users.models import UserModel
 class JWTEncoder:
     def __init__(
             self,
-            private_key: str = Path(f"../../{config.PRIVATE_KEY_PATH}").read_text(),
+            private_key: str = Path(f"../{config.PRIVATE_KEY_PATH}").read_text(),
             algorithm: str = config.ALGORITHM
     ):
         self.__private_key = private_key
@@ -28,7 +28,7 @@ class JWTEncoder:
 class JWTDecoder:
     def __init__(
             self,
-            public_key: str = Path(f'../../{config.PUBLIC_KEY_PATH}').read_text(),
+            public_key: str = Path(f'../{config.PUBLIC_KEY_PATH}').read_text(),
             algorithm: str = config.ALGORITHM
     ):
         self.__public_key = public_key

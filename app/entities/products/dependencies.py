@@ -105,6 +105,24 @@ class CreateProduct(BaseDependency):
             return self.converter.serialization(product)[0]
 
 
+class GetProduct(BaseDependency):
+    def __init__(self, converter: Converter = Converter(ProductModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(self, product_id: int) -> ProductModel:
+        with self.product_database() as product_db:
+            product = product_db.read(product_id)
+
+            if not product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='incorrect product_id'
+                )
+
+            return self.converter.serialization(product)[0]
+
+
 class UpdateProduct(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()

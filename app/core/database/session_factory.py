@@ -15,7 +15,7 @@ class ConnectionData:
 
     def __call__(self) -> dict:
         data = {
-            "DATABASE": self.__config_database.DATABASE,
+            "DATABASE": self.__config_database.DATABASE_NAME,
             "DATABASE_USER": self.__config_database.DATABASE_USER,
             "DATABASE_USER_PASSWORD": self.__config_database.DATABASE_USER_PASSWORD,
             "DATABASE_HOST": self.__config_database.DATABASE_HOST,

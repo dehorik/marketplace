@@ -44,7 +44,14 @@ class ProductDataBase(InterfaceDataBase):
                 )
                 VALUES
                     (%s, %s, %s, %s, %s)
-                RETURNING *;
+                RETURNING 
+                    product_id,
+                    user_id,
+                    product_name,
+                    product_price,
+                    product_description,
+                    NULL,
+                    product_photo_path;
             """,
             [
                 user_id,
