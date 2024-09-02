@@ -67,12 +67,8 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def get_user_by_credentials(
-            self,
-            user_name: str,
-            user_hashed_password: str
-    ) -> list:
-        #  для аутентификации
+    def get_user_by_user_name(self, user_name: str) -> list:
+        #  для аутентификации, извлекается хеш пароля!
 
         self._cursor.execute(
             """
@@ -80,12 +76,13 @@ class UserDataBase(InterfaceDataBase):
                     user_id,
                     role_id, 
                     user_name,
+                    user_hashed_password,
                     user_email,
                     user_photo_path
                 FROM users
-                WHERE user_name = %s AND user_hashed_password = %s;
+                WHERE user_name = %s;
             """,
-            [user_name, user_hashed_password]
+            [user_name]
         )
 
         return self._cursor.fetchall()

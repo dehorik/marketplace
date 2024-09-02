@@ -15,7 +15,7 @@ from auth.models import (
     UserModel
 )
 from auth.redis_client import RedisClient
-from auth.hashing_psw import get_password_hash
+from auth.hashing_psw import get_password_hash, verify_password
 from core.settings import config
 from core.database import UserDataBase
 from utils import Converter
@@ -52,12 +52,18 @@ class VerifyUser(BaseDependency):
             credentilas: UserCredentialsModel
     ) -> UserModel:
         with self.user_database() as user_db:
-            user = user_db.get_user_by_credentials(
-                credentilas.user_name,
-                get_password_hash(credentilas.user_password)
-            )
+            user = user_db.get_user_by_user_name(credentilas.user_name)
 
             if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="incorrect username or password"
+                )
+
+            user = [list(user) for user in user]
+            user_hashed_password = user[0].pop(3)
+
+            if not verify_password(credentilas.user_password, user_hashed_password):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="incorrect username or password"

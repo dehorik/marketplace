@@ -81,6 +81,8 @@ class RefreshTokenCreator:
         payload = {
             "type": "refresh",
             "sub": user.user_id,
+            "role_id": user.role_id,
+            "user_name": user.user_name,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
