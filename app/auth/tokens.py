@@ -2,8 +2,9 @@ import jwt
 import datetime
 from pathlib import Path
 
-from core.settings import config
+from auth.models import PayloadTokenModel
 from entities.users.models import UserModel
+from core.settings import config
 
 
 class JWTEncoder:
@@ -53,13 +54,17 @@ class AccessTokenCreator:
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_minutes
 
-    def __call__(self, user: UserModel) -> str:
+    def __call__(self, data: UserModel | PayloadTokenModel) -> str:
+        if type(data) is not UserModel and type(data) is not PayloadTokenModel:
+            raise ValueError('invalid data object')
+
         now = datetime.datetime.now(datetime.UTC)
         payload = {
-            "type": "access",
-            "sub": user.user_id,
-            "role_id": user.role_id,
-            "user_name": user.user_name,
+            "token_type": "access",
+            "sub": data.user_id,
+            "user_id": data.user_id,
+            "role_id": data.role_id,
+            "user_name": data.user_name,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
@@ -76,13 +81,17 @@ class RefreshTokenCreator:
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_days * 24 * 60
 
-    def __call__(self, user: UserModel) -> str:
+    def __call__(self, data: UserModel | PayloadTokenModel) -> str:
+        if type(data) is not UserModel and type(data) is not PayloadTokenModel:
+            raise ValueError('invalid data object')
+
         now = datetime.datetime.now(datetime.UTC)
         payload = {
-            "type": "refresh",
-            "sub": user.user_id,
-            "role_id": user.role_id,
-            "user_name": user.user_name,
+            "token_type": "refresh",
+            "sub": data.user_id,
+            "user_id": data.user_id,
+            "role_id": data.role_id,
+            "user_name": data.user_name,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }

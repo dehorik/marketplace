@@ -1,7 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Cookie
+from fastapi import APIRouter, Depends
 
-from auth.dependencies import Login
+from auth.dependencies import Login, Refresh
 from auth.models import AuthorizationModel, AccessTokenModel
 
 
@@ -15,8 +15,6 @@ router = APIRouter(
 def login(auth_model: Annotated[AuthorizationModel, Depends(Login())]):
     return auth_model
 
-@router.post("/refresh")
-def refresh(refresh_token: Annotated[str | None, Cookie()] = None):
-    return {
-        "refresh_token": refresh_token
-    }
+@router.post("/refresh", response_model=AccessTokenModel)
+def refresh(access_token: Annotated[AccessTokenModel, Depends(Refresh())]):
+    return access_token

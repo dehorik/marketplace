@@ -1,6 +1,7 @@
-from typing import Annotated, Tuple
-from fastapi import HTTPException, Depends, Response, status
+from typing import Annotated
+from fastapi import HTTPException, Depends, Response, Cookie, status
 from fastapi.security import HTTPBearer
+from jwt.exceptions import InvalidTokenError
 
 from auth.tokens import (
     JWTEncoder,
@@ -12,9 +13,11 @@ from auth.models import (
     UserCredentialsModel,
     AuthorizationModel,
     AccessTokenModel,
+    PayloadTokenModel,
     UserModel
 )
 from auth.redis_client import RedisClient
+from auth.exceptions import InvalidUserException, InvalidTokenException
 from auth.hashing_psw import get_password_hash, verify_password
 from core.settings import config
 from core.database import UserDataBase
@@ -72,12 +75,12 @@ class VerifyUser(BaseDependency):
             return self.converter.serialization(user)[0]
 
 
-class GenerateTokens(BaseDependency):
+class Login(BaseDependency):
     def __call__(
             self,
             response: Response,
             user: Annotated[UserModel, Depends(VerifyUser())]
-    ) -> Tuple[UserModel, str]:
+    ) -> AuthorizationModel:
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
@@ -91,17 +94,65 @@ class GenerateTokens(BaseDependency):
 
         self.redis_client.push_token(user.user_id, refresh_token)
 
-        return user, access_token
-
-
-class Login(BaseDependency):
-    def __call__(
-            self,
-            tp: Annotated[tuple, Depends(GenerateTokens())]
-    ) -> AuthorizationModel:
-        user, access_token = tp
         access_token = AccessTokenModel(access_token=access_token)
         auth_model = AuthorizationModel(user=user, access_token=access_token)
 
         return auth_model
 
+
+class ValidateTokens(BaseDependency):
+    def __call__(
+            self,
+            response: Response,
+            refresh_token: Annotated[str | None, Cookie()] = None
+    ) -> dict:
+        if refresh_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='unauthorized'
+            )
+
+        try:
+            payload = self.jwt_decoder(refresh_token)
+            self.redis_client.delete_token(payload['user_id'], refresh_token)
+            response.delete_cookie('refresh_token')
+
+            return payload
+        except (
+                InvalidTokenError,
+                InvalidUserException,
+                InvalidTokenException
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid token'
+            )
+
+
+class Refresh(BaseDependency):
+    def __call__(
+            self,
+            response: Response,
+            payload: Annotated[dict, Depends(ValidateTokens())]
+    ) -> AccessTokenModel:
+        payload_token = PayloadTokenModel(
+            token_type=payload['token_type'],
+            user_id=payload['user_id'],
+            role_id=payload['role_id'],
+            user_name=payload['user_name']
+        )
+
+        refresh_token = self.refresh_token_creator(payload_token)
+        self.redis_client.push_token(payload['sub'], refresh_token)
+        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            max_age=cookie_max_age,
+            httponly=True
+        )
+
+        payload_token.token_type = 'access'
+        access_token = self.access_token_creator(payload_token)
+
+        return AccessTokenModel(access_token=access_token)

@@ -17,3 +17,10 @@ class AccessTokenModel(BaseModel):
 class AuthorizationModel(BaseModel):
     user: UserModel
     access_token: AccessTokenModel
+
+
+class PayloadTokenModel(BaseModel):
+    token_type: str
+    user_id: int
+    role_id: int
+    user_name: str

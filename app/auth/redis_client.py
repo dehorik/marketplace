@@ -1,7 +1,8 @@
 from redis import Redis
 
-from utils import Singleton
+from auth.exceptions import InvalidUserException, InvalidTokenException
 from core.settings import Settings, config
+from utils import Singleton
 
 
 class ConnectionData:
@@ -58,18 +59,18 @@ class RedisClient(Singleton):
         user_id = str(user_id)
 
         if not self.__client.exists(user_id):
-            raise ValueError('user_id does not exist')
+            raise InvalidUserException('user_id does not exist')
 
         operation = self.__client.lrem(user_id, 1, token)
         if not operation:
-            raise ValueError('token does not exist')
+            raise InvalidTokenException('token does not exist')
 
     def get_tokens(self, user_id: str | int) -> list:
         # получение всех токенов пользователя
 
         user_id = str(user_id)
         if not self.__client.exists(user_id):
-            raise ValueError('user_id does not exist')
+            raise InvalidUserException('user_id does not exist')
         else:
             return self.__client.lrange(user_id, 0, -1)
 
@@ -80,4 +81,4 @@ class RedisClient(Singleton):
 
         operation = self.__client.delete(user_id)
         if not operation:
-            raise ValueError('user_id does not exist')
+            raise InvalidUserException('user_id does not exist')
