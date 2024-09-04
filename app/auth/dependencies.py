@@ -1,6 +1,7 @@
+import datetime
 from typing import Annotated
 from fastapi import HTTPException, Depends, Response, Cookie, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 
 from auth.tokens import (
@@ -10,6 +11,7 @@ from auth.tokens import (
     RefreshTokenCreator
 )
 from auth.models import (
+    FullPayloadTokenModel,
     UserCredentialsModel,
     AuthorizationModel,
     AccessTokenModel,
@@ -43,6 +45,71 @@ class BaseDependency:
         self.refresh_token_creator = refresh_token_creator
         self.redis_client = redis_client
         self.user_database = user_database
+
+
+class AccessTokenValidator(BaseDependency):
+    def __call__(
+            self,
+            token: Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
+    ) -> FullPayloadTokenModel:
+        try:
+            payload = self.jwt_decoder(token.credentials)
+            return FullPayloadTokenModel(**payload)
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid token'
+            )
+
+
+class CreateUser(BaseDependency):
+    def __init__(self, converter: Converter = Converter(UserModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(
+            self,
+            credentials: UserCredentialsModel
+    ) -> UserModel:
+        with self.user_database() as user_db:
+            user = user_db.get_user_by_user_name(credentials.user_name)
+            if user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='username is alredy taken'
+                )
+
+            user = user_db.create(
+                credentials.user_name,
+                get_password_hash(credentials.user_password)
+            )
+
+            return self.converter.serialization(user)[0]
+
+
+class Register(BaseDependency):
+    def __call__(
+            self,
+            response: Response,
+            user: Annotated[UserModel, Depends(CreateUser())]
+    ) -> AuthorizationModel:
+        access_token = self.access_token_creator(user)
+        refresh_token = self.refresh_token_creator(user)
+
+        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            max_age=cookie_max_age,
+            httponly=True
+        )
+
+        self.redis_client.push_token(user.user_id, refresh_token)
+
+        access_token = AccessTokenModel(access_token=access_token)
+        auth_model = AuthorizationModel(user=user, access_token=access_token)
+
+        return auth_model
 
 
 class VerifyUser(BaseDependency):
@@ -118,11 +185,15 @@ class ValidateTokens(BaseDependency):
             response.delete_cookie('refresh_token')
 
             return payload
-        except (
-                InvalidTokenError,
-                InvalidUserException,
-                InvalidTokenException
-        ):
+        except InvalidTokenException:
+            # noinspection PyUnboundLocalVariable
+            self.redis_client.delete_user(payload['user_id'])
+
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid token'
+            )
+        except (InvalidTokenError, InvalidUserException):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
@@ -144,11 +215,18 @@ class Refresh(BaseDependency):
 
         refresh_token = self.refresh_token_creator(payload_token)
         self.redis_client.push_token(payload['sub'], refresh_token)
-        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+
+        #
+        # настроить автоматическое удаление рефреш кук везде!!!!
+        #
+
+        now = datetime.datetime.now(datetime.UTC)
+        exp_minutes = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        expires = now + datetime.timedelta(minutes=exp_minutes)
         response.set_cookie(
             key='refresh_token',
             value=refresh_token,
-            max_age=cookie_max_age,
+            expires=expires,
             httponly=True
         )
 

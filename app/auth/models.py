@@ -1,5 +1,6 @@
 from fastapi import Form
 from pydantic import BaseModel
+from datetime import datetime
 
 from entities.users.models import UserModel
 
@@ -24,3 +25,13 @@ class PayloadTokenModel(BaseModel):
     user_id: int
     role_id: int
     user_name: str
+
+
+class FullPayloadTokenModel(BaseModel):
+    token_type: str
+    sub: int
+    user_id: int
+    role_id: int
+    user_name: str
+    iat: datetime
+    exp: datetime

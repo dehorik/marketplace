@@ -50,8 +50,12 @@ class RedisClient(Singleton):
 
     def push_token(self, user_id: str | int, token: str) -> None:
         # добавление токена в список или создание списка и добавление в него токена
+
         user_id = str(user_id)
         self.__client.rpush(user_id, token)
+
+        if self.__client.llen(user_id) >= 6:
+            self.__client.lpop(user_id)
 
     def delete_token(self, user_id: str | int, token: str) -> None:
         # удаление токена из списка токенов пользователя
