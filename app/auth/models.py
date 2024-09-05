@@ -35,3 +35,7 @@ class FullPayloadTokenModel(BaseModel):
     user_name: str
     iat: datetime
     exp: datetime
+
+
+class LogoutModel(BaseModel):
+    message: str = 'successful logout'

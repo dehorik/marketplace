@@ -1,8 +1,19 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
-from auth.dependencies import Register, Login, Refresh, AccessTokenValidator
-from auth.models import AuthorizationModel, AccessTokenModel, FullPayloadTokenModel
+from auth.dependencies import (
+    Register,
+    Login,
+    Logout,
+    Refresh,
+    AccessTokenValidator
+)
+from auth.models import (
+    AuthorizationModel,
+    AccessTokenModel,
+    FullPayloadTokenModel,
+    LogoutModel
+)
 
 
 router = APIRouter(
@@ -18,6 +29,10 @@ def register(auth_model: Annotated[AuthorizationModel, Depends(Register())]):
 @router.post("/login", response_model=AuthorizationModel)
 def login(auth_model: Annotated[AuthorizationModel, Depends(Login())]):
     return auth_model
+
+@router.post("/logout", response_model=LogoutModel)
+def logout(logout_model: Annotated[LogoutModel, Depends(Logout())]):
+    return logout_model
 
 @router.post("/refresh", response_model=AccessTokenModel)
 def refresh(access_token: Annotated[AccessTokenModel, Depends(Refresh())]):

@@ -16,7 +16,7 @@ from auth.models import (
     AuthorizationModel,
     AccessTokenModel,
     PayloadTokenModel,
-    UserModel
+    UserModel, LogoutModel
 )
 from auth.redis_client import RedisClient
 from auth.exceptions import InvalidUserException, InvalidTokenException
@@ -167,6 +167,41 @@ class Login(BaseDependency):
         return auth_model
 
 
+class Logout(BaseDependency):
+    def __call__(
+            self,
+            response: Response,
+            refresh_token: Annotated[str | None, Cookie()] = None
+    ) -> LogoutModel:
+        if refresh_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='unauthorized'
+            )
+
+        try:
+            payload = self.jwt_decoder(refresh_token)
+
+            self.redis_client.delete_token(payload['user_id'], refresh_token)
+            response.delete_cookie('refresh_token')
+
+            return LogoutModel()
+
+        except InvalidTokenException:
+            # noinspection PyUnboundLocalVariable
+            self.redis_client.delete_user(payload['user_id'])
+
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid token'
+            )
+        except (InvalidTokenError, InvalidUserException):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid token'
+            )
+
+
 class ValidateTokens(BaseDependency):
     def __call__(
             self,
@@ -234,3 +269,16 @@ class Refresh(BaseDependency):
         access_token = self.access_token_creator(payload_token)
 
         return AccessTokenModel(access_token=access_token)
+
+
+def set_refresh_cookie(response: Response, refresh_token: str) -> None:
+    now = datetime.datetime.now(datetime.UTC)
+    exp_minutes = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    expires = now + datetime.timedelta(minutes=exp_minutes)
+
+    response.set_cookie(
+        key='refresh_token',
+        value=refresh_token,
+        expires=expires,
+        httponly=True
+    )
