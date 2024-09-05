@@ -9,6 +9,8 @@ from core.settings import config
 
 
 class JWTEncoder:
+    """Универсальный класс для выпуска токенов"""
+
     def __init__(
             self,
             private_key: str = Path(f"../{config.PRIVATE_KEY_PATH}").read_text(),
@@ -28,6 +30,8 @@ class JWTEncoder:
 
 
 class JWTDecoder:
+    """Универсальный класс для декодирования токенов"""
+
     def __init__(
             self,
             public_key: str = Path(f'../{config.PUBLIC_KEY_PATH}').read_text(),
@@ -47,6 +51,8 @@ class JWTDecoder:
 
 
 class AccessTokenCreator:
+    """Для создания access токенов"""
+
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
@@ -59,11 +65,11 @@ class AccessTokenCreator:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
             raise InvalidPayloadObjectException('invalid payload object')
 
+        sub = data.user_id if type(data) is UserModel else data.sub
         now = datetime.datetime.now(datetime.UTC)
         payload = {
             "token_type": "access",
-            "sub": data.user_id,
-            "user_id": data.user_id,
+            "sub": sub,
             "role_id": data.role_id,
             "user_name": data.user_name,
             "iat": now,
@@ -74,6 +80,8 @@ class AccessTokenCreator:
 
 
 class RefreshTokenCreator:
+    """Для создания refresh токенов"""
+
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
@@ -86,11 +94,11 @@ class RefreshTokenCreator:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
             raise InvalidPayloadObjectException('invalid payload object')
 
+        sub = data.user_id if type(data) is UserModel else data.sub
         now = datetime.datetime.now(datetime.UTC)
         payload = {
             "token_type": "refresh",
-            "sub": data.user_id,
-            "user_id": data.user_id,
+            "sub": sub,
             "role_id": data.role_id,
             "user_name": data.user_name,
             "iat": now,

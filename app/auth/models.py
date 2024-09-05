@@ -26,15 +26,7 @@ class LogoutModel(BaseModel):
 
 class PayloadTokenModel(BaseModel):
     token_type: str
-    user_id: int
-    role_id: int
-    user_name: str
-
-
-class FullPayloadTokenModel(BaseModel):
-    token_type: str
     sub: int
-    user_id: int
     role_id: int
     user_name: str
     iat: datetime

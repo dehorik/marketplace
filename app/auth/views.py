@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from auth.dependencies import (
-    Register,
+    Registration,
     Login,
     Logout,
     Refresh,
@@ -11,8 +11,8 @@ from auth.dependencies import (
 from auth.models import (
     AuthorizationModel,
     AccessTokenModel,
-    FullPayloadTokenModel,
-    LogoutModel
+    LogoutModel,
+    PayloadTokenModel
 )
 
 
@@ -23,7 +23,7 @@ router = APIRouter(
 
 
 # dependencies
-register_user = Register()
+register_user = Registration()
 login_user = Login()
 logout_user = Logout()
 refresh_tokens = Refresh()
@@ -46,6 +46,6 @@ def logout(logout_model: Annotated[LogoutModel, Depends(logout_user)]):
 def refresh(access_token: Annotated[AccessTokenModel, Depends(refresh_tokens)]):
     return access_token
 
-@router.post('/validate-access', response_model=FullPayloadTokenModel)
-def access(payload: Annotated[FullPayloadTokenModel, Depends(validate_access_token)]):
+@router.post('/validate-access', response_model=PayloadTokenModel)
+def access(payload: Annotated[PayloadTokenModel, Depends(validate_access_token)]):
     return payload
