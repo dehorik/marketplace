@@ -2,6 +2,7 @@ import jwt
 import datetime
 from pathlib import Path
 
+from auth.exceptions import InvalidPayloadObjectException
 from auth.models import PayloadTokenModel
 from entities.users.models import UserModel
 from core.settings import config
@@ -56,7 +57,7 @@ class AccessTokenCreator:
 
     def __call__(self, data: UserModel | PayloadTokenModel) -> str:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
-            raise ValueError('invalid data object')
+            raise InvalidPayloadObjectException('invalid payload object')
 
         now = datetime.datetime.now(datetime.UTC)
         payload = {
@@ -83,7 +84,7 @@ class RefreshTokenCreator:
 
     def __call__(self, data: UserModel | PayloadTokenModel) -> str:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
-            raise ValueError('invalid data object')
+            raise InvalidPayloadObjectException('invalid payload object')
 
         now = datetime.datetime.now(datetime.UTC)
         payload = {

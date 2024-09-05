@@ -20,6 +20,10 @@ class AuthorizationModel(BaseModel):
     access_token: AccessTokenModel
 
 
+class LogoutModel(BaseModel):
+    message: str = 'successful logout'
+
+
 class PayloadTokenModel(BaseModel):
     token_type: str
     user_id: int
@@ -35,7 +39,3 @@ class FullPayloadTokenModel(BaseModel):
     user_name: str
     iat: datetime
     exp: datetime
-
-
-class LogoutModel(BaseModel):
-    message: str = 'successful logout'

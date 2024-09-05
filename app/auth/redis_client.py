@@ -1,6 +1,10 @@
 from redis import Redis
 
-from auth.exceptions import InvalidUserException, InvalidTokenException
+from auth.exceptions import (
+    InvalidDataObject,
+    InvalidUserException,
+    InvalidTokenException
+)
 from core.settings import Settings, config
 from utils import Singleton
 
@@ -27,41 +31,37 @@ class RedisClient(Singleton):
         if self.__dict__:
             return
 
-        if type(data) is ConnectionData:
-            connection_data = data()
+        if type(data) is not dict and type(data) is not ConnectionData:
+            raise InvalidDataObject("invalid database data object")
 
-            self.__client = Redis(
-                host=connection_data["REDIS_HOST"],
-                port=connection_data["REDIS_PORT"],
-                decode_responses=True
-            )
-        elif type(data) is dict:
+        if type(data) is ConnectionData:
+            data = data()
+
+        try:
             self.__client = Redis(
                 host=data["REDIS_HOST"],
                 port=data["REDIS_PORT"],
                 decode_responses=True
             )
-        else:
-            raise ValueError("invalid database data object")
+        except KeyError:
+            raise InvalidDataObject("invalid database data object")
 
     def close(self) -> None:
         # сброс всех данных
         self.__client.flushall()
 
-    def push_token(self, user_id: str | int, token: str) -> None:
-        # добавление токена в список или создание списка и добавление в него токена
+    def append_token(self, user_id: str | int, token: str) -> None:
+        # добавление токена в список (создание списка при отсутствии)
+        # максимум сохраненных refresh токенов пользователя - 5
 
         user_id = str(user_id)
-        self.__client.rpush(user_id, token)
-
-        if self.__client.llen(user_id) >= 6:
+        if self.__client.rpush(user_id, token) >= 6:
             self.__client.lpop(user_id)
 
     def delete_token(self, user_id: str | int, token: str) -> None:
-        # удаление токена из списка токенов пользователя
+        # удаление токена из списка
 
         user_id = str(user_id)
-
         if not self.__client.exists(user_id):
             raise InvalidUserException('user_id does not exist')
 
@@ -82,7 +82,6 @@ class RedisClient(Singleton):
         # удаление пользователя и его токенов
 
         user_id = str(user_id)
-
         operation = self.__client.delete(user_id)
         if not operation:
             raise InvalidUserException('user_id does not exist')

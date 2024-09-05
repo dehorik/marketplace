@@ -22,22 +22,30 @@ router = APIRouter(
 )
 
 
+# dependencies
+register_user = Register()
+login_user = Login()
+logout_user = Logout()
+refresh_tokens = Refresh()
+validate_access_token = AccessTokenValidator()
+
+
 @router.post("/register", response_model=AuthorizationModel)
-def register(auth_model: Annotated[AuthorizationModel, Depends(Register())]):
+def register(auth_model: Annotated[AuthorizationModel, Depends(register_user)]):
     return auth_model
 
 @router.post("/login", response_model=AuthorizationModel)
-def login(auth_model: Annotated[AuthorizationModel, Depends(Login())]):
+def login(auth_model: Annotated[AuthorizationModel, Depends(login_user)]):
     return auth_model
 
 @router.post("/logout", response_model=LogoutModel)
-def logout(logout_model: Annotated[LogoutModel, Depends(Logout())]):
+def logout(logout_model: Annotated[LogoutModel, Depends(logout_user)]):
     return logout_model
 
 @router.post("/refresh", response_model=AccessTokenModel)
-def refresh(access_token: Annotated[AccessTokenModel, Depends(Refresh())]):
+def refresh(access_token: Annotated[AccessTokenModel, Depends(refresh_tokens)]):
     return access_token
 
 @router.post('/validate-access', response_model=FullPayloadTokenModel)
-def access(payload: Annotated[FullPayloadTokenModel, Depends(AccessTokenValidator())]):
+def access(payload: Annotated[FullPayloadTokenModel, Depends(validate_access_token)]):
     return payload

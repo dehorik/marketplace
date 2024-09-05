@@ -35,18 +35,13 @@ class Session(Singleton):
         if self.__dict__:
             return
 
+        if type(data) is not dict and type(data) is not ConnectionData:
+            raise ValueError("invalid database data object")
+
         if type(data) is ConnectionData:
-            connection_data = data()
+            data = data()
 
-            self.__connection = connect(
-                dbname=connection_data["DATABASE"],
-                user=connection_data["DATABASE_USER"],
-                password=connection_data["DATABASE_USER_PASSWORD"],
-                host=connection_data["DATABASE_HOST"],
-                port=connection_data["DATABASE_PORT"]
-            )
-
-        elif type(data) is dict:
+        try:
             self.__connection = connect(
                 dbname=data["DATABASE"],
                 user=data["DATABASE_USER"],
@@ -54,8 +49,7 @@ class Session(Singleton):
                 host=data["DATABASE_HOST"],
                 port=data["DATABASE_PORT"]
             )
-
-        else:
+        except KeyError:
             raise ValueError("invalid database data object")
 
     def __del__(self):

@@ -68,7 +68,7 @@ class UserDataBase(InterfaceDataBase):
         pass
 
     def get_user_by_user_name(self, user_name: str) -> list:
-        #  для аутентификации, извлекается хеш пароля!
+        #  для аутентификации, извлекается хеш пароля
 
         self._cursor.execute(
             """

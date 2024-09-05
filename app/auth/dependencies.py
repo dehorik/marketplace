@@ -54,6 +54,7 @@ class AccessTokenValidator(BaseDependency):
     ) -> FullPayloadTokenModel:
         try:
             payload = self.jwt_decoder(token.credentials)
+
             return FullPayloadTokenModel(**payload)
         except InvalidTokenError:
             raise HTTPException(
@@ -96,15 +97,8 @@ class Register(BaseDependency):
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
-        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            max_age=cookie_max_age,
-            httponly=True
-        )
-
-        self.redis_client.push_token(user.user_id, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
+        set_refresh_cookie(response, refresh_token)
 
         access_token = AccessTokenModel(access_token=access_token)
         auth_model = AuthorizationModel(user=user, access_token=access_token)
@@ -151,15 +145,8 @@ class Login(BaseDependency):
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
-        cookie_max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            max_age=cookie_max_age,
-            httponly=True
-        )
-
-        self.redis_client.push_token(user.user_id, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
+        set_refresh_cookie(response, refresh_token)
 
         access_token = AccessTokenModel(access_token=access_token)
         auth_model = AuthorizationModel(user=user, access_token=access_token)
@@ -249,21 +236,8 @@ class Refresh(BaseDependency):
         )
 
         refresh_token = self.refresh_token_creator(payload_token)
-        self.redis_client.push_token(payload['sub'], refresh_token)
-
-        #
-        # настроить автоматическое удаление рефреш кук везде!!!!
-        #
-
-        now = datetime.datetime.now(datetime.UTC)
-        exp_minutes = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-        expires = now + datetime.timedelta(minutes=exp_minutes)
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            expires=expires,
-            httponly=True
-        )
+        self.redis_client.append_token(payload['sub'], refresh_token)
+        set_refresh_cookie(response, refresh_token)
 
         payload_token.token_type = 'access'
         access_token = self.access_token_creator(payload_token)
