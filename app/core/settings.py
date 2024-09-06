@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     PRIVATE_KEY_PATH: str
     PUBLIC_KEY_PATH: str
     ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: float
-    REFRESH_TOKEN_EXPIRE_DAYS: float
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
 
     model_config = SettingsConfigDict(env_file=DOTENV)
 

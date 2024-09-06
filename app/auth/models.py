@@ -15,13 +15,9 @@ class AccessTokenModel(BaseModel):
     type: str = "Bearer"
 
 
-class AuthorizationModel(BaseModel):
+class AuthenticationModel(BaseModel):
     user: UserModel
     access_token: AccessTokenModel
-
-
-class LogoutModel(BaseModel):
-    message: str = 'successful logout'
 
 
 class PayloadTokenModel(BaseModel):
@@ -29,5 +25,5 @@ class PayloadTokenModel(BaseModel):
     sub: int
     role_id: int
     user_name: str
-    iat: datetime
-    exp: datetime
+    iat: datetime | None = None
+    exp: datetime | None = None

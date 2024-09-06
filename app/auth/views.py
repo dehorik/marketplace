@@ -2,16 +2,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from auth.dependencies import (
-    Registration,
-    Login,
-    Logout,
-    Refresh,
-    AccessTokenValidator
+    register_user,
+    login_user,
+    logout_user,
+    refresh_tokens,
+    validate_access_token
 )
 from auth.models import (
-    AuthorizationModel,
+    AuthenticationModel,
     AccessTokenModel,
-    LogoutModel,
     PayloadTokenModel
 )
 
@@ -22,25 +21,17 @@ router = APIRouter(
 )
 
 
-# dependencies
-register_user = Registration()
-login_user = Login()
-logout_user = Logout()
-refresh_tokens = Refresh()
-validate_access_token = AccessTokenValidator()
-
-
-@router.post("/register", response_model=AuthorizationModel)
-def register(auth_model: Annotated[AuthorizationModel, Depends(register_user)]):
+@router.post("/register", response_model=AuthenticationModel)
+def register(auth_model: Annotated[AuthenticationModel, Depends(register_user)]):
     return auth_model
 
-@router.post("/login", response_model=AuthorizationModel)
-def login(auth_model: Annotated[AuthorizationModel, Depends(login_user)]):
+@router.post("/login", response_model=AuthenticationModel)
+def login(auth_model: Annotated[AuthenticationModel, Depends(login_user)]):
     return auth_model
 
-@router.post("/logout", response_model=LogoutModel)
-def logout(logout_model: Annotated[LogoutModel, Depends(logout_user)]):
-    return logout_model
+@router.post("/logout")
+def logout(response: Annotated[str, Depends(logout_user)]):
+    return response
 
 @router.post("/refresh", response_model=AccessTokenModel)
 def refresh(access_token: Annotated[AccessTokenModel, Depends(refresh_tokens)]):
