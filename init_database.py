@@ -5,7 +5,7 @@ from app.core.settings import config
 
 def init_database():
     connection = psycopg2.connect(
-        dbname=config.DATABASE,
+        dbname=config.DATABASE_NAME,
         user=config.DATABASE_USER,
         password=config.DATABASE_USER_PASSWORD,
         host=config.DATABASE_HOST,
