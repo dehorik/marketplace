@@ -46,7 +46,13 @@ class CommentDataBase(InterfaceDataBase):
                 VALUES (%s, %s, CURRENT_DATE, %s, %s, %s)
                 RETURNING *;
             """,
-            [user_id, product_id, comment_text, comment_rating, comment_photo_path]
+            [
+                user_id,
+                product_id,
+                comment_text,
+                comment_rating,
+                comment_photo_path
+            ]
         )
 
         return self._cursor.fetchall()
@@ -106,6 +112,51 @@ class CommentDataBase(InterfaceDataBase):
                 RETURNING *;
             """,
             [comment_id]
+        )
+
+        return self._cursor.fetchall()
+
+    def get_comment_item_list(
+            self,
+            product_id: int,
+            amount: int,
+            last_comment_id: int = None
+    ) -> list:
+        """
+        Для получения отзывов под товаром (от самых новых до старых)
+
+        :param product_id: product_id товара
+        :param amount: нужное количество отзывов
+        :param last_comment_id: comment_id последнего подгруженного отзыва;
+               (если это первый запрос на подгрузку отзывов, оставить None)
+        :return: список отзывов
+        """
+
+        if last_comment_id:
+            condition = f"AND comment.comment_id < {last_comment_id}"
+        else:
+            condition = ""
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    comment.comment_id, 
+                    users.user_id,
+                    product.product_id, 
+                    users.user_name,
+                    users.user_photo_path,
+                    comment.comment_date,
+                    comment.comment_text,
+                    comment.comment_rating,
+                    comment.comment_photo_path   
+                FROM users 
+                    INNER JOIN comment USING(user_id)
+                    INNER JOIN product USING(product_id)
+                WHERE product.product_id = %s {condition}
+                ORDER BY comment.comment_id DESC
+                LIMIT %s;
+            """,
+            [product_id, amount]
         )
 
         return self._cursor.fetchall()
