@@ -15,110 +15,138 @@ def init_database():
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS role (
-            role_id SERIAL PRIMARY KEY,
-            role_name VARCHAR(255)
-        );
-        
-        CREATE TABLE IF NOT EXISTS users (
-            user_id SERIAL PRIMARY KEY,
-            role_id INT DEFAULT 1,
-            user_name VARCHAR(255),
-            user_hashed_password VARCHAR(255),
-            user_email VARCHAR(255) DEFAULT NULL,
-            user_photo_path VARCHAR(255) DEFAULT NULL,
+            CREATE TABLE IF NOT EXISTS role (
+                role_id SERIAL PRIMARY KEY,
+                role_name VARCHAR(255)
+            );
             
-            FOREIGN KEY (role_id) REFERENCES role (role_id) ON UPDATE CASCADE
-        );
-        
-        CREATE TABLE IF NOT EXISTS product (
-            product_id SERIAL PRIMARY KEY,
-            user_id INT,
-            product_name VARCHAR(255),
-            product_price DECIMAL(12, 2),
-            product_description TEXT,
-            product_photo_path VARCHAR(255),
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                role_id INT DEFAULT 1,
+                user_name VARCHAR(255),
+                user_hashed_password VARCHAR(255),
+                user_email VARCHAR(255) DEFAULT NULL,
+                user_photo_path VARCHAR(255) DEFAULT NULL,
+                
+                FOREIGN KEY (role_id) 
+                REFERENCES role (role_id)
+            );
             
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE SET NULL
-        );
-        
-        CREATE TABLE IF NOT EXISTS comment (
-            comment_id SERIAL PRIMARY KEY,
-            user_id INT,
-            product_id INT,
-            comment_date DATE,
-            comment_text VARCHAR(255) DEFAULT NULL,
-            comment_rating INT,
-            comment_photo_path VARCHAR(255) DEFAULT NULL,
-        
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-            FOREIGN KEY (product_id) REFERENCES product (product_id) ON DELETE CASCADE
-        );
-        
-        CREATE TABLE IF NOT EXISTS order_status (
-            order_status_id SERIAL PRIMARY KEY,
-            order_status_name VARCHAR(255)
-        );
-        
-        CREATE TABLE IF NOT EXISTS orders (
-            order_id SERIAL PRIMARY KEY,
-            product_id INT,
-            user_id INT,
-            order_status_id INT,
-            date_start DATE,
-            date_end DATE,
-            order_address VARCHAR(255),
-            product_name VARCHAR(255),
-            product_photo VARCHAR(255),
-            product_price NUMERIC(12, 2),
+            CREATE TABLE IF NOT EXISTS product (
+                product_id SERIAL PRIMARY KEY,
+                user_id INT,
+                product_name VARCHAR(255),
+                product_price INT,
+                product_description TEXT,
+                product_photo_path VARCHAR(255),
+                
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id) 
+                ON DELETE CASCADE
+            );
             
-            FOREIGN KEY (product_id) REFERENCES product (product_id) ON DELETE SET NULL,
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-            FOREIGN KEY (order_status_id) REFERENCES order_status (order_status_id) ON UPDATE CASCADE
-        );
-        
-        CREATE TABLE IF NOT EXISTS orders_archive (
-            order_archive_id SERIAL PRIMARY KEY,
-            product_id INT,
-            user_id INT,
-            order_status_id INT,
-            date_start DATE,
-            date_end DATE,
-            order_address VARCHAR(255),
-            product_name VARCHAR(255),
-            product_photo VARCHAR(255),
-            product_price NUMERIC(12, 2),
+            CREATE TABLE IF NOT EXISTS comment (
+                comment_id SERIAL PRIMARY KEY,
+                user_id INT,
+                product_id INT,
+                comment_date DATE,
+                comment_text VARCHAR(255) DEFAULT NULL,
+                comment_rating INT,
+                comment_photo_path VARCHAR(255) DEFAULT NULL,
             
-            FOREIGN KEY (product_id) REFERENCES product (product_id) ON DELETE SET NULL,
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-            FOREIGN KEY (order_status_id) REFERENCES order_status (order_status_id) ON UPDATE CASCADE
-        );
-        
-        CREATE TABLE IF NOT EXISTS shopping_bag (
-            shopping_bag_id SERIAL PRIMARY KEY,
-            product_id INT,
-            user_id INT,
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id) 
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id) 
+                ON DELETE CASCADE
+            );
             
-            FOREIGN KEY (product_id) REFERENCES product (product_id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
-        );
-        
-        
-        /* database setup */
-        
-        INSERT INTO order_status
-            (order_status_name)
-        VALUES
-            ('В доставке'),
-            ('Доставлено'),
-            ('Отменено');
-        
-        INSERT INTO role 
-            (role_name)
-        VALUES
-            ('user'),
-            ('admin'),
-            ('owner');
+            CREATE TABLE IF NOT EXISTS order_status (
+                order_status_id SERIAL PRIMARY KEY,
+                order_status_name VARCHAR(255)
+            );
+            
+            CREATE TABLE IF NOT EXISTS orders (
+                order_id SERIAL PRIMARY KEY,
+                product_id INT,
+                user_id INT,
+                order_status_id INT DEFAULT 1,
+                date_start DATE,
+                date_end DATE,
+                order_address VARCHAR(255),
+                product_name VARCHAR(255),
+                product_price INT,
+                product_photo_path VARCHAR(255),
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id) 
+                ON DELETE SET NULL,
+                
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id) 
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (order_status_id) 
+                REFERENCES order_status (order_status_id) 
+            );
+            
+            CREATE TABLE IF NOT EXISTS orders_archive (
+                order_archive_id SERIAL PRIMARY KEY,
+                product_id INT,
+                user_id INT,
+                order_status_id INT,
+                date_start DATE,
+                date_end DATE,
+                order_address VARCHAR(255),
+                product_name VARCHAR(255),
+                product_price INT,
+                product_photo_path VARCHAR(255),
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id) 
+                ON DELETE SET NULL,
+                
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id) 
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (order_status_id) 
+                REFERENCES order_status (order_status_id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS shopping_bag_product (
+                shopping_bag_product_id SERIAL PRIMARY KEY,
+                product_id INT,
+                user_id INT,
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id) 
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id) 
+                ON DELETE CASCADE
+            ); 
+        """
+    )
+
+    cursor.execute(
+        """
+            INSERT INTO order_status
+                (order_status_name)
+            VALUES
+                ('В доставке'),
+                ('Доставлено'),
+                ('Отменено');
+                
+            INSERT INTO role 
+                (role_name)
+            VALUES
+                ('user'),
+                ('admin'),
+                ('owner');
         """
     )
 
