@@ -28,8 +28,11 @@ class UserDataBase(InterfaceDataBase):
     def create(self, user_name: str, user_hashed_password: str) -> list:
         self._cursor.execute(
             """
-                INSERT INTO users
-                    (role_id, user_name, user_hashed_password)
+                INSERT INTO users (
+                    role_id, 
+                    user_name, 
+                    user_hashed_password
+                )
                 VALUES
                     (1, %s, %s)
                 RETURNING 
