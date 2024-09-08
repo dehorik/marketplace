@@ -51,16 +51,16 @@
     <div class="container">
         <main class="main">
             <div class="main-photo">
-                <img src={{product.product_photo_path}} alt="">
+                <img src={{product.product.product_photo_path}}>
             </div>
 
 
             <div class="main-details">
-                <h1 class="main-details-title">{{product.product_name}}</h1>
-                <p class="main-details-text">{{product.product_description}}</p>
+                <h1 class="main-details-title">{{product.product.product_name}}</h1>
+                <p class="main-details-text">{{product.product.product_description}}</p>
 
                 <div class="main-details-price">
-                    <span class="main-details-price-price">{{product.product_price}}</span>
+                    <span class="main-details-price-price">{{product.product.product_price}} $</span>
 
                     <div class="main-details-price-action">
                         <button class="button">Купить</button>

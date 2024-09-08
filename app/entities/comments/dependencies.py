@@ -1,4 +1,4 @@
-from typing import Annotated, Type
+from typing import Annotated, Type, Callable
 from fastapi import Form, UploadFile, HTTPException, status
 
 from entities.comments.models import (
@@ -8,7 +8,7 @@ from entities.comments.models import (
 )
 from core.settings import config
 from core.database import CommentDataBase
-from utils import FileWriter, FileReWriter, FileDeleter, Converter
+from utils import write_file, rewrite_file, delete_file, Converter
 
 
 class BaseDependency:
@@ -20,9 +20,9 @@ class BaseDependency:
 
     def __init__(
             self,
-            file_writer: Type[FileWriter] = FileWriter,
-            file_rewriter: Type[FileReWriter] = FileReWriter,
-            file_deleter: Type[FileDeleter] = FileDeleter,
+            file_writer: Callable = write_file,
+            file_rewriter: Callable = rewrite_file,
+            file_deleter: Callable = delete_file,
             comment_database: Type[CommentDataBase] = CommentDataBase
     ):
         self.file_writer = file_writer

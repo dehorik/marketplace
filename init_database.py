@@ -34,113 +34,59 @@ def init_database():
             
             CREATE TABLE IF NOT EXISTS product (
                 product_id SERIAL PRIMARY KEY,
-                user_id INT,
                 product_name VARCHAR(255),
                 product_price INT,
                 product_description TEXT,
-                product_photo_path VARCHAR(255),
-                
-                FOREIGN KEY (user_id) 
-                REFERENCES users (user_id) 
-                ON DELETE CASCADE
+                product_photo_path VARCHAR(255)
             );
             
             CREATE TABLE IF NOT EXISTS comment (
                 comment_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
+                comment_rating INT,
                 comment_date DATE,
                 comment_text VARCHAR(255) DEFAULT NULL,
-                comment_rating INT,
                 comment_photo_path VARCHAR(255) DEFAULT NULL,
             
                 FOREIGN KEY (user_id) 
-                REFERENCES users (user_id) 
-                ON DELETE CASCADE,
+                REFERENCES users (user_id),
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id) 
-                ON DELETE CASCADE
-            );
-            
-            CREATE TABLE IF NOT EXISTS order_status (
-                order_status_id SERIAL PRIMARY KEY,
-                order_status_name VARCHAR(255)
             );
             
             CREATE TABLE IF NOT EXISTS orders (
                 order_id SERIAL PRIMARY KEY,
                 product_id INT,
                 user_id INT,
-                order_status_id INT DEFAULT 1,
-                date_start DATE,
-                date_end DATE,
+                order_date_start DATE,
+                order_date_end DATE,
                 order_address VARCHAR(255),
-                product_name VARCHAR(255),
-                product_price INT,
-                product_photo_path VARCHAR(255),
                 
                 FOREIGN KEY (product_id) 
-                REFERENCES product (product_id) 
-                ON DELETE SET NULL,
+                REFERENCES product (product_id),
                 
                 FOREIGN KEY (user_id) 
-                REFERENCES users (user_id) 
-                ON DELETE CASCADE,
-                
-                FOREIGN KEY (order_status_id) 
-                REFERENCES order_status (order_status_id) 
+                REFERENCES users (user_id)
             );
             
-            CREATE TABLE IF NOT EXISTS orders_archive (
-                order_archive_id SERIAL PRIMARY KEY,
-                product_id INT,
-                user_id INT,
-                order_status_id INT,
-                date_start DATE,
-                date_end DATE,
-                order_address VARCHAR(255),
-                product_name VARCHAR(255),
-                product_price INT,
-                product_photo_path VARCHAR(255),
-                
-                FOREIGN KEY (product_id) 
-                REFERENCES product (product_id) 
-                ON DELETE SET NULL,
-                
-                FOREIGN KEY (user_id) 
-                REFERENCES users (user_id) 
-                ON DELETE CASCADE,
-                
-                FOREIGN KEY (order_status_id) 
-                REFERENCES order_status (order_status_id)
-            );
-            
-            CREATE TABLE IF NOT EXISTS shopping_bag_product (
-                shopping_bag_product_id SERIAL PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS shopping_bag_item (
+                shopping_bag_item_id SERIAL PRIMARY KEY,
                 product_id INT,
                 user_id INT,
                 
                 FOREIGN KEY (product_id) 
-                REFERENCES product (product_id) 
-                ON DELETE CASCADE,
+                REFERENCES product (product_id),
                 
                 FOREIGN KEY (user_id) 
-                REFERENCES users (user_id) 
-                ON DELETE CASCADE
+                REFERENCES users (user_id)
             ); 
         """
     )
 
     cursor.execute(
         """
-            INSERT INTO order_status
-                (order_status_name)
-            VALUES
-                ('В доставке'),
-                ('Доставлено'),
-                ('Отменено');
-                
             INSERT INTO role 
                 (role_name)
             VALUES

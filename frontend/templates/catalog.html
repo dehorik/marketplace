@@ -66,14 +66,14 @@
                 <div class="merchants-item-extra">
                     <div class="merchants-item-info">
                         <div class="merchants-item-price" data-base-price="7">
-                            {{ product.product_price }}
+                            {{ product.product_price }} $
                         </div>
                     </div>
                 </div>
             </div>
             {%- endmacro %}
 
-            {% for product in products -%}
+            {% for product in product_catalog.products -%}
                 {{ merchants_item(product) }}
             {% endfor -%}
         </div>

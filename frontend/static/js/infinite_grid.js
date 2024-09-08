@@ -14,7 +14,7 @@ function update_catalog(amount, last_product_id) {
 
     ajax_request.open(
         "GET",
-        `/products/update-catalog?amount=${amount}&last_product_id=${last_product_id}`
+        `/products/catalog-items?amount=${amount}&last_product_id=${last_product_id}`
     );
     ajax_request.setRequestHeader('Content-Type', 'application/json');
     ajax_request.send();
@@ -68,7 +68,7 @@ function create_item(product) {
     const divprice = document.createElement('div');
     divprice.setAttribute('data-base-price', '7'); //чё это бля? ты думал, что сервер может не вернуть цену?
     divprice.className = "merchants-item-price";
-    divprice.innerHTML = product.product_price;
+    divprice.innerHTML = `${product.product_price} $`;
     divextra.append(divinfo);
     divinfo.append(divprice);
 

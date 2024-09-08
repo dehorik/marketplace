@@ -27,7 +27,6 @@ class ProductDataBase(InterfaceDataBase):
 
     def create(
             self,
-            user_id: int,
             product_name: str,
             product_price: float,
             product_description: str,
@@ -36,18 +35,16 @@ class ProductDataBase(InterfaceDataBase):
         self._cursor.execute(
             """
                 INSERT INTO product (
-                    user_id, 
                     product_name, 
                     product_price, 
                     product_description, 
                     product_photo_path
                 )
                 VALUES
-                    (%s, %s, %s, %s, %s)
+                    (%s, %s, %s, %s)
                 RETURNING *
             """,
             [
-                user_id,
                 product_name,
                 product_price,
                 product_description,
@@ -62,19 +59,18 @@ class ProductDataBase(InterfaceDataBase):
             """
                 SELECT 
                     product_id,
-                    user_id,
                     product_name,
                     product_price, 
                     product_description,
+                    product_photo_path,
                     (
                         SELECT 
-                            ROUND(AVG(comment_rating), 2) as product_rating
+                            ROUND(AVG(comment_rating), 1) as product_rating
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id
                         WHERE product.product_id = %s
-                    ) AS rating,
-                    product_photo_path 
+                    ) AS product_rating
                 FROM product
                 WHERE product_id = %s;
             """,
@@ -83,22 +79,21 @@ class ProductDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def update(
-            self,
-            product_id: int,
-            product_name: str | None = None,
-            product_price: float | None = None,
-            product_description: str | None = None
-    ) -> list:
-        params = {
-            'product_name': product_name,
-            'product_price': product_price,
-            'product_description': product_description
-        }
-        params = {key: value for key, value in params.items() if value is not None}
+    def update(self, product_id: int, **kwargs) -> list:
+        if not kwargs:
+            self._cursor.execute(
+                """
+                    SELECT *
+                    FROM product 
+                    WHERE product_id = %s;
+                """,
+                [product_id]
+            )
+
+            return self._cursor.fetchall()
 
         set_values = ""
-        for key, value in params.items():
+        for key, value in kwargs.items():
             if type(value) is str:
                 set_values = set_values + f"{key} = '{value}', "
             else:
@@ -117,26 +112,75 @@ class ProductDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def delete(self, product_id: int) -> list:
+    def delete(self, product_id: int) -> dict:
+        deleted_items = {
+            "product": None,
+            "comments": [],
+            "orders": [],
+            "shopping_bag_items": []
+        }
+
         self._cursor.execute(
             """
                 DELETE 
-                FROM product
+                FROM comment
                 WHERE product_id = %s
                 RETURNING *;
             """,
             [product_id]
         )
+        deleted_items['comments'].extend(self._cursor.fetchall())
 
-        return self._cursor.fetchall()
+        self._cursor.execute(
+            """
+                DELETE 
+                FROM orders 
+                WHERE product_id = %s
+                RETURNING *; 
+            """,
+            [product_id]
+        )
+        deleted_items['orders'].extend(self._cursor.fetchall())
 
-    def get_catalog(self, amount: int, last_product_id: int | None = None) -> list:
+        self._cursor.execute(
+            """
+                DELETE 
+                FROM shopping_bag_item
+                WHERE product_id = %s
+                RETURNING *; 
+            """,
+            [product_id]
+        )
+        deleted_items["shopping_bag_items"].extend(self._cursor.fetchall())
+
+        self._cursor.execute(
+            """
+                DELETE 
+                FROM product
+                WHERE product_id = %s
+                RETURNING *; 
+            """,
+            [product_id]
+        )
+        deleted_items['product'] = self._cursor.fetchone()
+
+        return deleted_items
+
+    def get_catalog(
+            self,
+            amount: int = 9,
+            last_product_id: int | None = None
+    ) -> list:
         """
-        Для получения последних созданных товаров и последующей подгрузки их в каталог
+        Для получения последних созданных товаров
+        и последующей подгрузки их в каталог
 
         :param amount: количество возвращаемых товаров
-        :param last_product_id: product_id последнего товара из предыдущей подгрузки;
-               если это первый запрос на получение последних товаров в каталог, то ничего не предавать
+        :param last_product_id: product_id последнего товара
+               из предыдущей подгрузки;
+               если это первый запрос на получение
+               последних товаров в каталог, то оставить None
+
         :return: список товаров
         """
 
@@ -157,7 +201,7 @@ class ProductDataBase(InterfaceDataBase):
                     product LEFT JOIN (
                         SELECT 
                             product.product_id,
-                            ROUND(AVG(comment_rating), 2) as product_rating
+                            ROUND(AVG(comment_rating), 1) as product_rating
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id

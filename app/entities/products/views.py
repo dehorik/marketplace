@@ -3,14 +3,18 @@ from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from entities.products.models import ProductModel, UpdateCatalogResponseModel
+from entities.products.models import (
+    ProductModel,
+    ProductCatalogModel,
+    ExtendedProductModel
+)
 from entities.products.dependencies import (
-    Catalog,
-    CreateProduct,
-    GetProduct,
-    UpdateCatalog,
-    UpdateProduct,
-    DeleteProduct
+    get_catalog_dependency,
+    load_catalog_dependency,
+    create_product_dependency,
+    get_product_dependency,
+    update_product_dependency,
+    delete_product_dependency
 )
 
 
@@ -26,42 +30,56 @@ templates = Jinja2Templates(
 
 
 @router.get("/catalog", response_class=HTMLResponse)
-def get_catalog(request: Request, products: Annotated[list, Depends(Catalog())]):
+def get_catalog(
+        request: Request,
+        product_catalog: Annotated[ProductCatalogModel, Depends(get_catalog_dependency)]
+):
     return templates.TemplateResponse(
         name='catalog.html',
         request=request,
-        context={"products": products}
+        context={
+            "product_catalog": product_catalog
+        }
     )
 
-@router.get("/update-catalog", response_model=UpdateCatalogResponseModel)
-def update_catalog(products: Annotated[list, Depends(UpdateCatalog())]):
-    return {
-        'products': products
-    }
+@router.get("/catalog-items", response_model=ProductCatalogModel)
+def load_catalog(
+        product_catalog:
+        Annotated[ProductCatalogModel, Depends(load_catalog_dependency)]
+):
+    return product_catalog
 
 @router.post(
     '/create',
     response_model=ProductModel,
     status_code=status.HTTP_201_CREATED
 )
-def create_product(product: Annotated[ProductModel, Depends(CreateProduct())]):
+def create_product(
+        product: Annotated[ProductModel, Depends(create_product_dependency)]
+):
     return product
 
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ProductModel, Depends(GetProduct())]
+        product: Annotated[ExtendedProductModel, Depends(get_product_dependency)]
 ):
     return templates.TemplateResponse(
         name='merchan.html',
         request=request,
-        context={"product": product}
+        context={
+            "product": product
+        }
     )
 
 @router.patch("/{product_id}", response_model=ProductModel)
-def update_product(product: Annotated[ProductModel, Depends(UpdateProduct())]):
+def update_product(
+        product: Annotated[ProductModel, Depends(update_product_dependency)]
+):
     return product
 
 @router.delete("/{product_id}", response_model=ProductModel)
-def delete_product(product: Annotated[ProductModel, Depends(DeleteProduct())]):
+def delete_product(
+        product: Annotated[ProductModel, Depends(delete_product_dependency)]
+):
     return product

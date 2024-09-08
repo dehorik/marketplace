@@ -1,31 +1,32 @@
-from typing import Annotated
-from fastapi import Form, UploadFile, HTTPException, status
+from typing import Annotated, Type, Callable
+from fastapi import Form, UploadFile, HTTPException, File, status
 
+from entities.products.models import (
+    ProductModel,
+    ExtendedProductModel,
+    ProductCatalogCardModel,
+    ProductCatalogModel
+)
 from core.settings import config
 from core.database import ProductDataBase, CommentDataBase
-from utils import Converter, FileWriter, FileReWriter, FileDeleter
-from entities.products.models import ProductModel, ProductCatalogCardModel
+from utils import Converter, write_file, rewrite_file, delete_file
 
 
 class BaseDependency:
-    """
-    Базовый класс для других классов-зависимостей,
-    предоставляющий объектам дочерних классов ссылки на экземпляры
-    FileWriter, ProductDataBase и т.д.
-    """
+    """Базовый класс для других классов-зависимостей"""
 
     def __init__(
             self,
-            file_writer: Annotated[type, FileWriter] = FileWriter,
-            file_rewriter: Annotated[type, FileReWriter] = FileReWriter,
-            file_deleter: Annotated[type, FileDeleter] = FileDeleter,
-            producct_database: Annotated[type, ProductDataBase] = ProductDataBase,
-            comment_database: Annotated[type, CommentDataBase] = CommentDataBase
+            file_writer: Callable = write_file,
+            file_rewriter: Callable = rewrite_file,
+            file_deleter: Callable = delete_file,
+            producct_database: Type = ProductDataBase,
+            comment_database: Type = CommentDataBase
     ):
         """
-        :param file_writer: ссылка на класс для записи файлов
-        :param file_rewriter: ссылка на класс для перезаписи файлов
-        :param file_deleter: ссылка на класс для удаления файлов
+        :param file_writer: ссылка на функцию для записи файлов
+        :param file_rewriter: ссылка на функцию для перезаписи файлов
+        :param file_deleter: ссылка на функцию для удаления файлов
         :param producct_database: ссылка на класс для работы с БД (товар)
         :param comment_database: ссылка на класс для работы с БД (отзывы)
         """
@@ -37,7 +38,7 @@ class BaseDependency:
         self.comment_database = comment_database
 
 
-class Catalog(BaseDependency):
+class ProductCatalog(BaseDependency):
     def __init__(
             self,
             converter: Converter = Converter(ProductCatalogCardModel)
@@ -45,13 +46,16 @@ class Catalog(BaseDependency):
         super().__init__()
         self.converter = converter
 
-    def __call__(self) -> list:
+    def __call__(self) -> ProductCatalogModel:
         with self.product_database() as product_db:
             products = product_db.get_catalog(amount=9)
-            return self.converter.serialization(products)
+
+            return ProductCatalogModel(
+                products=self.converter.serialization(products)
+            )
 
 
-class UpdateCatalog(BaseDependency):
+class CatalogLoader(BaseDependency):
     def __init__(
             self,
             converter: Converter = Converter(ProductCatalogCardModel)
@@ -63,24 +67,41 @@ class UpdateCatalog(BaseDependency):
             self,
             amount: int,
             last_product_id: int | None = None
-    ) -> list:
+    ) -> ProductCatalogModel:
         with self.product_database() as product_db:
-            products = product_db.get_catalog(amount, last_product_id)
-            return self.converter.serialization(products)
+            products = product_db.get_catalog(
+                amount=amount,
+                last_product_id=last_product_id
+            )
+
+            return ProductCatalogModel(
+                products=self.converter.serialization(products)
+            )
 
 
-class CreateProduct(BaseDependency):
+class ProductCreator(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
-            user_id: int,
-            product_name: Annotated[str, Form(min_length=2, max_length=30)],
-            product_price: Annotated[float, Form(gt=0, le=1000000)],
-            product_description: Annotated[str, Form(min_length=2, max_length=300)],
-            product_photo: UploadFile
+            product_name: Annotated[
+                str,
+                Form(min_length=2, max_length=30)
+            ],
+            product_price: Annotated[
+                int,
+                Form(gt=0, le=1000000)
+            ],
+            product_description: Annotated[
+                str,
+                Form(min_length=2, max_length=300)
+            ],
+            product_photo: Annotated[
+                UploadFile,
+                File()
+            ]
     ) -> ProductModel:
         if not product_photo.content_type.split('/')[0] == 'image':
             raise HTTPException(
@@ -88,42 +109,50 @@ class CreateProduct(BaseDependency):
                 detail='invalid file type'
             )
 
-        with self.product_database() as product_db:
-            product_photo_path = self.file_writer(
-                config.PRODUCT_PHOTO_PATH,
-                product_photo.file.read()
-            ).path
+        product_photo_path = self.file_writer(
+            config.PRODUCT_PHOTO_PATH,
+            product_photo.file.read()
+        )
 
+        with self.product_database() as product_db:
             product = product_db.create(
-                user_id,
                 product_name,
                 product_price,
                 product_description,
                 product_photo_path
             )
 
-            return self.converter.serialization(product)[0]
+        return self.converter.serialization(product)[0]
 
 
-class GetProduct(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ProductModel)):
+class ProductGetter(BaseDependency):
+    def __init__(
+            self,
+            converter: Converter = Converter(ProductModel)
+    ):
         super().__init__()
         self.converter = converter
 
-    def __call__(self, product_id: int) -> ProductModel:
+    def __call__(self, product_id: int) -> ExtendedProductModel:
         with self.product_database() as product_db:
             product = product_db.read(product_id)
 
-            if not product:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail='incorrect product_id'
-                )
+        if not product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='incorrect product_id'
+            )
 
-            return self.converter.serialization(product)[0]
+        product = list(product[0])
+        product_rating = product.pop(-1)
+
+        return ExtendedProductModel(
+            product=self.converter.serialization([product])[0],
+            product_rating=product_rating
+        )
 
 
-class UpdateProduct(BaseDependency):
+class ProductUpdater(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -131,10 +160,22 @@ class UpdateProduct(BaseDependency):
     def __call__(
             self,
             product_id: int,
-            product_name: Annotated[str | None, Form(min_length=2, max_length=30)] = None,
-            product_price: Annotated[float | None, Form(gt=0, le=1000000)] = None,
-            product_description: Annotated[str | None, Form(min_length=2, max_length=300)] = None,
-            product_photo: UploadFile | None = None
+            product_name: Annotated[
+                str | None,
+                Form(min_length=2, max_length=30)
+            ] = None,
+            product_price: Annotated[
+                int | None,
+                Form(gt=0, le=1000000)
+            ] = None,
+            product_description: Annotated[
+                str | None,
+                Form(min_length=2, max_length=300)
+            ] = None,
+            product_photo: Annotated[
+                UploadFile,
+                File()
+            ] = None
     ) -> ProductModel:
         if product_photo:
             if not product_photo.content_type.split('/')[0] == 'image':
@@ -143,54 +184,71 @@ class UpdateProduct(BaseDependency):
                     detail='invalid file type'
                 )
 
+        fields_for_update = {
+            'product_name': product_name,
+            'product_price': product_price,
+            'product_description': product_description
+        }
+        fields_for_update = {
+            key: value
+            for key, value in fields_for_update.items()
+            if value is not None
+        }
+
         with self.product_database() as product_db:
-            params = {
-                'product_name': product_name,
-                'product_price': product_price,
-                'product_description': product_description
-            }
-            params = {key: value for key, value in params.items() if value is not None}
-            product = product_db.update(product_id, **params)
+            product = product_db.update(
+                product_id=product_id,
+                **fields_for_update
+            )
 
-            if not product:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail='incorrect product_id'
-                )
+        if not product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='incorrect product_id'
+            )
 
-            if product_photo:
-                product_photo_path = product[0][-1]
-                self.file_rewriter(product_photo_path, product_photo.file.read())
+        product = self.converter.serialization(product)[0]
 
-            return self.converter.serialization(product)[0]
+        if product_photo:
+            self.file_rewriter(
+                product.product_photo_path,
+                product_photo.file.read()
+            )
+
+        return product
 
 
-class DeleteProduct(BaseDependency):
+class ProductDeleter(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(self, product_id: int) -> ProductModel:
-        with self.comment_database() as comment_db:
-            comments = comment_db.read(product_id)
-
-            for comment in comments:
-                deleted_comment = comment_db.delete(comment[0])
-                deleted_comment_photo_path = deleted_comment[0][-1]
-
-                if deleted_comment_photo_path:
-                    self.file_deleter(deleted_comment_photo_path)
-
         with self.product_database() as product_db:
-            product = product_db.delete(product_id)
+            deleted_items = product_db.delete(product_id)
 
-            if not product:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail='incorrect product_id'
-                )
+        if not deleted_items['product']:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="incorrect product_id"
+            )
 
-            deleted_product_photo_path = product[0][-1]
-            self.file_deleter(deleted_product_photo_path)
+        product = self.converter.serialization([deleted_items['product']])[0]
+        self.file_deleter(product.product_photo_path)
 
-            return self.converter.serialization(product)[0]
+        for comment in deleted_items['comments']:
+            comment_photo_path = comment[-1]
+
+            if comment_photo_path:
+                self.file_deleter(comment_photo_path)
+
+        return product
+
+
+# dependencies
+get_catalog_dependency = ProductCatalog()
+load_catalog_dependency = CatalogLoader()
+create_product_dependency = ProductCreator()
+get_product_dependency = ProductGetter()
+update_product_dependency = ProductUpdater()
+delete_product_dependency = ProductDeleter()
