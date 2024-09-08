@@ -69,22 +69,21 @@ class CommentDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def update(
-            self,
-            comment_id: int,
-            comment_text: str | None = None,
-            comment_rating: int | None = None,
-            comment_photo_path: str | None = None
-    ) -> list:
-        params = {
-            "comment_text": comment_text,
-            "comment_rating": comment_rating,
-            "comment_photo_path": comment_photo_path
-        }
-        params = {key: value for key, value in params.items() if value is not None}
+    def update(self, comment_id: int, **kwargs) -> list:
+        if not kwargs:
+            self._cursor.execute(
+                """
+                    SELECT *
+                    FROM comment
+                    WHERE comment_id = %s;
+                """,
+                [comment_id]
+            )
+
+            return self._cursor.fetchall()
 
         set_values = ""
-        for key, value in params.items():
+        for key, value in kwargs.items():
             if type(value) is str:
                 set_values = set_values + f"{key} = '{value}', "
             else:
@@ -119,7 +118,7 @@ class CommentDataBase(InterfaceDataBase):
     def get_comment_item_list(
             self,
             product_id: int,
-            amount: int,
+            amount: int = 12,
             last_comment_id: int = None
     ) -> list:
         """
@@ -128,7 +127,7 @@ class CommentDataBase(InterfaceDataBase):
         :param product_id: product_id товара
         :param amount: нужное количество отзывов
         :param last_comment_id: comment_id последнего подгруженного отзыва;
-               (если это первый запрос на подгрузку отзывов, оставить None)
+               (если это первый запрос на подгрузку отзывов - оставить None)
         :return: список отзывов
         """
 
@@ -145,9 +144,9 @@ class CommentDataBase(InterfaceDataBase):
                     product.product_id, 
                     users.user_name,
                     users.user_photo_path,
+                    comment.comment_rating,
                     comment.comment_date,
                     comment.comment_text,
-                    comment.comment_rating,
                     comment.comment_photo_path   
                 FROM users 
                     INNER JOIN comment USING(user_id)

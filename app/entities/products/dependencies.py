@@ -8,7 +8,7 @@ from entities.products.models import (
     ProductCatalogModel
 )
 from core.settings import config
-from core.database import ProductDataBase, CommentDataBase
+from core.database import ProductDataBase
 from utils import Converter, write_file, rewrite_file, delete_file
 
 
@@ -20,22 +20,19 @@ class BaseDependency:
             file_writer: Callable = write_file,
             file_rewriter: Callable = rewrite_file,
             file_deleter: Callable = delete_file,
-            producct_database: Type = ProductDataBase,
-            comment_database: Type = CommentDataBase
+            producct_database: Type = ProductDataBase
     ):
         """
         :param file_writer: ссылка на функцию для записи файлов
         :param file_rewriter: ссылка на функцию для перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
         :param producct_database: ссылка на класс для работы с БД (товар)
-        :param comment_database: ссылка на класс для работы с БД (отзывы)
         """
 
         self.file_writer = file_writer
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
         self.product_database = producct_database
-        self.comment_database = comment_database
 
 
 class CatalogLoader(BaseDependency):
