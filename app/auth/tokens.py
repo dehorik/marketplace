@@ -2,8 +2,8 @@ import jwt
 import datetime
 from pathlib import Path
 
-from auth.exceptions import InvalidPayloadObjectException
 from auth.models import PayloadTokenModel
+from auth.exceptions import InvalidPayloadObjectException
 from entities.users.models import UserModel
 from core.settings import config
 
@@ -51,12 +51,12 @@ class JWTDecoder:
 
 
 class AccessTokenCreator:
-    """Для создания access токенов"""
+    """Для выпуска access токенов"""
 
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
-            exp_minutes: float = config.ACCESS_TOKEN_EXPIRE_MINUTES
+            exp_minutes: int = config.ACCESS_TOKEN_EXPIRE_MINUTES
     ):
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_minutes
@@ -71,7 +71,6 @@ class AccessTokenCreator:
             "token_type": "access",
             "sub": sub,
             "role_id": data.role_id,
-            "user_name": data.user_name,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
@@ -80,12 +79,12 @@ class AccessTokenCreator:
 
 
 class RefreshTokenCreator:
-    """Для создания refresh токенов"""
+    """Для выпуска refresh токенов"""
 
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
-            exp_days: float = config.REFRESH_TOKEN_EXPIRE_DAYS
+            exp_days: int = config.REFRESH_TOKEN_EXPIRE_DAYS
     ):
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_days * 24 * 60
@@ -100,7 +99,6 @@ class RefreshTokenCreator:
             "token_type": "refresh",
             "sub": sub,
             "role_id": data.role_id,
-            "user_name": data.user_name,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }

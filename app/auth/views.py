@@ -31,12 +31,14 @@ def login(auth_model: Annotated[AuthenticationModel, Depends(login_user)]):
 
 @router.post("/logout")
 def logout(response: Annotated[str, Depends(logout_user)]):
-    return response
+    return {
+        "message": response
+    }
 
 @router.post("/refresh", response_model=AccessTokenModel)
 def refresh(access_token: Annotated[AccessTokenModel, Depends(refresh_tokens)]):
     return access_token
 
-@router.post('/validate-access', response_model=PayloadTokenModel)
+@router.get('/validate-access', response_model=PayloadTokenModel)
 def access(payload: Annotated[PayloadTokenModel, Depends(validate_access_token)]):
     return payload

@@ -1,5 +1,4 @@
-import datetime
-from typing import Annotated
+from typing import Annotated, Type
 from fastapi import HTTPException, Depends, Response, Cookie, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
@@ -30,8 +29,8 @@ http_bearer = HTTPBearer()
 
 class BaseDependency:
     """
-    Базовый класс, предоставляющий зависимостям
-    ссылки на необходимые объекты
+    Базовый класс, предоставляющий дочерним ссылки на необходимые объекты,
+    тем самым реализуя эффективную систему внедрения зависимостей
     """
 
     def __init__(
@@ -41,7 +40,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = RedisClient(),
-            user_database: Annotated[type, UserDataBase] = UserDataBase
+            user_database: Type = UserDataBase
     ):
         """
         :param jwt_encoder: объект для выпуска jwt
@@ -101,12 +100,10 @@ class Registration(BaseDependency):
         self.redis_client.append_token(user.user_id, refresh_token)
         set_refresh_cookie(response, refresh_token)
 
-        auth_model = AuthenticationModel(
+        return AuthenticationModel(
             user=user,
             access_token=AccessTokenModel(access_token=access_token)
         )
-
-        return auth_model
 
 
 class CredentialsVerifier(BaseDependency):
@@ -155,12 +152,10 @@ class Login(BaseDependency):
         self.redis_client.append_token(user.user_id, refresh_token)
         set_refresh_cookie(response, refresh_token)
 
-        auth_model = AuthenticationModel(
+        return AuthenticationModel(
             user=user,
             access_token=AccessTokenModel(access_token=access_token)
         )
-
-        return auth_model
 
 
 class Logout(BaseDependency):
@@ -186,6 +181,8 @@ class Logout(BaseDependency):
 
         except InvalidTokenException:
             # если refresh токена в redis нет - им кто-то уже воспользовался
+            # для безопасности пользователя следует удалить все его refresh jwt
+
             # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload['sub'])
 
@@ -207,7 +204,7 @@ class RefreshTokenValidator(BaseDependency):
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> dict:
+    ) -> PayloadTokenModel:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -215,8 +212,8 @@ class RefreshTokenValidator(BaseDependency):
             )
 
         try:
-            payload = self.jwt_decoder(refresh_token)
-            self.redis_client.delete_token(payload['sub'], refresh_token)
+            payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
+            self.redis_client.delete_token(payload.sub, refresh_token)
             response.delete_cookie('refresh_token')
 
             return payload
@@ -227,7 +224,7 @@ class RefreshTokenValidator(BaseDependency):
             # тем самым удалив и токен злоумышленника)
 
             # noinspection PyUnboundLocalVariable
-            self.redis_client.delete_user(payload['sub'])
+            self.redis_client.delete_user(payload.sub)
 
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -243,21 +240,22 @@ class RefreshTokenValidator(BaseDependency):
 class Refresher(BaseDependency):
     """Выпуск пары токенов refresh/access на основе refresh токена"""
 
+    def __init__(self, converter: Converter = Converter(UserModel)):
+        super().__init__()
+        self.converter = converter
+
     def __call__(
             self,
             response: Response,
-            payload: Annotated[dict, Depends(RefreshTokenValidator())]
+            payload: Annotated[PayloadTokenModel, Depends(RefreshTokenValidator())]
     ) -> AccessTokenModel:
-        payload_token = PayloadTokenModel(
-            token_type=payload['token_type'],
-            sub=payload['sub'],
-            role_id=payload['role_id'],
-            user_name=payload['user_name']
-        )
-        refresh_token = self.refresh_token_creator(payload_token)
-        access_token = self.access_token_creator(payload_token)
+        with self.user_database() as user_db:
+            user = self.converter.serialization(user_db.read(payload.sub))[0]
 
-        self.redis_client.append_token(payload['sub'], refresh_token)
+        refresh_token = self.refresh_token_creator(user)
+        access_token = self.access_token_creator(user)
+
+        self.redis_client.append_token(payload.sub, refresh_token)
         set_refresh_cookie(response, refresh_token)
 
         return AccessTokenModel(access_token=access_token)
@@ -286,7 +284,7 @@ class Authorization(BaseDependency):
     (проверяем наличие прав на совершение каких-либо действий)
     """
 
-    def __init__(self, min_role_id: int = 2):
+    def __init__(self, min_role_id: int):
         super().__init__()
         self.__min_role_id = min_role_id
 

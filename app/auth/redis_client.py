@@ -10,7 +10,7 @@ from utils import Singleton
 
 
 class ConnectionData:
-    """Класс для извлечения из .env файла конфигурационных данных для БД redis"""
+    """Класс для извлечения из .env файла конфигурационных данных для redis"""
 
     def __init__(self, config_database: Settings = config):
         self.__config_database = config_database

@@ -33,5 +33,4 @@ class ProductCatalogCardModel(BaseModel):
 
 
 class ProductCatalogModel(BaseModel):
-    """Список карточек товаров в каталоге"""
     products: List[ProductCatalogCardModel]

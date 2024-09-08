@@ -6,6 +6,8 @@ from entities.users.models import UserModel
 
 
 class UserCredentialsModel(BaseModel):
+    """Данные для входа/регистрации"""
+
     user_name: str = Form(min_length=6, max_length=14)
     user_password: str = Form(min_length=8, max_length=18)
 
@@ -16,6 +18,8 @@ class AccessTokenModel(BaseModel):
 
 
 class AuthenticationModel(BaseModel):
+    """Отдаётся при прохождении аутентификации"""
+
     user: UserModel
     access_token: AccessTokenModel
 
@@ -24,6 +28,5 @@ class PayloadTokenModel(BaseModel):
     token_type: str
     sub: int
     role_id: int
-    user_name: str
     iat: datetime | None = None
     exp: datetime | None = None

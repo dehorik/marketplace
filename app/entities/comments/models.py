@@ -30,5 +30,4 @@ class CommentItemModel(BaseModel):
 
 
 class CommentItemListModel(BaseModel):
-    """Список из подгружаемых отзывов"""
     comments: List[CommentItemModel]
