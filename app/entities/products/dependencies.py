@@ -38,24 +38,9 @@ class BaseDependency:
         self.comment_database = comment_database
 
 
-class ProductCatalog(BaseDependency):
-    def __init__(
-            self,
-            converter: Converter = Converter(ProductCatalogCardModel)
-    ):
-        super().__init__()
-        self.converter = converter
-
-    def __call__(self) -> ProductCatalogModel:
-        with self.product_database() as product_db:
-            products = product_db.get_catalog(amount=9)
-
-            return ProductCatalogModel(
-                products=self.converter.serialization(products)
-            )
-
-
 class CatalogLoader(BaseDependency):
+    """Получение последних созданных товаров"""
+
     def __init__(
             self,
             converter: Converter = Converter(ProductCatalogCardModel)
@@ -65,7 +50,7 @@ class CatalogLoader(BaseDependency):
 
     def __call__(
             self,
-            amount: int,
+            amount: int = 9,
             last_product_id: int | None = None
     ) -> ProductCatalogModel:
         with self.product_database() as product_db:
@@ -80,6 +65,8 @@ class CatalogLoader(BaseDependency):
 
 
 class ProductCreator(BaseDependency):
+    """Создание товара"""
+
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -126,6 +113,8 @@ class ProductCreator(BaseDependency):
 
 
 class ProductGetter(BaseDependency):
+    """Получение товара"""
+
     def __init__(
             self,
             converter: Converter = Converter(ProductModel)
@@ -153,6 +142,8 @@ class ProductGetter(BaseDependency):
 
 
 class ProductUpdater(BaseDependency):
+    """Обновление товара"""
+
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -219,6 +210,8 @@ class ProductUpdater(BaseDependency):
 
 
 class ProductDeleter(BaseDependency):
+    """Удаление товара"""
+
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -246,7 +239,6 @@ class ProductDeleter(BaseDependency):
 
 
 # dependencies
-get_catalog_dependency = ProductCatalog()
 load_catalog_dependency = CatalogLoader()
 create_product_dependency = ProductCreator()
 get_product_dependency = ProductGetter()
