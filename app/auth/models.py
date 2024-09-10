@@ -27,6 +27,5 @@ class AuthenticationModel(BaseModel):
 class PayloadTokenModel(BaseModel):
     token_type: str
     sub: int
-    role_id: int
     iat: datetime | None = None
     exp: datetime | None = None

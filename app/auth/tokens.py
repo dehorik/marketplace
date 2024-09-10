@@ -70,7 +70,6 @@ class AccessTokenCreator:
         payload = {
             "token_type": "access",
             "sub": sub,
-            "role_id": data.role_id,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }
@@ -98,7 +97,6 @@ class RefreshTokenCreator:
         payload = {
             "token_type": "refresh",
             "sub": sub,
-            "role_id": data.role_id,
             "iat": now,
             "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
         }

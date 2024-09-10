@@ -249,11 +249,8 @@ class Refresher(BaseDependency):
             response: Response,
             payload: Annotated[PayloadTokenModel, Depends(RefreshTokenValidator())]
     ) -> AccessTokenModel:
-        with self.user_database() as user_db:
-            user = self.converter.serialization(user_db.read(payload.sub))[0]
-
-        refresh_token = self.refresh_token_creator(user)
-        access_token = self.access_token_creator(user)
+        refresh_token = self.refresh_token_creator(payload)
+        access_token = self.access_token_creator(payload)
 
         self.redis_client.append_token(payload.sub, refresh_token)
         set_refresh_cookie(response, refresh_token)
@@ -284,15 +281,24 @@ class Authorization(BaseDependency):
     (проверяем наличие прав на совершение каких-либо действий)
     """
 
-    def __init__(self, min_role_id: int):
+    def __init__(
+            self,
+            min_role_id: int,
+            converter: Converter = Converter(UserModel)
+    ):
         super().__init__()
+        self.converter = converter
         self.__min_role_id = min_role_id
 
     def __call__(
             self,
             payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
     ) -> PayloadTokenModel:
-        if not self.__min_role_id <= payload.role_id:
+        with self.user_database() as user_db:
+            user = user_db.read(payload.sub)
+
+        user = self.converter.serialization(user)[0]
+        if not self.__min_role_id <= user.role_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='you have no such rights'
@@ -320,8 +326,8 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 # а __init__ для внедрения внешних зависимостей
 # (объктов БД, классов для работы с jwt и т.д)
 
-register_user = Registration()
-login_user = Login()
-logout_user = Logout()
-refresh_tokens = Refresher()
-validate_access_token = AccessTokenValidator()
+register_user_dependency = Registration()
+login_user_dependency = Login()
+logout_user_dependency = Logout()
+refresh_tokens_dependency = Refresher()
+validate_access_token_dependency = AccessTokenValidator()
