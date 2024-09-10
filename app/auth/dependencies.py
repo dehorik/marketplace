@@ -97,8 +97,8 @@ class Registration(BaseDependency):
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
-        self.redis_client.append_token(user.user_id, refresh_token)
         set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
 
         return AuthenticationModel(
             user=user,
@@ -149,8 +149,8 @@ class Login(BaseDependency):
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
-        self.redis_client.append_token(user.user_id, refresh_token)
         set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
 
         return AuthenticationModel(
             user=user,
@@ -173,9 +173,9 @@ class Logout(BaseDependency):
             )
 
         try:
+            response.delete_cookie('refresh_token')
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
-            response.delete_cookie('refresh_token')
 
             return 'successful logout'
 
@@ -212,9 +212,9 @@ class RefreshTokenValidator(BaseDependency):
             )
 
         try:
+            response.delete_cookie('refresh_token')
             payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
             self.redis_client.delete_token(payload.sub, refresh_token)
-            response.delete_cookie('refresh_token')
 
             return payload
         except InvalidTokenException:
@@ -252,8 +252,8 @@ class Refresher(BaseDependency):
         refresh_token = self.refresh_token_creator(payload)
         access_token = self.access_token_creator(payload)
 
-        self.redis_client.append_token(payload.sub, refresh_token)
         set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(payload.sub, refresh_token)
 
         return AccessTokenModel(access_token=access_token)
 

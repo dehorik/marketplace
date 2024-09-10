@@ -54,26 +54,27 @@ class RedisClient(Singleton):
         # добавление токена в список (создание списка при отсутствии)
         # максимум сохраненных refresh токенов пользователя - 5
 
-        user_id = str(user_id)
-        if self.__client.rpush(user_id, token) >= 6:
+        amount_tokens = self.__client.rpush(user_id, token)
+        expire_sec = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        self.__client.expire(str(user_id), expire_sec)
+
+        if amount_tokens >= 6:
             self.__client.lpop(user_id)
 
     def delete_token(self, user_id: str | int, token: str) -> None:
         # удаление токена из списка
 
-        user_id = str(user_id)
-        if not self.__client.exists(user_id):
+        if not self.__client.exists(str(user_id)):
             raise InvalidUserException('user_id does not exist')
 
-        operation = self.__client.lrem(user_id, 1, token)
+        operation = self.__client.lrem(str(user_id), 1, token)
         if not operation:
             raise InvalidTokenException('token does not exist')
 
     def get_tokens(self, user_id: str | int) -> list:
         # получение всех токенов пользователя
 
-        user_id = str(user_id)
-        if not self.__client.exists(user_id):
+        if not self.__client.exists(str(user_id)):
             raise InvalidUserException('user_id does not exist')
         else:
             return self.__client.lrange(user_id, 0, -1)
@@ -81,7 +82,6 @@ class RedisClient(Singleton):
     def delete_user(self, user_id: str | int) -> None:
         # удаление пользователя и его токенов
 
-        user_id = str(user_id)
-        operation = self.__client.delete(user_id)
+        operation = self.__client.delete(str(user_id))
         if not operation:
             raise InvalidUserException('user_id does not exist')
