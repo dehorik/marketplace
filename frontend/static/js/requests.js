@@ -4,11 +4,6 @@ const axios= require("axios").default;
 class Request {
     constructor(url) {
         this.url = url;
-        this.configured_axios = axios.create(
-            {
-                baseURL: 'http://127.0.0.1:8000/'
-            }
-        );
     }
 
     configure_request(method='get', params={}, headers={}) {
@@ -18,8 +13,9 @@ class Request {
     }
 
     send_request() {
-        this.configured_axios.request(
+        axios.request(
             {
+                "url": this.url,
                 "method": this.method,
                 "headers": this.headers,
                 "params": this.params
@@ -36,5 +32,6 @@ class Request {
 }
 
 
-
-
+const request = new Request("http://127.0.0.1:8000/products/latest");
+request.configure_request(method="get");
+request.send_request();
