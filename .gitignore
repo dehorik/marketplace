@@ -3,4 +3,5 @@ __pycache__/
 .venv/
 database_data/
 certificates/
+node_modules/
 .env
