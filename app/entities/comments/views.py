@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post(
-    '/create/{product_id}',
+    '/create',
     response_model=CommentModel,
     status_code=status.HTTP_201_CREATED
 )
@@ -26,7 +26,7 @@ def create_comment(
 ):
     return comment
 
-@router.get("/list/{product_id}", response_model=CommentItemListModel)
+@router.get("/latest", response_model=CommentItemListModel)
 def load_comment_list(
         comments: Annotated[CommentItemListModel, Depends(load_comments_dependency)]
 ):
