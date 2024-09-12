@@ -10,33 +10,22 @@ function update_catalog(amount, last_product_id) {
     // я добавил к тегу div, содержащему карточку товара, атрибут data-product-id;
     // он необходим для корректной работы скрипта
 
-    const ajax_request = new XMLHttpRequest();
-
-    ajax_request.open(
-        "GET",
-        `/products/latest?amount=${amount}&last_product_id=${last_product_id}`
-    );
-    ajax_request.setRequestHeader('Content-Type', 'application/json');
-    ajax_request.send();
-
-    ajax_request.onload = () => {
-        if (ajax_request.status === 200) {
-            // по адресу /docs пожно найти описание возвращаемого json при get запросе
-            // на /products/update-catalog
-
-            const json_response = JSON.parse(ajax_request.response);
-            const products = json_response.products;
+    axios.get(
+        "/products/latest", {
+        params: {
+            amount: amount,
+            last_product_id: last_product_id
+        }
+    })
+        .then(function (response) {
+            let products = response.data.products;
 
             for (let i in products) {
                 const product = products[i];
                 const item = create_item(product);
                 place_item(item);
             }
-        }
-        else {
-            console.log(ajax_request.statusText);
-        }
-    };
+        });
 }
 
 function create_item(product) {
