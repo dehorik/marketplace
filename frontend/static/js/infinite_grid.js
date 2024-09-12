@@ -14,7 +14,7 @@ function update_catalog(amount, last_product_id) {
 
     ajax_request.open(
         "GET",
-        `/products/catalog-items?amount=${amount}&last_product_id=${last_product_id}`
+        `/products/latest?amount=${amount}&last_product_id=${last_product_id}`
     );
     ajax_request.setRequestHeader('Content-Type', 'application/json');
     ajax_request.send();

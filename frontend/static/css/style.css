@@ -254,6 +254,10 @@ body {
   margin-right: 30px;
 }
 
+.main-photo img {
+  width: 100px;
+}
+
 .main-details {
   width: 435px;
 }
