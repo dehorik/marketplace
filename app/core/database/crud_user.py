@@ -70,7 +70,7 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def get_user_by_user_name(self, user_name: str) -> list:
+    def auth_user_data(self, user_name: str) -> list:
         #  для аутентификации, извлекается хеш пароля
 
         self._cursor.execute(

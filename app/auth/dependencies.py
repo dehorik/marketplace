@@ -71,7 +71,7 @@ class UserCreator(BaseDependency):
             credentials: UserCredentialsModel
     ) -> UserModel:
         with self.user_database() as user_db:
-            user = user_db.get_user_by_user_name(credentials.user_name)
+            user = user_db.auth_user_data(credentials.user_name)
             if user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -118,7 +118,7 @@ class CredentialsVerifier(BaseDependency):
             credentilas: UserCredentialsModel
     ) -> UserModel:
         with self.user_database() as user_db:
-            user = user_db.get_user_by_user_name(credentilas.user_name)
+            user = user_db.auth_user_data(credentilas.user_name)
 
             if not user:
                 raise HTTPException(

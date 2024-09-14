@@ -7,6 +7,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/static/js/token_utils.js"></script>
+    <script>
+        verify_token();
+    </script>
     <title>ItemHub</title>
 </head>
 <body>
@@ -45,6 +49,36 @@
                 </ul>
 
                 <div class="user__profile">
+                    <script>
+                        const access_token = get_token();
+
+                        const profile_elem = document.querySelector(".user__profile");
+                        const profile_elem_photo = document.createElement('img');
+
+                        if (access_token) {
+                            axios.get(
+                                "/users/me", {
+                                headers: {
+                                    Authorization: `Bearer ${access_token}`
+                                }
+                            })
+                                .then(function (response) {
+                                    const user_photo_path = response.data.user_photo_path;
+
+                                    if (user_photo_path) {
+                                        profile_elem_photo.src = user_photo_path;
+                                    }
+                                    else {
+                                        profile_elem_photo.src = "/static/img/default_avatar.png";
+                                    }
+                                });
+                        }
+                        else {
+                            profile_elem_photo.src = "/static/img/default_avatar.png";
+                        }
+
+                        profile_elem.append(profile_elem_photo);
+                    </script>
                 </div>
             </div>
         </div>
