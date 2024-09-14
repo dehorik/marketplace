@@ -141,9 +141,26 @@ body {
 .header {
   padding: 10px;
 }
+
 .header .container {
   display: flex;
   align-items: center;
+}
+
+.auth__elem {
+  margin: 22px;
+  font-size: 18px;
+}
+
+.auth__elem a {
+  padding: 5px;
+  color: black;
+  font-family: "Gilroy", sans-serif;
+  text-decoration: none;
+}
+
+.auth__elem a:hover {
+  border-bottom: 1px solid black;
 }
 
 .user__profile {
