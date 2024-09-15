@@ -173,14 +173,13 @@ class ProductUpdater(BaseDependency):
                 )
 
         fields_for_update = {
-            'product_name': product_name,
-            'product_price': product_price,
-            'product_description': product_description
-        }
-        fields_for_update = {
             key: value
-            for key, value in fields_for_update.items()
-            if value is not None
+            for key, value in {
+                'product_name': product_name,
+                'product_price': product_price,
+                'product_description': product_description
+            }
+            if value
         }
 
         with self.product_database() as product_db:

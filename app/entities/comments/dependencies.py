@@ -122,6 +122,10 @@ class CommentUpdater(BaseDependency):
     def __call__(
             self,
             comment_id: int,
+
+            del_text: bool = False,
+            del_photo: bool = False,
+
             comment_text: Annotated[
                 str | None,
                 Form(min_length=3, max_length=200)
@@ -135,6 +139,27 @@ class CommentUpdater(BaseDependency):
                 File()
             ] = None
     ) -> CommentModel:
+        """
+        :param comment_id: id отзыва (параметр пути)
+
+        параметры del_text и del_photo указывают на то, нужно ли
+        удалить уже существующие текст и фото под отзывом;
+        попытка передать true в один из этих параметров
+        параллельно с передачей соответствующх значений в форме
+        приведёт к ошибке!
+
+        :param del_text: удалять ли существующий текст
+        :param del_photo: удалять ли существующее фото
+
+        :param comment_text: текст под отзывом;
+               (при замене или первичной установке)
+        :param comment_rating: рейтинг
+        :param comment_photo: фотография под отзывом;
+               (при замене существующей или первичной установке)
+
+        :return: отредактированный отзыв
+        """
+
         if comment_photo:
             if not comment_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
@@ -142,15 +167,23 @@ class CommentUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
-        fields_for_update = {
-            "comment_text": comment_text,
-            "comment_rating": comment_rating
-        }
+        if del_text and comment_text or del_photo and comment_photo:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="conflict between query params and form data"
+            )
+
         fields_for_update = {
             key: value
-            for key, value in fields_for_update.items()
-            if value is not None
+            for key, value in {
+                "comment_text": comment_text,
+                "comment_rating": comment_rating
+            }.items()
+            if value
         }
+
+        if del_text:
+            fields_for_update["comment_text"] = None
 
         with self.comment_database() as comment_db:
             comment = comment_db.update(
@@ -185,6 +218,23 @@ class CommentUpdater(BaseDependency):
                     )
 
                 comment = self.converter.serialization(comment)[0]
+
+        elif del_photo:
+            if not comment.comment_photo_path:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="this comment does not have a photo"
+                )
+
+            self.file_deleter(comment.comment_photo_path)
+
+            with self.comment_database() as comment_db:
+                comment = comment_db.update(
+                    comment_id=comment_id,
+                    comment_photo_path=None
+                )
+
+            comment = self.converter.serialization(comment)[0]
 
         return comment
 

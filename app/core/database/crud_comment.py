@@ -86,6 +86,8 @@ class CommentDataBase(InterfaceDataBase):
         for key, value in kwargs.items():
             if type(value) is str:
                 set_values = set_values + f"{key} = '{value}', "
+            elif not value:
+                set_values = set_values + f"{key} = NULL, "
             else:
                 set_values = set_values + f"{key} = {value}, "
         set_values = set_values[:-2]
