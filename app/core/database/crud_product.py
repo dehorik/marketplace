@@ -70,11 +70,16 @@ class ProductDataBase(InterfaceDataBase):
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id
                         WHERE product.product_id = %s
-                    ) AS product_rating
+                    ) AS product_rating,
+                    (
+                        SELECT COUNT(comment_id)
+                        FROM comment 
+                        WHERE product_id = %s
+                    ) AS amount_comments
                 FROM product
                 WHERE product_id = %s;
             """,
-            [product_id, product_id]
+            [product_id] * 3
         )
 
         return self._cursor.fetchall()

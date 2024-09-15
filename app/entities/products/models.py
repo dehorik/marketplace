@@ -20,6 +20,7 @@ class ExtendedProductModel(BaseModel):
 
     product: ProductModel
     product_rating: float | None = Field(ge=1, le=5, default=None)
+    amount_comments: int
 
 
 class ProductCatalogCardModel(BaseModel):

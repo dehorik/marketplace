@@ -130,11 +130,13 @@ class ProductGetter(BaseDependency):
             )
 
         product = list(product[0])
-        product_rating = product.pop(-1)
+        product_rating = product.pop(-2)
+        amount_comments = product.pop(-1)
 
         return ExtendedProductModel(
             product=self.converter.serialization([product])[0],
-            product_rating=product_rating
+            product_rating=product_rating,
+            amount_comments=amount_comments
         )
 
 
