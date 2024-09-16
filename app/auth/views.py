@@ -1,5 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 from auth.dependencies import (
     register_user_dependency,
@@ -21,7 +23,12 @@ router = APIRouter(
 )
 
 
-@router.post("/register", response_model=AuthenticationModel)
+templates = Jinja2Templates(
+    directory='../frontend/templates'
+)
+
+
+@router.post("/registration", response_model=AuthenticationModel)
 def register(
         auth_model: Annotated[AuthenticationModel, Depends(register_user_dependency)]
 ):
@@ -45,8 +52,15 @@ def refresh(
 ):
     return access_token
 
-@router.get('/validate-access', response_model=PayloadTokenModel)
+@router.get('/access-token-validator', response_model=PayloadTokenModel)
 def access(
         payload: Annotated[PayloadTokenModel, Depends(validate_access_token_dependency)]
 ):
     return payload
+
+@router.get("/registration-page", response_class=HTMLResponse)
+def get_registration_page(request: Request):
+    return templates.TemplateResponse(
+        name='registration.html',
+        request=request
+    )

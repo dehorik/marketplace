@@ -1,5 +1,5 @@
 from typing import Annotated, Type
-from fastapi import HTTPException, Depends, Response, Cookie, status
+from fastapi import HTTPException, Depends, Response, Cookie, Form, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 
@@ -11,7 +11,6 @@ from auth.tokens import (
 )
 from auth.models import (
     UserModel,
-    UserCredentialsModel,
     AuthenticationModel,
     AccessTokenModel,
     PayloadTokenModel
@@ -68,10 +67,11 @@ class UserCreator(BaseDependency):
 
     def __call__(
             self,
-            credentials: UserCredentialsModel
+            user_name: Annotated[str, Form(min_length=6, max_length=16)],
+            user_password: Annotated[str, Form(min_length=8, max_length=16)]
     ) -> UserModel:
         with self.user_database() as user_db:
-            user = user_db.auth_user_data(credentials.user_name)
+            user = user_db.auth_user_data(user_name)
             if user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -79,8 +79,8 @@ class UserCreator(BaseDependency):
                 )
 
             user = user_db.create(
-                credentials.user_name,
-                get_password_hash(credentials.user_password)
+                user_name,
+                get_password_hash(user_password)
             )
 
             return self.converter.serialization(user)[0]
@@ -102,7 +102,7 @@ class Registration(BaseDependency):
 
         return AuthenticationModel(
             user=user,
-            access_token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(access_token=access_token)
         )
 
 
@@ -115,10 +115,11 @@ class CredentialsVerifier(BaseDependency):
 
     def __call__(
             self,
-            credentilas: UserCredentialsModel
+            user_name: Annotated[str, Form(min_length=6, max_length=16)],
+            user_password: Annotated[str, Form(min_length=8, max_length=16)]
     ) -> UserModel:
         with self.user_database() as user_db:
-            user = user_db.auth_user_data(credentilas.user_name)
+            user = user_db.auth_user_data(user_name)
 
             if not user:
                 raise HTTPException(
@@ -129,7 +130,7 @@ class CredentialsVerifier(BaseDependency):
             user = list(user[0])
             user_hashed_password = user.pop(3)
 
-            if not verify_password(credentilas.user_password, user_hashed_password):
+            if not verify_password(user_password, user_hashed_password):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="incorrect username or password"
@@ -154,7 +155,7 @@ class Login(BaseDependency):
 
         return AuthenticationModel(
             user=user,
-            access_token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(access_token=access_token)
         )
 
 
