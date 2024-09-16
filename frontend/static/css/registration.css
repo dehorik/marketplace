@@ -1,0 +1,131 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    -ms-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+#registration-form-container {
+    border: black solid 1px;
+    border-radius: 15px;
+    height: 465px;
+    width: 440px;
+    margin: 8.5% 0 0 36%;
+}
+
+#registration-title{
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 18px 0 0 0;
+}
+
+#form-elements {
+    margin: 32px 0 0 42px;
+}
+
+.input-container {
+    color: #3b3b3b;
+    font-weight: 450;
+    margin: 0 0 15px 0;
+}
+
+#password-view {
+    display: flex;
+    margin: 12px 0 0 0;
+}
+
+#password-view input{
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 25px;
+}
+
+#password-view input:hover {
+    box-shadow: none;
+}
+
+#password-view label {
+    display: inline-block;
+    margin: 0 0 0 5px;
+}
+
+.invalid-input-msg {
+    margin: 10px 0 0 0;
+    font-size: 15px;
+    height: 17px;
+    color: red;
+}
+
+.input-container input {
+    display: block;
+    border: #bcbcbc solid 1px;
+    border-radius: 4px;
+    height: 40px;
+    width: 240px;
+    font-size: 17px;
+    padding: 4px;
+}
+
+.input-container input:hover {
+    border: #5197ff solid 2px;
+    box-shadow: 1px 1px #6bbdff, -1px -1px #6bbdff;
+}
+
+.input-container label {
+    display: block;
+    margin: 0 0 8px 0;
+}
+
+#send-data-button {
+    margin: 38px 0 0 0;
+}
+
+#send-data-button input {
+    background-color: #492eff;
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+    font-weight: 400;
+    font-size: 15px;
+}
+
+#send-data-button input:hover {
+    background-color: #3f72ff;
+}
+
+#cancel-registration-button {
+    margin: 35px 0 0 42%;
+}
+
+#cancel-registration-button a{
+    font-size: 15px;
+    border: #7a7a7a solid 2px;
+    border-radius: 5px;
+    background-color: white;
+    padding: 10px;
+    font-weight: 400;
+    width: 80px;
+    height: 37px;
+    text-decoration: none;
+    color: #191411;
+}
+
+#cancel-registration-button a:hover {
+    background-color: rgba(233,233,233,0.94);
+}

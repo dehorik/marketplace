@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/static/js/auth_token.js"></script>
-    <script>
-        verify_token();
-    </script>
     <title>ItemHub</title>
 </head>
 <body>
@@ -54,6 +51,8 @@
                         const access_token = get_token();
 
                         if (access_token) {
+                            verify_token();
+
                             axios.get(
                                 "/users/me", {
                                     headers: {

@@ -8,8 +8,8 @@ from entities.users.models import UserModel
 class UserCredentialsModel(BaseModel):
     """Данные для входа/регистрации"""
 
-    user_name: str = Form(min_length=6, max_length=14)
-    user_password: str = Form(min_length=8, max_length=18)
+    user_name: str = Form(min_length=6, max_length=16)
+    user_password: str = Form(min_length=8, max_length=16)
 
 
 class AccessTokenModel(BaseModel):
