@@ -38,11 +38,35 @@ password_viewer.addEventListener("click", function () {
 form.addEventListener("submit", (event) => {
     event.preventDefault();
     const form_data = new FormData(form);
+
     axios.post("/auth/registration", form_data)
         .then(function (response) {
             const access_token = response.data.token.access_token;
+            const user = response.data.user;
             set_token(access_token);
-            window.location.href = '/products/list';
+
+            const new_body = document.createElement("body");
+            const message_elem = document.createElement('div');
+            message_elem.id = "successful_auth_message";
+            message_elem.innerHTML = `Добро пожаловать, ${user.user_name}!`;
+            new_body.append(message_elem);
+            document.body.replaceWith(new_body);
+
+            const text = message_elem.textContent;
+            message_elem.innerHTML = text.replace(/./g, '<span class="new">$&</span>');
+
+            const span_elems= message_elem.querySelectorAll('span.new');
+            span_elems.forEach((span, i) => {
+                setTimeout(() => {
+                    span.classList.add('div_opacity');
+                }, 40 * i);
+            });
+
+            setTimeout( () => {
+                    window.location.href = '/products/list';
+                },
+                1410
+            );
         })
         .catch(function (error) {
             if (error.response.status === 400) {
