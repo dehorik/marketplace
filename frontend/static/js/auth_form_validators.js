@@ -4,13 +4,17 @@ const password_view_checkbox = document.getElementById("password-view-checkbox")
 const invalid_username_msg = document.querySelector("#username-input-container .invalid-input-msg");
 const invalid_password_msg = document.querySelector("#password-input-container .invalid-input-msg");
 
-2
+
 input_username_elem.addEventListener("input", function () {
     if (input_username_elem.value.length < 6) {
         invalid_username_msg.innerHTML = "Минимальная длина: 6 символов";
     }
     else if (input_username_elem.value.length > 16) {
         invalid_username_msg.innerHTML = "Максимальная длина: 16 символов";
+    }
+    else if (6 <= invalid_username_msg.length <= 16 && 8 <= invalid_password_msg.length <= 18) {
+        invalid_username_msg.innerHTML = "";
+        invalid_password_msg.innerHTML = "";
     }
     else {
         invalid_username_msg.innerHTML = "";
@@ -23,6 +27,10 @@ input_password_elem.addEventListener("input", function () {
     }
     else if (input_password_elem.value.length > 18) {
         invalid_password_msg.innerHTML = "Максимальная длина: 18 символов";
+    }
+    else if (6 <= invalid_username_msg.length <= 16 && 8 <= invalid_password_msg.length <= 18) {
+        invalid_username_msg.innerHTML = "";
+        invalid_password_msg.innerHTML = "";
     }
     else {
         invalid_password_msg.innerHTML = "";

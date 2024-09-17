@@ -38,15 +38,16 @@ function refresh() {
         });
 }
 
-
 function verify_token() {
     const access_token = get_token();
 
     if (!access_token) {
-        return;
+        return false;
     }
 
     if (check_token_exp(access_token)) {
         refresh();
     }
+
+    return true;
 }

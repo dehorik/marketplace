@@ -27,11 +27,6 @@ function load_user_photo() {
 
                 profile_elem.append(profile_elem_photo);
                 container_elem.append(profile_elem);
-            })
-            .catch(function (error) {
-                if (error.response.status === 401) {
-                    delete_token();
-                }
             });
     }
     else {
