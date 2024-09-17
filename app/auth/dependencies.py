@@ -68,7 +68,7 @@ class UserCreator(BaseDependency):
     def __call__(
             self,
             user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=16)]
+            user_password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> UserModel:
         with self.user_database() as user_db:
             user = user_db.auth_user_data(user_name)
@@ -116,7 +116,7 @@ class CredentialsVerifier(BaseDependency):
     def __call__(
             self,
             user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=16)]
+            user_password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> UserModel:
         with self.user_database() as user_db:
             user = user_db.auth_user_data(user_name)

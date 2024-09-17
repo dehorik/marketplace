@@ -5,27 +5,25 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="/static/css/registration.css" rel="stylesheet">
+    <link href="/static/css/auth_form.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="/static/js/auth_token.js"></script>
-    <script src="/static/js/registration.js"></script>
-    <title>Document</title>
+    <title>ItemHub</title>
 </head>
 <body>
 <div id="registration-form-container">
-    <div id="registration-title">Регистрация</div>
+    <div id="registration-method">Регистрация</div>
 
     <form action="/auth/registration" method="post" name="registration">
         <div id="form-elements">
             <div id="input-containers">
                 <div id="username-input-container" class="input-container">
                     <label for="input-username">Имя пользователя</label>
-                    <input type="text" name="user_name" id="input-username" minlength="6" maxlength="16" required>
+                    <input type="text" name="user_name" id="input-username" required>
                     <div class="invalid-input-msg"></div>
                 </div>
                 <div id="password-input-container" class="input-container">
                     <label for="input-password">Пароль</label>
-                    <input type="text" name="user_password" id="input-password" minlength="8" maxlength="16" required>
+                    <input type="text" name="user_password" id="input-password" required>
                     <div id="password-view">
                         <input type="checkbox" id="password-view-checkbox">
                         <label for="password-view-checkbox">Скрыть пароль</label>
@@ -44,5 +42,9 @@
         <a href="/products/list">Назад</a>
     </div>
 </div>
+
+<script src="/static/js/credentials_form_validators.js"></script>
+<script src="/static/js/auth_token.js"></script>
+<script src="/static/js/registration.js"></script>
 </body>
 </html>

@@ -27,7 +27,7 @@ html, body {
     margin: 8.5% 0 0 36%;
 }
 
-#registration-title{
+#registration-method{
     text-align: center;
     font-size: 24px;
     font-weight: 600;
@@ -103,10 +103,15 @@ html, body {
     color: white;
     font-weight: 400;
     font-size: 15px;
+    margin: 0 10px 0 0;
 }
 
 #send-data-button input:hover {
     background-color: #3f72ff;
+}
+
+#login-by-email-btn {
+    width: 131px;
 }
 
 #cancel-registration-button {
