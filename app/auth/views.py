@@ -64,3 +64,10 @@ def get_registration_page(request: Request):
         name='registration.html',
         request=request
     )
+
+@router.get("/login-page", response_class=HTMLResponse)
+def get_login_page(request: Request):
+    return templates.TemplateResponse(
+        name='login.html',
+        request=request
+    )

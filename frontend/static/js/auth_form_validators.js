@@ -1,18 +1,15 @@
 const input_username_elem = document.getElementById("input-username");
 const input_password_elem = document.getElementById("input-password");
-const password_viewer = document.getElementById("password-view-checkbox");
+const password_view_checkbox = document.getElementById("password-view-checkbox");
 const invalid_username_msg = document.querySelector("#username-input-container .invalid-input-msg");
 const invalid_password_msg = document.querySelector("#password-input-container .invalid-input-msg");
 
-
+2
 input_username_elem.addEventListener("input", function () {
     if (input_username_elem.value.length < 6) {
         invalid_username_msg.innerHTML = "Минимальная длина: 6 символов";
     }
-    else if (input_username_elem.name === "user_email" && input_username_elem.value.length > 32) {
-        invalid_username_msg.innerHTML = "Максимальная длина: 32 символа";
-    }
-    else if (input_username_elem.name === "user_name" && input_username_elem.value.length > 16) {
+    else if (input_username_elem.value.length > 16) {
         invalid_username_msg.innerHTML = "Максимальная длина: 16 символов";
     }
     else {
@@ -44,8 +41,8 @@ input_password_elem.addEventListener("blur", () => {
     }
 });
 
-password_viewer.addEventListener("click", function () {
-    if (password_viewer.checked) {
+password_view_checkbox.addEventListener("click", function () {
+    if (password_view_checkbox.checked) {
         input_password_elem.type = "password";
     }
     else {
@@ -54,31 +51,20 @@ password_viewer.addEventListener("click", function () {
 });
 
 
-function successful_auth(response) {
-    const access_token = response.data.token.access_token;
-    const user = response.data.user;
-    set_token(access_token);
+function validate_form_data() {
+    if (input_username_elem.value.length > 16) {
+        return false;
+    }
+    else if (input_username_elem.value.length < 6) {
+        return false;
+    }
 
-    const new_body = document.createElement("body");
-    const message_elem = document.createElement('div');
-    message_elem.id = "successful_auth_message";
-    message_elem.innerHTML = `Добро пожаловать, ${user.user_name}!`;
-    new_body.append(message_elem);
-    document.body.replaceWith(new_body);
+    if (input_password_elem.value.length > 18) {
+        return false;
+    }
+    else if (input_password_elem.value.length < 8) {
+        return false;
+    }
 
-    const text = message_elem.textContent;
-    message_elem.innerHTML = text.replace(/./g, '<span class="new">$&</span>');
-
-    const span_elems= message_elem.querySelectorAll('span.new');
-    span_elems.forEach((span, i) => {
-        setTimeout(() => {
-            span.classList.add('div_opacity');
-        }, 40 * i);
-    });
-
-    setTimeout( () => {
-            window.location.href = '/products/list';
-        },
-        1410
-    );
+    return true;
 }

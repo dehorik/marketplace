@@ -4,17 +4,7 @@ const form = document.querySelector("#registration-form-container form");
 form.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    if (input_username_elem.value.length > 16 && !(input_username_elem.name === "user_email")) {
-        return;
-    }
-    else if (input_username_elem.value.length < 6) {
-        return;
-    }
-
-    if (input_password_elem.value.length > 18) {
-        return;
-    }
-    else if (input_password_elem.value.length < 8) {
+    if (!validate_form_data()) {
         return;
     }
 
@@ -22,12 +12,20 @@ form.addEventListener("submit", (event) => {
 
     axios.post("/auth/registration", form_data)
         .then(function (response) {
-            successful_auth(response);
+            const user = response.data.user;
+            const access_token = response.data.token.access_token;
+            set_token(access_token);
+
+            get_message(user, '/products/list');
         })
         .catch(function (error) {
-            if (error.response.status === 400) {
-                const invalid_elem_msg = document.querySelector("#username-input-container .invalid-input-msg");
-                invalid_elem_msg.innerHTML = "Имя пользователя уже занято!";
+            if (error.response.status === 409) {
+                invalid_username_msg.innerHTML = "Имя пользователя уже занято!";
+            }
+
+            else if (error.response.status === 422) {
+                invalid_username_msg.innerHTML = "Невалидные данные";
+                invalid_password_msg.innerHTML = "Невалидные данные";
             }
         });
 });

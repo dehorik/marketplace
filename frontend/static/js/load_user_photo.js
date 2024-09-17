@@ -41,7 +41,7 @@ function load_user_photo() {
         const login_elem = document.createElement("a");
 
         registration_elem.href = '/auth/registration-page';
-        login_elem.href = '#';
+        login_elem.href = '/auth/login-page';
         registration_elem.innerHTML = "Регистрация";
         login_elem.innerHTML = "Вход";
 

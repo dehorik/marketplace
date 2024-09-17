@@ -1,40 +1,10 @@
-const login_by_email_btn = document.getElementById("login-by-email-btn");
-const login_method_label = document.querySelector("#username-input-container label");
 const form = document.querySelector("#registration-form-container form");
 
-
-login_by_email_btn.addEventListener("click", () => {
-    if (login_method_label.innerHTML === "Имя пользователя") {
-        login_method_label.innerHTML = "Почта";
-        login_by_email_btn.value = "Войти по имени";
-
-        input_username_elem.name = "user_email";
-    }
-    else {
-        login_method_label.innerHTML = "Имя пользователя";
-        login_by_email_btn.value = "Войти по почте";
-
-        input_username_elem.name = "user_name";
-    }
-});
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    if (input_username_elem.value.length > 16 && !(input_username_elem.name === "user_email")) {
-        return;
-    }
-    else if (input_username_elem.value.length > 32 && input_username_elem.name === "user_email") {
-        return;
-    }
-    else if (input_username_elem.value.length < 6) {
-        return;
-    }
-
-    if (input_password_elem.value.length > 18) {
-        return;
-    }
-    else if (input_password_elem.value.length < 8) {
+    if (!validate_form_data()) {
         return;
     }
 
@@ -42,7 +12,20 @@ form.addEventListener("submit", (event) => {
 
     axios.post("/auth/login", form_data)
         .then(function (response) {
-            successful_auth(response);
+            const user = response.data.user;
+            const access_token = response.data.token.access_token;
+            set_token(access_token);
+
+            get_message(user, '/products/list');
+        })
+        .catch(function (error) {
+           if (error.response.status === 401) {
+               invalid_username_msg.innerHTML = "Некорректное имя пользователя или пароль";
+               invalid_password_msg.innerHTML = "Некорректное имя пользователя или пароль";
+           }
+           else if (error.response.status === 422) {
+               invalid_username_msg.innerHTML = "Невалидные данные";
+               invalid_password_msg.innerHTML = "Невалидные данные";
+           }
         });
 });
-

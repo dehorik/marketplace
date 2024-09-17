@@ -74,7 +74,7 @@ class UserCreator(BaseDependency):
             user = user_db.auth_user_data(user_name)
             if user:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_409_CONFLICT,
                     detail='username is alredy taken'
                 )
 
