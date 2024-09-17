@@ -79,7 +79,7 @@
             </div>
             {%- endmacro %}
 
-            {% for product in product_catalog.products -%}
+            {% for product in products_list.products -%}
                 {{ merchants_item(product) }}
             {% endfor -%}
         </div>

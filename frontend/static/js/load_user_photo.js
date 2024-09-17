@@ -6,7 +6,7 @@ function load_user_photo() {
         verify_token();
 
         axios.get(
-            "/users/me", {
+            "/users/me/data", {
                 headers: {
                     Authorization: `Bearer ${access_token}`
                 }

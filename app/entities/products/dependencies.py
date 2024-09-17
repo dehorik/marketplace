@@ -5,7 +5,7 @@ from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
     ProductCatalogCardModel,
-    ProductCatalogModel
+    ProductsListCatalogModel
 )
 from core.settings import config
 from core.database import ProductDataBase
@@ -35,7 +35,7 @@ class BaseDependency:
         self.product_database = product_database
 
 
-class CatalogLoader(BaseDependency):
+class CatalogLoaderDependency(BaseDependency):
     """Получение последних созданных товаров"""
 
     def __init__(
@@ -49,19 +49,19 @@ class CatalogLoader(BaseDependency):
             self,
             amount: int = 9,
             last_product_id: int | None = None
-    ) -> ProductCatalogModel:
+    ) -> ProductsListCatalogModel:
         with self.product_database() as product_db:
             products = product_db.get_catalog(
                 amount=amount,
                 last_product_id=last_product_id
             )
 
-            return ProductCatalogModel(
+            return ProductsListCatalogModel(
                 products=self.converter.serialization(products)
             )
 
 
-class ProductCreator(BaseDependency):
+class CreateProdcutDependency(BaseDependency):
     """Создание товара"""
 
     def __init__(self, converter: Converter = Converter(ProductModel)):
@@ -109,7 +109,7 @@ class ProductCreator(BaseDependency):
         return self.converter.serialization(product)[0]
 
 
-class ProductGetter(BaseDependency):
+class GetProductDependency(BaseDependency):
     """Получение товара"""
 
     def __init__(
@@ -134,13 +134,13 @@ class ProductGetter(BaseDependency):
         amount_comments = product.pop(-1)
 
         return ExtendedProductModel(
-            product=self.converter.serialization([product])[0],
+            product_data=self.converter.serialization([product])[0],
             product_rating=product_rating,
             amount_comments=amount_comments
         )
 
 
-class ProductUpdater(BaseDependency):
+class UpdateProductDependency(BaseDependency):
     """Обновление товара"""
 
     def __init__(self, converter: Converter = Converter(ProductModel)):
@@ -207,7 +207,7 @@ class ProductUpdater(BaseDependency):
         return product
 
 
-class ProductDeleter(BaseDependency):
+class DeleteProductDependency(BaseDependency):
     """Удаление товара"""
 
     def __init__(self, converter: Converter = Converter(ProductModel)):
@@ -237,8 +237,8 @@ class ProductDeleter(BaseDependency):
 
 
 # dependencies
-load_catalog_dependency = CatalogLoader()
-create_product_dependency = ProductCreator()
-get_product_dependency = ProductGetter()
-update_product_dependency = ProductUpdater()
-delete_product_dependency = ProductDeleter()
+load_catalog_dependency = CatalogLoaderDependency()
+create_product_dependency = CreateProdcutDependency()
+get_product_dependency = GetProductDependency()
+update_product_dependency = UpdateProductDependency()
+delete_product_dependency = DeleteProductDependency()

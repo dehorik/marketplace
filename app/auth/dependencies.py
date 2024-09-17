@@ -58,7 +58,7 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class UserCreator(BaseDependency):
+class CreateUserDependency(BaseDependency):
     """Создание пользователя при регистрации"""
 
     def __init__(self, converter: Converter = Converter(UserModel)):
@@ -86,13 +86,13 @@ class UserCreator(BaseDependency):
             return self.converter.serialization(user)[0]
 
 
-class Registration(BaseDependency):
+class RegistrationDependency(BaseDependency):
     """Выпуск токенов для только что зарегистрировавшегося пользователя"""
 
     def __call__(
             self,
             response: Response,
-            user: Annotated[UserModel, Depends(UserCreator())]
+            user: Annotated[UserModel, Depends(CreateUserDependency())]
     ) -> AuthenticationModel:
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
@@ -106,7 +106,7 @@ class Registration(BaseDependency):
         )
 
 
-class CredentialsVerifier(BaseDependency):
+class VerifyCredentialsDependency(BaseDependency):
     """Проверка данных для входа"""
 
     def __init__(self, converter: Converter = Converter(UserModel)):
@@ -139,13 +139,13 @@ class CredentialsVerifier(BaseDependency):
             return self.converter.serialization([user])[0]
 
 
-class Login(BaseDependency):
+class LoginDependency(BaseDependency):
     """Выпуск токенов для только что вошедшего пользователя"""
 
     def __call__(
             self,
             response: Response,
-            user: Annotated[UserModel, Depends(CredentialsVerifier())]
+            user: Annotated[UserModel, Depends(VerifyCredentialsDependency())]
     ) -> AuthenticationModel:
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
@@ -159,7 +159,7 @@ class Login(BaseDependency):
         )
 
 
-class Logout(BaseDependency):
+class LogoutDependency(BaseDependency):
     """Выход из аккаунта"""
 
     def __call__(
@@ -198,7 +198,7 @@ class Logout(BaseDependency):
             )
 
 
-class RefreshTokenValidator(BaseDependency):
+class RefreshTokenValidatorDependency(BaseDependency):
     """Валидация refresh токена"""
 
     def __call__(
@@ -238,7 +238,7 @@ class RefreshTokenValidator(BaseDependency):
             )
 
 
-class Refresher(BaseDependency):
+class RefreshTokensDependency(BaseDependency):
     """Выпуск пары токенов refresh/access на основе refresh токена"""
 
     def __init__(self, converter: Converter = Converter(UserModel)):
@@ -248,7 +248,10 @@ class Refresher(BaseDependency):
     def __call__(
             self,
             response: Response,
-            payload: Annotated[PayloadTokenModel, Depends(RefreshTokenValidator())]
+            payload: Annotated[
+                PayloadTokenModel,
+                Depends(RefreshTokenValidatorDependency())
+            ]
     ) -> AccessTokenModel:
         refresh_token = self.refresh_token_creator(payload)
         access_token = self.access_token_creator(payload)
@@ -259,7 +262,7 @@ class Refresher(BaseDependency):
         return AccessTokenModel(access_token=access_token)
 
 
-class AccessTokenValidator(BaseDependency):
+class AccessTokenValidatorDependency(BaseDependency):
     """Для декодирования access токена из заголовков"""
 
     def __call__(
@@ -276,7 +279,7 @@ class AccessTokenValidator(BaseDependency):
             )
 
 
-class Authorization(BaseDependency):
+class AuthorizationDependency(BaseDependency):
     """
     Авторизация пользователя
     (проверяем наличие прав на совершение каких-либо действий)
@@ -293,7 +296,10 @@ class Authorization(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
+            payload: Annotated[
+                PayloadTokenModel,
+                Depends(AccessTokenValidatorDependency())
+            ]
     ) -> PayloadTokenModel:
         with self.user_database() as user_db:
             user = user_db.read(payload.sub)
@@ -327,8 +333,8 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 # а __init__ для внедрения внешних зависимостей
 # (объктов БД, классов для работы с jwt и т.д)
 
-register_user_dependency = Registration()
-login_user_dependency = Login()
-logout_user_dependency = Logout()
-refresh_tokens_dependency = Refresher()
-validate_access_token_dependency = AccessTokenValidator()
+register_user_dependency = RegistrationDependency()
+login_user_dependency = LoginDependency()
+logout_user_dependency = LogoutDependency()
+refresh_tokens_dependency = RefreshTokensDependency()
+validate_access_token_dependency = AccessTokenValidatorDependency()

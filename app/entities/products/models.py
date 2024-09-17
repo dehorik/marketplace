@@ -18,7 +18,7 @@ class ExtendedProductModel(BaseModel):
     Например, для получения рейтинга и т.д
     """
 
-    product: ProductModel
+    product_data: ProductModel
     product_rating: float | None = Field(ge=1, le=5, default=None)
     amount_comments: int
 
@@ -33,5 +33,5 @@ class ProductCatalogCardModel(BaseModel):
     product_photo_path: str
 
 
-class ProductCatalogModel(BaseModel):
+class ProductsListCatalogModel(BaseModel):
     products: List[ProductCatalogCardModel]

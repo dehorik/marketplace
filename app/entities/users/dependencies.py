@@ -2,7 +2,7 @@ from typing import Type, Annotated
 from fastapi import Depends
 
 from entities.users.models import UserModel
-from auth import AccessTokenValidator, PayloadTokenModel
+from auth import PayloadTokenModel, validate_access_token_dependency
 from core.database import UserDataBase
 from utils import Converter
 
@@ -17,7 +17,7 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class UserGetter(BaseDependency):
+class GetUserDataDependency(BaseDependency):
     """
     Получение пользовательских данных
     путём валидации access токена из заголовков
@@ -29,7 +29,10 @@ class UserGetter(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
+            payload: Annotated[
+                PayloadTokenModel,
+                Depends(validate_access_token_dependency)
+            ]
     ) -> UserModel:
         with self.user_database() as user_db:
             user = user_db.read(payload.sub)
@@ -37,4 +40,4 @@ class UserGetter(BaseDependency):
         return self.converter.serialization(user)[0]
 
 
-get_user_dependency = UserGetter()
+get_user_data_dependency = GetUserDataDependency()
