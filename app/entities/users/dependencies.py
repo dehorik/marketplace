@@ -2,9 +2,12 @@ from typing import Type, Annotated
 from fastapi import Depends
 
 from entities.users.models import UserModel
-from auth import PayloadTokenModel, validate_access_token_dependency
+from auth import PayloadTokenModel, Authorization
 from core.database import UserDataBase
 from utils import Converter
+
+
+base_user_dependency = Authorization(min_role_id=1)
 
 
 class BaseDependency:
@@ -31,7 +34,7 @@ class GetUserDataDependency(BaseDependency):
             self,
             payload: Annotated[
                 PayloadTokenModel,
-                Depends(validate_access_token_dependency)
+                Depends(base_user_dependency)
             ]
     ) -> UserModel:
         with self.user_database() as user_db:

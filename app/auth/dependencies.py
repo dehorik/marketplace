@@ -117,7 +117,7 @@ class Login(BaseDependency):
                 )
 
             user[0] = list(user[0])
-            user_hashed_password = user.pop(3)
+            user_hashed_password = user[0].pop(3)
 
             if not verify_password(user_password, user_hashed_password):
                 raise HTTPException(
