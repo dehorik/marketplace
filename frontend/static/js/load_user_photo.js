@@ -35,8 +35,8 @@ function load_user_photo() {
         const registration_elem = document.createElement("a");
         const login_elem = document.createElement("a");
 
-        registration_elem.href = '/auth/registration-page';
-        login_elem.href = '/auth/login-page';
+        registration_elem.href = '/auth/registration';
+        login_elem.href = '/auth/login';
         registration_elem.innerHTML = "Регистрация";
         login_elem.innerHTML = "Вход";
 
