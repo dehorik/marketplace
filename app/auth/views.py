@@ -58,14 +58,14 @@ def access(
 ):
     return payload
 
-@router.get("/registration-page", response_class=HTMLResponse)
+@router.get("/registration", response_class=HTMLResponse)
 def get_registration_page(request: Request):
     return templates.TemplateResponse(
         name='registration.html',
         request=request
     )
 
-@router.get("/login-page", response_class=HTMLResponse)
+@router.get("/login", response_class=HTMLResponse)
 def get_login_page(request: Request):
     return templates.TemplateResponse(
         name='login.html',
