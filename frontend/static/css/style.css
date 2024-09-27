@@ -250,7 +250,6 @@ body {
 
 .main-photo {
   width: 530px;
-  max-width: 100%;
   margin-right: 30px;
 }
 
@@ -346,7 +345,7 @@ body {
     padding-right: 15px;
   }
   .main-photo {
-    width: 100%;
+    max-width: 400px;
   }
   .main-details {
     min-width: 400px;
@@ -365,7 +364,7 @@ body {
     margin-right: 0;
     margin-bottom: 20px;
     width: 400px;
-    max-width: 50px;
+    max-width: 500px;
   }
 }
 @media (max-width: 475px) {
