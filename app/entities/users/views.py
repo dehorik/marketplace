@@ -17,5 +17,7 @@ def get_user_page():
     pass
 
 @router.get("/me/data", response_model=UserModel)
-def get_user_data(user: Annotated[UserModel, Depends(get_user_data_dependency)]):
+def get_user_data(
+        user: Annotated[UserModel, Depends(get_user_data_dependency)]
+):
     return user

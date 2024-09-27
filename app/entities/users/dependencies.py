@@ -20,7 +20,7 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class GetUserDataDependency(BaseDependency):
+class UserDataGetter(BaseDependency):
     """
     Получение пользовательских данных
     путём валидации access токена из заголовков
@@ -43,4 +43,4 @@ class GetUserDataDependency(BaseDependency):
         return self.converter.serialization(user)[0]
 
 
-get_user_data_dependency = GetUserDataDependency()
+get_user_data_dependency = UserDataGetter()
