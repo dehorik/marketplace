@@ -35,7 +35,7 @@ class BaseDependency:
         self.product_database = product_database
 
 
-class CatalogLoaderDependency(BaseDependency):
+class CatalogLoader(BaseDependency):
     """Получение последних созданных товаров"""
 
     def __init__(
@@ -61,9 +61,7 @@ class CatalogLoaderDependency(BaseDependency):
             )
 
 
-class CreateProdcutDependency(BaseDependency):
-    """Создание товара"""
-
+class ProductCreator(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -109,9 +107,7 @@ class CreateProdcutDependency(BaseDependency):
         return self.converter.serialization(product)[0]
 
 
-class GetProductDependency(BaseDependency):
-    """Получение товара"""
-
+class ProductGetter(BaseDependency):
     def __init__(
             self,
             converter: Converter = Converter(ProductModel)
@@ -140,9 +136,7 @@ class GetProductDependency(BaseDependency):
         )
 
 
-class UpdateProductDependency(BaseDependency):
-    """Обновление товара"""
-
+class ProductUpdater(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -207,9 +201,7 @@ class UpdateProductDependency(BaseDependency):
         return product
 
 
-class DeleteProductDependency(BaseDependency):
-    """Удаление товара"""
-
+class ProductDeleter(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -237,8 +229,8 @@ class DeleteProductDependency(BaseDependency):
 
 
 # dependencies
-load_catalog_dependency = CatalogLoaderDependency()
-create_product_dependency = CreateProdcutDependency()
-get_product_dependency = GetProductDependency()
-update_product_dependency = UpdateProductDependency()
-delete_product_dependency = DeleteProductDependency()
+load_catalog_dependency = CatalogLoader()
+create_product_dependency = ProductCreator()
+get_product_dependency = ProductGetter()
+update_product_dependency = ProductUpdater()
+delete_product_dependency = ProductDeleter()
