@@ -15,6 +15,7 @@ form.addEventListener("submit", (event) => {
             const user = response.data.user;
             const access_token = response.data.token.access_token;
             set_token(access_token);
+            localStorage.setItem("user_id", user.user_id);
 
             get_message(user, '/products/list');
         })
