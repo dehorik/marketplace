@@ -70,7 +70,7 @@ class Registration(BaseDependency):
             user_password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> AuthenticationModel:
         with self.user_database() as user_db:
-            if user_db.auth_user_data(user_name):
+            if user_db.get_user_by_user_name(user_name):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail='username is alredy taken'
@@ -108,7 +108,7 @@ class Login(BaseDependency):
             user_password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> AuthenticationModel:
         with self.user_database() as user_db:
-            user = user_db.auth_user_data(user_name)
+            user = user_db.get_user_by_user_name(user_name)
 
             if not user:
                 raise HTTPException(
