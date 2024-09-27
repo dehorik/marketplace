@@ -28,9 +28,7 @@ class BaseDependency:
         self.comment_database = comment_database
 
 
-class CreateCommentDependency(BaseDependency):
-    """Создание отзыва"""
-
+class CommentCreator(BaseDependency):
     def __init__(self, converter: Converter = Converter(CommentModel)):
         super().__init__()
         self.converter = converter
@@ -87,7 +85,7 @@ class CreateCommentDependency(BaseDependency):
         return self.converter.serialization(comment)[0]
 
 
-class CommentLoaderDependency(BaseDependency):
+class CommentLoader(BaseDependency):
     """Подгрузка отзывов под товаром"""
 
     def __init__(self, converter: Converter = Converter(CommentItemModel)):
@@ -112,7 +110,7 @@ class CommentLoaderDependency(BaseDependency):
         )
 
 
-class UpdateCommentDependency(BaseDependency):
+class CommentUpdater(BaseDependency):
     """Обновление отзыва"""
 
     def __init__(self, converter: Converter = Converter(CommentModel)):
@@ -239,9 +237,7 @@ class UpdateCommentDependency(BaseDependency):
         return comment
 
 
-class DeleteCommentDependency(BaseDependency):
-    """Удаление отзыва"""
-
+class CommentDeleter(BaseDependency):
     def __init__(self, converter: Converter = Converter(CommentModel)):
         super().__init__()
         self.converter = converter
@@ -265,7 +261,7 @@ class DeleteCommentDependency(BaseDependency):
 
 
 # dependencies
-create_comment_dependency = CreateCommentDependency()
-load_comments_dependency = CommentLoaderDependency()
-update_comment_dependency = UpdateCommentDependency()
-delete_comment_dependency = DeleteCommentDependency()
+create_comment_dependency = CommentCreator()
+load_comments_dependency = CommentLoader()
+update_comment_dependency = CommentUpdater()
+delete_comment_dependency = CommentDeleter()
