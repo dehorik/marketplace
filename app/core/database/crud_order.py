@@ -56,3 +56,33 @@ class OrderDataBase(InterfaceDataBase):
         )
 
         return self._cursor.fetchall()
+
+    def add_to_shopping_bag(self, product_id: int, user_id: int) -> list:
+        self._cursor.execute(
+            """
+                INSERT INTO shopping_bag_item (
+                    product_id,
+                    user_id
+                )
+                VALUES (
+                    %s, %s
+                )
+                RETURNING *;
+            """,
+            [product_id, user_id]
+        )
+
+        return self._cursor.fetchall()
+
+    def delete_from_shopping_bag(self, shopping_bag_item_id: int) -> list:
+        self._cursor.execute(
+            """
+                DELETE 
+                FROM shopping_bag_item
+                WHERE shopping_bag_item_id = %s
+                RETURNING *;   
+            """,
+            [shopping_bag_item_id]
+        )
+
+        return self._cursor.fetchall()

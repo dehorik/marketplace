@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
@@ -23,7 +23,11 @@ templates = Jinja2Templates(
 )
 
 
-@router.post("/registration", response_model=AuthenticationModel)
+@router.post(
+    "/registration",
+    response_model=AuthenticationModel,
+    status_code=status.HTTP_201_CREATED
+)
 def registration(
         auth_model: Annotated[AuthenticationModel, Depends(registration_dependency)]
 ):
@@ -39,7 +43,11 @@ def login(
 def logout(response: Annotated[str, Depends(logout_dependency)]):
     return response
 
-@router.post("/refresh", response_model=AccessTokenModel)
+@router.post(
+    "/refresh",
+    response_model=AccessTokenModel,
+    status_code=status.HTTP_201_CREATED
+)
 def refresh(
         access_token: Annotated[AccessTokenModel, Depends(refresh_dependency)]
 ):
