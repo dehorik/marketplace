@@ -1,6 +1,6 @@
 from typing import Type, Annotated
 from psycopg2.errors import ForeignKeyViolation
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Form, status
 
 from entities.users.models import UserModel
 from auth import PayloadTokenModel, Authorization
@@ -51,7 +51,11 @@ class RoleUpdater(BaseDependency):
         super().__init__()
         self.converter = converter
 
-    def __call__(self, user_id: int, role_id: int) -> UserModel:
+    def __call__(
+            self,
+            user_id: int,
+            role_id: Annotated[int, Form(ge=1)]
+    ) -> UserModel:
         try:
             with self.user_database() as user_db:
                 user = user_db.set_role(user_id, role_id)

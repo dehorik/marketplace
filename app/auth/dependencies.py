@@ -80,20 +80,21 @@ class Registration(BaseDependency):
                 user_name,
                 get_password_hash(user_password)
             )
-            user = self.converter.serialization(user)[0]
 
-            access_token = self.access_token_creator(user)
-            refresh_token = self.refresh_token_creator(user)
+        user = self.converter.serialization(user)[0]
 
-            set_refresh_cookie(response, refresh_token)
-            self.redis_client.append_token(user.user_id, refresh_token)
+        access_token = self.access_token_creator(user)
+        refresh_token = self.refresh_token_creator(user)
 
-            return AuthenticationModel(
-                user=user,
-                token=AccessTokenModel(
-                    access_token=access_token
-                )
+        set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
+
+        return AuthenticationModel(
+            user=user,
+            token=AccessTokenModel(
+                access_token=access_token
             )
+        )
 
 
 class Login(BaseDependency):
@@ -110,35 +111,35 @@ class Login(BaseDependency):
         with self.user_database() as user_db:
             user = user_db.get_user_by_user_name(user_name)
 
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            user[0] = list(user[0])
-            user_hashed_password = user[0].pop(3)
-
-            if not verify_password(user_password, user_hashed_password):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            user = self.converter.serialization(user)[0]
-
-            access_token = self.access_token_creator(user)
-            refresh_token = self.refresh_token_creator(user)
-
-            set_refresh_cookie(response, refresh_token)
-            self.redis_client.append_token(user.user_id, refresh_token)
-
-            return AuthenticationModel(
-                user=user,
-                token=AccessTokenModel(
-                    access_token=access_token
-                )
+        if not user:
+            raise HTTPException(
+                 status_code=status.HTTP_401_UNAUTHORIZED,
+                 detail="incorrect username or password"
             )
+
+        user[0] = list(user[0])
+        user_hashed_password = user[0].pop(3)
+
+        if not verify_password(user_password, user_hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="incorrect username or password"
+            )
+
+        user = self.converter.serialization(user)[0]
+
+        access_token = self.access_token_creator(user)
+        refresh_token = self.refresh_token_creator(user)
+
+        set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(user.user_id, refresh_token)
+
+        return AuthenticationModel(
+            user=user,
+            token=AccessTokenModel(
+                access_token=access_token
+            )
+        )
 
 
 class Logout(BaseDependency):
@@ -271,6 +272,7 @@ class Authorization(BaseDependency):
             user = user_db.read(payload.sub)
 
         user = self.converter.serialization(user)[0]
+
         if not self.__min_role_id <= user.role_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

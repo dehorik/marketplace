@@ -8,7 +8,7 @@ from entities.products.models import (
     ProductsListCatalogModel
 )
 from core.settings import config
-from core.database import ProductDataBase
+from core.database import ProductDataBase, OrderDataBase
 from utils import Converter, write_file, rewrite_file, delete_file
 
 
@@ -20,7 +20,8 @@ class BaseDependency:
             file_writer: Callable = write_file,
             file_rewriter: Callable = rewrite_file,
             file_deleter: Callable = delete_file,
-            product_database: Type = ProductDataBase
+            product_database: Type = ProductDataBase,
+            order_database: Type = OrderDataBase
     ):
         """
         :param file_writer: ссылка на функцию для записи файлов
@@ -33,6 +34,7 @@ class BaseDependency:
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
         self.product_database = product_database
+        self.order_database = order_database
 
 
 class CatalogLoader(BaseDependency):
@@ -56,9 +58,9 @@ class CatalogLoader(BaseDependency):
                 last_product_id=last_product_id
             )
 
-            return ProductsListCatalogModel(
-                products=self.converter.serialization(products)
-            )
+        return ProductsListCatalogModel(
+            products=self.converter.serialization(products)
+        )
 
 
 class ProductCreator(BaseDependency):
@@ -156,6 +158,10 @@ class ProductUpdater(BaseDependency):
                 str | None,
                 Form(min_length=2, max_length=300)
             ] = None,
+            is_hidden: Annotated[
+                bool | None,
+                Form()
+            ] = None,
             product_photo: Annotated[
                 UploadFile,
                 File()
@@ -173,9 +179,10 @@ class ProductUpdater(BaseDependency):
             for key, value in {
                 'product_name': product_name,
                 'product_price': product_price,
-                'product_description': product_description
-            }
-            if value
+                'product_description': product_description,
+                'is_hidden': is_hidden
+            }.items()
+            if value is not None
         }
 
         with self.product_database() as product_db:
@@ -207,6 +214,13 @@ class ProductDeleter(BaseDependency):
         self.converter = converter
 
     def __call__(self, product_id: int) -> ProductModel:
+        with self.order_database() as order_db:
+            if order_db.get_orders_by_product_id(product_id):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="there are orders with this product"
+                )
+
         with self.product_database() as product_db:
             deleted_items = product_db.delete(product_id)
 

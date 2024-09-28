@@ -62,6 +62,7 @@ class ProductDataBase(InterfaceDataBase):
                     product_name,
                     product_price, 
                     product_description,
+                    is_hidden,
                     product_photo_path,
                     (
                         SELECT 
@@ -121,7 +122,6 @@ class ProductDataBase(InterfaceDataBase):
         deleted_items = {
             "product": None,
             "comments": [],
-            "orders": [],
             "shopping_bag_items": []
         }
 
@@ -135,17 +135,6 @@ class ProductDataBase(InterfaceDataBase):
             [product_id]
         )
         deleted_items['comments'].extend(self._cursor.fetchall())
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM orders 
-                WHERE product_id = %s
-                RETURNING *; 
-            """,
-            [product_id]
-        )
-        deleted_items['orders'].extend(self._cursor.fetchall())
 
         self._cursor.execute(
             """
@@ -185,9 +174,12 @@ class ProductDataBase(InterfaceDataBase):
         """
 
         if last_product_id:
-            condition = f"WHERE product.product_id < {last_product_id}"
+            condition = f"""
+                WHERE product.product_id < {last_product_id} 
+                AND product.is_hidden != true
+            """
         else:
-            condition = ""
+            condition = "WHERE product.is_hidden != true"
 
         self._cursor.execute(
             f"""
