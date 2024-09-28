@@ -37,6 +37,7 @@ def init_database():
                 product_name VARCHAR(255),
                 product_price INT,
                 product_description TEXT,
+                is_hidden BOOLEAN DEFAULT false,
                 product_photo_path VARCHAR(255)
             );
             
