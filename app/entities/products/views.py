@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
-    ProductsListCatalogModel
+    ProductListCatalogModel
 )
 from entities.products.dependencies import (
     load_catalog_dependency,
@@ -31,7 +31,7 @@ templates = Jinja2Templates(
 @router.get("/list", response_class=HTMLResponse)
 def get_catalog(
         request: Request,
-        products_list: Annotated[ProductsListCatalogModel, Depends(load_catalog_dependency)]
+        products_list: Annotated[ProductListCatalogModel, Depends(load_catalog_dependency)]
 ):
     return templates.TemplateResponse(
         name='catalog.html',
@@ -41,9 +41,9 @@ def get_catalog(
         }
     )
 
-@router.get("/latest", response_model=ProductsListCatalogModel)
+@router.get("/latest", response_model=ProductListCatalogModel)
 def load_catalog(
-        products_list: Annotated[ProductsListCatalogModel, Depends(load_catalog_dependency)]
+        products_list: Annotated[ProductListCatalogModel, Depends(load_catalog_dependency)]
 ):
     return products_list
 

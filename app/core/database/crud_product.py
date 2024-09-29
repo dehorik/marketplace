@@ -202,9 +202,8 @@ class ProductDataBase(InterfaceDataBase):
                     ON product.product_id = rating.product_id
                 {condition}
                 ORDER BY product.product_id DESC
-                LIMIT %s;
-            """,
-            [amount]
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()

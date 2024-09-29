@@ -5,7 +5,7 @@ from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
     ProductCatalogCardModel,
-    ProductsListCatalogModel
+    ProductListCatalogModel
 )
 from core.settings import config
 from core.database import ProductDataBase, OrderDataBase
@@ -51,14 +51,14 @@ class CatalogLoader(BaseDependency):
             self,
             amount: int = 9,
             last_product_id: int | None = None
-    ) -> ProductsListCatalogModel:
+    ) -> ProductListCatalogModel:
         with self.product_database() as product_db:
             products = product_db.get_catalog(
                 amount=amount,
                 last_product_id=last_product_id
             )
 
-        return ProductsListCatalogModel(
+        return ProductListCatalogModel(
             products=self.converter.serialization(products)
         )
 

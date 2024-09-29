@@ -73,6 +73,8 @@ class CommentCreator(BaseDependency):
                     comment_text,
                     comment_photo_path
                 )
+
+            return self.converter.serialization(comment)[0]
         except ForeignKeyViolation:
             if comment_photo_path:
                 self.file_deleter(comment_photo_path)
@@ -82,10 +84,8 @@ class CommentCreator(BaseDependency):
                 detail="incorrect user_id or product_id"
             )
 
-        return self.converter.serialization(comment)[0]
 
-
-class CommentLoader(BaseDependency):
+class CommentsLoader(BaseDependency):
     """Подгрузка отзывов под товаром"""
 
     def __init__(self, converter: Converter = Converter(CommentItemModel)):
@@ -262,6 +262,6 @@ class CommentDeleter(BaseDependency):
 
 # dependencies
 create_comment_dependency = CommentCreator()
-load_comments_dependency = CommentLoader()
+load_comments_dependency = CommentsLoader()
 update_comment_dependency = CommentUpdater()
 delete_comment_dependency = CommentDeleter()

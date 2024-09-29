@@ -34,5 +34,5 @@ class ProductCatalogCardModel(BaseModel):
     product_photo_path: str
 
 
-class ProductsListCatalogModel(BaseModel):
+class ProductListCatalogModel(BaseModel):
     products: List[ProductCatalogCardModel]

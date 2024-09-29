@@ -86,3 +86,36 @@ class OrderDataBase(InterfaceDataBase):
         )
 
         return self._cursor.fetchall()
+
+    def get_shopping_bag_items(
+            self,
+            user_id: int,
+            amount: int = 10,
+            last_item_id: int | None = None
+    ) -> list:
+        if last_item_id:
+            condition = f"""
+                WHERE shopping_bag_item.user_id = {user_id} 
+                AND shopping_bag_item.shopping_bag_item_id < {last_item_id}
+            """
+        else:
+            condition = f"WHERE shopping_bag_item.user_id = {user_id}"
+
+        self._cursor.execute(
+            f"""
+                SELECT
+                    shopping_bag_item.shopping_bag_item_id,
+                    shopping_bag_item.user_id,
+                    shopping_bag_item.product_id,
+                    product.product_name,
+                    product.product_price
+                FROM 
+                    shopping_bag_item INNER JOIN product
+                    ON shopping_bag_item.product_id = product.product_id
+                {condition}
+                ORDER BY shopping_bag_item.shopping_bag_item_id DESC
+                LIMIT {amount};
+            """
+        )
+
+        return self._cursor.fetchall()
