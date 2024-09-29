@@ -1,5 +1,5 @@
-from typing import Type
-from fastapi import HTTPException, status
+from typing import Type, Annotated
+from fastapi import HTTPException, Depends, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.orders.models import (
@@ -7,8 +7,12 @@ from entities.orders.models import (
     ShoppingBagItemCardModel,
     ShoppingBagItemCardListModel
 )
+from auth import Authorization, PayloadTokenModel
 from core.database import OrderDataBase
 from utils import Converter
+
+
+base_user_dependency = Authorization(min_role_id=1)
 
 
 class BaseDependency:
@@ -28,12 +32,16 @@ class ShoppingBagItemSaver(BaseDependency):
         super().__init__()
         self.converter = converter
 
-    def __call__(self, user_id: int, product_id: int) -> ShoppingBagItemModel:
+    def __call__(
+            self,
+            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            product_id: int
+    ) -> ShoppingBagItemModel:
         try:
             with self.order_database() as order_db:
                 shopping_bag_item = order_db.add_to_shopping_bag(
-                    product_id=product_id,
-                    user_id=user_id
+                    user_id=payload.sub,
+                    product_id=product_id
                 )
 
             return self.converter.serialization(shopping_bag_item)[0]
@@ -51,9 +59,14 @@ class ShoppingBagItemDeleter(BaseDependency):
         super().__init__()
         self.converter = converter
 
-    def __call__(self, item_id: int) -> ShoppingBagItemModel:
+    def __call__(
+            self,
+            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            item_id: int
+    ) -> ShoppingBagItemModel:
         with self.order_database() as order_db:
             shopping_bag_item = order_db.delete_from_shopping_bag(
+                user_id=payload.sub,
                 shopping_bag_item_id=item_id
             )
 
@@ -78,7 +91,7 @@ class ShoppingBagItemLoader(BaseDependency):
 
     def __call__(
             self,
-            user_id: int,
+            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
             amount: int = 10,
             last_item_id: int | None = None
     ) -> ShoppingBagItemCardListModel:
@@ -94,7 +107,7 @@ class ShoppingBagItemLoader(BaseDependency):
         try:
             with self.order_database() as order_db:
                 shopping_bag_items = order_db.get_shopping_bag_items(
-                    user_id=user_id,
+                    user_id=payload.sub,
                     amount=amount,
                     last_item_id=last_item_id
                 )

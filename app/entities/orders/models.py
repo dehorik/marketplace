@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ShoppingBagItemModel(BaseModel):
@@ -16,8 +16,8 @@ class ShoppingBagItemCardModel(BaseModel):
     shopping_bag_item_id: int
     user_id: int
     product_id: int
-    product_name: str
-    product_price: int
+    product_name: str = Field(min_length=2, max_length=20)
+    product_price: int = Field(gt=0, le=100000)
 
 
 class ShoppingBagItemCardListModel(BaseModel):

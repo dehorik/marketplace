@@ -1,6 +1,6 @@
 from typing import Type, Annotated
-from psycopg2.errors import ForeignKeyViolation
 from fastapi import Depends, HTTPException, Form, status
+from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel
 from auth import PayloadTokenModel, Authorization
@@ -9,6 +9,7 @@ from utils import Converter
 
 
 base_user_dependency = Authorization(min_role_id=1)
+owner_dependency = Authorization(min_role_id=3)
 
 
 class BaseDependency:
@@ -33,10 +34,7 @@ class UserDataGetter(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[
-                PayloadTokenModel,
-                Depends(base_user_dependency)
-            ]
+            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)]
     ) -> UserModel:
         with self.user_database() as user_db:
             user = user_db.read(payload.sub)
@@ -53,9 +51,16 @@ class RoleUpdater(BaseDependency):
 
     def __call__(
             self,
-            user_id: int,
+            payload: Annotated[PayloadTokenModel, Depends(owner_dependency)],
+            user_id: Annotated[int, Form(ge=1)],
             role_id: Annotated[int, Form(ge=1)]
     ) -> UserModel:
+        if payload.sub == user_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="you cannot change your role"
+            )
+
         try:
             with self.user_database() as user_db:
                 user = user_db.set_role(user_id, role_id)

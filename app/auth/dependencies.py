@@ -72,7 +72,7 @@ class Registration(BaseDependency):
         with self.user_database() as user_db:
             if user_db.get_user_by_user_name(user_name):
                 raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
+                    status_code=status.HTTP_400_CONFLICT,
                     detail='username is alredy taken'
                 )
 
@@ -263,21 +263,19 @@ class Authorization(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[
-                PayloadTokenModel,
-                Depends(AccessTokenValidator())
-            ]
+            payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
     ) -> PayloadTokenModel:
-        with self.user_database() as user_db:
-            user = user_db.read(payload.sub)
+        if self.__min_role_id > 1:
+            with self.user_database() as user_db:
+                user = user_db.read(payload.sub)
 
-        user = self.converter.serialization(user)[0]
+            user = self.converter.serialization(user)[0]
 
-        if not self.__min_role_id <= user.role_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='you have no such rights'
-            )
+            if not self.__min_role_id <= user.role_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='you have no such rights'
+                )
 
         return payload
 

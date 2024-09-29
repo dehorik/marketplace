@@ -21,7 +21,7 @@ class CommentItemModel(BaseModel):
     comment_id: int
     user_id: int
     product_id: int
-    user_name: str
+    user_name: str = Field(min_length=6, max_length=16)
     user_photo_path: str | None = None
     comment_rating: int = Field(ge=1, le=5)
     comment_date: datetime
