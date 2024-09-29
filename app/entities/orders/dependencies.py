@@ -12,6 +12,8 @@ from utils import Converter
 
 
 class BaseDependency:
+    """Базовый класс для других классов-зависимостей"""
+
     def __init__(
             self,
             order_database: Type = OrderDataBase
@@ -20,6 +22,8 @@ class BaseDependency:
 
 
 class ShoppingBagItemSaver(BaseDependency):
+    """Добавление товара в корзину"""
+
     def __init__(self, converter: Converter = Converter(ShoppingBagItemModel)):
         super().__init__()
         self.converter = converter
@@ -41,13 +45,17 @@ class ShoppingBagItemSaver(BaseDependency):
 
 
 class ShoppingBagItemDeleter(BaseDependency):
+    """Удаление товара из корзины"""
+
     def __init__(self, converter: Converter = Converter(ShoppingBagItemModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(self, item_id: int) -> ShoppingBagItemModel:
         with self.order_database() as order_db:
-            shopping_bag_item = order_db.delete_from_shopping_bag(item_id)
+            shopping_bag_item = order_db.delete_from_shopping_bag(
+                shopping_bag_item_id=item_id
+            )
 
         if not shopping_bag_item:
             raise HTTPException(
@@ -59,7 +67,12 @@ class ShoppingBagItemDeleter(BaseDependency):
 
 
 class ShoppingBagItemLoader(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ShoppingBagItemCardModel)):
+    """Загрузка карточек товаров в корзине"""
+
+    def __init__(
+            self,
+            converter: Converter = Converter(ShoppingBagItemCardModel)
+    ):
         super().__init__()
         self.converter = converter
 
@@ -69,6 +82,15 @@ class ShoppingBagItemLoader(BaseDependency):
             amount: int = 10,
             last_item_id: int | None = None
     ) -> ShoppingBagItemCardListModel:
+        """
+        :param amount: требуемое количество карточек
+        :param last_item_id: id карточки из последней подгрузки;
+                             если это первый запрос на получение карточек,
+                             оставить None
+
+        :return: список из карточек товаров
+        """
+
         try:
             with self.order_database() as order_db:
                 shopping_bag_items = order_db.get_shopping_bag_items(

@@ -3,7 +3,7 @@ from core.database.interface_database import InterfaceDataBase
 
 
 class OrderDataBase(InterfaceDataBase):
-    """Класс для выполнения CRUD операций с заказами"""
+    """Класс для выполнения CRUD операций с заказами и товарами в корзине"""
 
     def __init__(self, session: Session = Session()):
         self.__session = session

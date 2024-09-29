@@ -3,17 +3,17 @@ from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from entities.products.models import (
-    ProductModel,
-    ExtendedProductModel,
-    ProductListCatalogModel
-)
 from entities.products.dependencies import (
     load_catalog_dependency,
     create_product_dependency,
     get_product_dependency,
     update_product_dependency,
     delete_product_dependency
+)
+from entities.products.models import (
+    ProductModel,
+    ExtendedProductModel,
+    ProductListCatalogModel
 )
 
 
@@ -31,7 +31,10 @@ templates = Jinja2Templates(
 @router.get("/list", response_class=HTMLResponse)
 def get_catalog(
         request: Request,
-        products_list: Annotated[ProductListCatalogModel, Depends(load_catalog_dependency)]
+        products_list: Annotated[
+            ProductListCatalogModel,
+            Depends(load_catalog_dependency)
+        ]
 ):
     return templates.TemplateResponse(
         name='catalog.html',
@@ -43,7 +46,10 @@ def get_catalog(
 
 @router.get("/latest", response_model=ProductListCatalogModel)
 def load_catalog(
-        products_list: Annotated[ProductListCatalogModel, Depends(load_catalog_dependency)]
+        products_list: Annotated[
+            ProductListCatalogModel,
+            Depends(load_catalog_dependency)
+        ]
 ):
     return products_list
 
@@ -60,7 +66,10 @@ def create_product(
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ExtendedProductModel, Depends(get_product_dependency)]
+        product: Annotated[
+            ExtendedProductModel,
+            Depends(get_product_dependency)
+        ]
 ):
     return templates.TemplateResponse(
         name='merchan.html',
