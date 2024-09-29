@@ -86,16 +86,17 @@ class CommentDataBase(InterfaceDataBase):
         for key, value in kwargs.items():
             if type(value) is str:
                 set_values = set_values + f"{key} = '{value}', "
-            elif not value:
+            elif value is None:
                 set_values = set_values + f"{key} = NULL, "
             else:
                 set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+        else:
+            set_values = set_values + "comment_date = CURRENT_DATE"
 
         self._cursor.execute(
             f"""
                 UPDATE comment 
-                    SET {set_values}
+                    SET {set_values}            
                 WHERE comment_id = %s
                 RETURNING *;
             """,

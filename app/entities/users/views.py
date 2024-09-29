@@ -25,6 +25,6 @@ def get_user_data(
 ):
     return user
 
-@router.put("/role", response_model=UserModel)
+@router.patch("/role", response_model=UserModel)
 def update_role(user: Annotated[UserModel, Depends(update_role_dependency)]):
     return user

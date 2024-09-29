@@ -104,7 +104,8 @@ class ProductDataBase(InterfaceDataBase):
                 set_values = set_values + f"{key} = '{value}', "
             else:
                 set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+        else:
+            set_values = set_values[:-2]
 
         self._cursor.execute(
             f"""
