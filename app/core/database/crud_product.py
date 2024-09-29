@@ -165,14 +165,6 @@ class ProductDataBase(InterfaceDataBase):
             amount: int = 9,
             last_product_id: int | None = None
     ) -> list:
-        """
-        :param amount: количество возвращаемых товаров
-        :param last_product_id: product_id последнего товара
-               из предыдущей подгрузки;
-               при первом запросе оставить None
-        :return: список товаров
-        """
-
         if last_product_id:
             condition = f"""
                 WHERE product.product_id < {last_product_id} 

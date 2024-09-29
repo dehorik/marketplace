@@ -2,8 +2,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
+from entities.users.dependencies import (
+    get_user_data_dependency,
+    update_role_dependency
+)
 from entities.users.models import UserModel
-from entities.users.dependencies import get_user_data_dependency, update_role_dependency
+
 
 router = APIRouter(
     prefix='/users',
@@ -21,6 +25,6 @@ def get_user_data(
 ):
     return user
 
-@router.patch("/role", response_model=UserModel)
+@router.put("/role", response_model=UserModel)
 def update_role(user: Annotated[UserModel, Depends(update_role_dependency)]):
     return user

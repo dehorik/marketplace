@@ -95,9 +95,18 @@ class CommentsLoader(BaseDependency):
     def __call__(
             self,
             product_id: int,
-            amount: int = 12,
+            amount: int = 10,
             last_comment_id: int | None = None
     ) -> CommentItemListModel:
+        """
+        :param product_id: product_id товара
+        :param amount: нужное количество отзывов
+        :param last_comment_id: comment_id последнего подгруженного отзыва;
+               (если это первый запрос на подгрузку отзывов - оставить None)
+
+        :return: список отзывов
+        """
+
         with self.comment_database() as comment_db:
             comments = comment_db.get_comment_item_list(
                 product_id=product_id,
