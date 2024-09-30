@@ -1,11 +1,11 @@
 from typing import Annotated, Type, Callable
-from fastapi import Form, UploadFile, HTTPException, File, status
+from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
-    ProductCatalogCardModel,
-    ProductListCatalogModel
+    ProductCardModel,
+    ProductCardListModel
 )
 from core.settings import config
 from core.database import ProductDataBase, OrderDataBase
@@ -40,18 +40,15 @@ class BaseDependency:
 class CatalogLoader(BaseDependency):
     """Получение последних созданных товаров"""
 
-    def __init__(
-            self,
-            converter: Converter = Converter(ProductCatalogCardModel)
-    ):
+    def __init__(self, converter: Converter = Converter(ProductCardModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
-            amount: int = 9,
-            last_product_id: int | None = None
-    ) -> ProductListCatalogModel:
+            amount: Annotated[int, Query(ge=0)] = 9,
+            last_product_id: Annotated[int | None, Query(ge=1)] = None
+    ) -> ProductCardListModel:
         """
         :param amount: количество возвращаемых товаров
         :param last_product_id: product_id последнего товара
@@ -67,7 +64,30 @@ class CatalogLoader(BaseDependency):
                 last_product_id=last_product_id
             )
 
-        return ProductListCatalogModel(
+        return ProductCardListModel(
+            products=self.converter.serialization(products)
+        )
+
+
+class ProductSearcher(BaseDependency):
+    def __init__(self, converter: Converter = Converter(ProductCardModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(
+            self,
+            product_name: Annotated[str, Query(min_length=2, max_length=20)],
+            amount: Annotated[int, Query(ge=0)] = 9,
+            last_product_id: Annotated[int | None, Query(ge=1)] = None
+    ) -> ProductCardListModel:
+        with self.product_database() as product_db:
+            products = product_db.search_product(
+                product_name=product_name,
+                amount=amount,
+                last_product_id=last_product_id
+            )
+
+        return ProductCardListModel(
             products=self.converter.serialization(products)
         )
 
@@ -81,7 +101,7 @@ class ProductCreator(BaseDependency):
             self,
             product_name: Annotated[
                 str,
-                Form(min_length=2, max_length=30)
+                Form(min_length=2, max_length=20)
             ],
             product_price: Annotated[
                 int,
@@ -119,10 +139,7 @@ class ProductCreator(BaseDependency):
 
 
 class ProductGetter(BaseDependency):
-    def __init__(
-            self,
-            converter: Converter = Converter(ProductModel)
-    ):
+    def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
 
@@ -253,6 +270,7 @@ class ProductDeleter(BaseDependency):
 
 # dependencies
 load_catalog_dependency = CatalogLoader()
+search_product_dependency = ProductSearcher()
 create_product_dependency = ProductCreator()
 get_product_dependency = ProductGetter()
 update_product_dependency = ProductUpdater()

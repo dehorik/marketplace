@@ -24,7 +24,7 @@ class ExtendedProductModel(BaseModel):
     amount_comments: int
 
 
-class ProductCatalogCardModel(BaseModel):
+class ProductCardModel(BaseModel):
     """Схема карточки товара в каталоге"""
 
     product_id: int
@@ -34,5 +34,5 @@ class ProductCatalogCardModel(BaseModel):
     product_photo_path: str
 
 
-class ProductListCatalogModel(BaseModel):
-    products: List[ProductCatalogCardModel]
+class ProductCardListModel(BaseModel):
+    products: List[ProductCardModel]

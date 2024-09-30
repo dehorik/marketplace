@@ -200,3 +200,48 @@ class ProductDataBase(InterfaceDataBase):
         )
 
         return self._cursor.fetchall()
+
+    def search_product(
+            self,
+            product_name: str,
+            amount: int = 9,
+            last_product_id: int = None
+    ) -> list:
+        if last_product_id:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.product_id < {last_product_id}
+                AND product.is_hidden != true
+            """
+        else:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.is_hidden != true
+            """
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    product.product_id,
+                    product.product_name,
+                    product.product_price,
+                    rating.product_rating,
+                    product.product_photo_path
+                FROM 
+                    product LEFT JOIN (
+                        SELECT 
+                            product.product_id,
+                            ROUND(AVG(comment_rating), 1) as product_rating
+                        FROM 
+                            product INNER JOIN comment 
+                            ON product.product_id = comment.product_id
+                        GROUP BY product.product_id
+                    ) AS rating
+                    ON product.product_id = rating.product_id                
+                {condition}
+                ORDER BY product.product_id DESC
+                LIMIT {amount};
+            """
+        )
+
+        return self._cursor.fetchall()

@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from entities.products.dependencies import (
     load_catalog_dependency,
+    search_product_dependency,
     create_product_dependency,
     get_product_dependency,
     update_product_dependency,
@@ -13,7 +14,7 @@ from entities.products.dependencies import (
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
-    ProductListCatalogModel
+    ProductCardListModel
 )
 
 
@@ -32,7 +33,7 @@ templates = Jinja2Templates(
 def get_catalog(
         request: Request,
         products_list: Annotated[
-            ProductListCatalogModel,
+            ProductCardListModel,
             Depends(load_catalog_dependency)
         ]
 ):
@@ -44,14 +45,23 @@ def get_catalog(
         }
     )
 
-@router.get("/latest", response_model=ProductListCatalogModel)
+@router.get("/latest", response_model=ProductCardListModel)
 def load_catalog(
         products_list: Annotated[
-            ProductListCatalogModel,
+            ProductCardListModel,
             Depends(load_catalog_dependency)
         ]
 ):
     return products_list
+
+@router.get("/search", response_model=ProductCardListModel)
+def search_product(
+        products: Annotated[
+            ProductCardListModel,
+            Depends(search_product_dependency)
+        ]
+):
+    return products
 
 @router.post(
     '/create',
