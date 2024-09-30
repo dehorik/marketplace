@@ -80,6 +80,14 @@ class ProductSearcher(BaseDependency):
             amount: Annotated[int, Query(ge=0)] = 9,
             last_product_id: Annotated[int | None, Query(ge=1)] = None
     ) -> ProductCardListModel:
+        """
+        :param product_name: имя товара
+        :param amount: максимальное количество товаров в ответе
+        :param last_product_id: id товара из последней подгрузки
+
+        :return: список найденных товаров
+        """
+
         with self.product_database() as product_db:
             products = product_db.search_product(
                 product_name=product_name,

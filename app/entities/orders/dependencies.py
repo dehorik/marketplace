@@ -1,5 +1,5 @@
 from typing import Type, Annotated
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.orders.models import (
@@ -92,8 +92,8 @@ class ShoppingBagItemLoader(BaseDependency):
     def __call__(
             self,
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
-            amount: int = 10,
-            last_item_id: int | None = None
+            amount: Annotated[int, Query(ge=0)] = 10,
+            last_item_id: Annotated[int | None, Query(ge=1)] = None
     ) -> ShoppingBagItemCardListModel:
         """
         :param amount: требуемое количество карточек

@@ -1,5 +1,5 @@
 from typing import Annotated, Type, Callable
-from fastapi import Form, UploadFile, HTTPException, File, status
+from fastapi import Form, UploadFile, HTTPException, File, Path, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.comments.models import (
@@ -94,9 +94,9 @@ class CommentsLoader(BaseDependency):
 
     def __call__(
             self,
-            product_id: int,
-            amount: int = 10,
-            last_comment_id: int | None = None
+            product_id: Annotated[int, Path(ge=1)],
+            amount: Annotated[int, Query(ge=0)] = 10,
+            last_comment_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CommentItemListModel:
         """
         :param product_id: product_id товара
