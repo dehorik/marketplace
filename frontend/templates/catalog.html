@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -57,6 +57,14 @@
 
 </header>
 
+<div class="search-field">
+    <form>
+        <label for="search-field-area"></label>
+        <input type="text" id="search-field-area" placeholder="Введите название товара">
+    </form>
+    <div id="exception-message-area"></div>
+</div>
+
 <section class="merchants" id="merchants">
     <div class="container">
         <div class="merchants-items" id="grid"> <!-- do not touch id -->
@@ -87,5 +95,6 @@
 </section>
 
 <script src="/static/js/infinite_scroll_products.js"></script>
+<script src="/static/js/search_product.js"></script>
 </body>
 </html>

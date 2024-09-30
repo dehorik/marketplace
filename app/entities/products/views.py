@@ -29,7 +29,7 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/list", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 def get_catalog(
         request: Request,
         products_list: Annotated[

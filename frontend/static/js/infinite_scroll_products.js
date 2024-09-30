@@ -1,6 +1,8 @@
 window.addEventListener('load', () => {
-    // вешаем на событие скролла обработчик, только когда страница полностью загрузится
     window.addEventListener('scroll', check_position);
+
+    localStorage.removeItem("state");
+    localStorage.removeItem("searched-product-name");
 });
 
 
@@ -10,13 +12,22 @@ function update_catalog(amount, last_product_id) {
     // я добавил к тегу div, содержащему карточку товара, атрибут data-product-id;
     // он необходим для корректной работы скрипта
 
-    axios.get(
-        "/products/latest", {
-        params: {
-            amount: amount,
+    let url = "/products/latest";
+    let params = {
+        amount: amount,
+        last_product_id: last_product_id
+    };
+
+    if (localStorage.getItem("state") === "searching") {
+        url = "/products/search";
+        params = {
+            product_name: localStorage.getItem("searched-product-name"),
+            amount: 9,
             last_product_id: last_product_id
         }
-    })
+    }
+
+    axios.get(url, {params})
         .then(function (response) {
             let products = response.data.products;
 
