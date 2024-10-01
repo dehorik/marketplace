@@ -16,7 +16,7 @@ form.addEventListener("submit", (event) => {
             const access_token = response.data.token.access_token;
             set_token(access_token);
 
-            get_message(user, '/products');
+            get_message(user, '/');
         })
         .catch(function (error) {
            if (error.response.status === 401) {

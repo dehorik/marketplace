@@ -29,22 +29,6 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("", response_class=HTMLResponse)
-def get_catalog(
-        request: Request,
-        products_list: Annotated[
-            ProductCardListModel,
-            Depends(load_catalog_dependency)
-        ]
-):
-    return templates.TemplateResponse(
-        name='catalog.html',
-        request=request,
-        context={
-            "products_list": products_list
-        }
-    )
-
 @router.get("/latest", response_model=ProductCardListModel)
 def load_catalog(
         products_list: Annotated[

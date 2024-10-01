@@ -41,13 +41,12 @@ form.addEventListener("submit", (event) => {
     }
 
     if (input_product_name_elem.value.length === 0) {
-        window.location.href = "/products";
+        localStorage.removeItem("searching");
+        window.location.href = "/";
         return;
     }
 
-    if (document.getElementById("not-found-message")) {
-        document.getElementById("not-found-message").remove();
-    }
+    document.getElementById("not-found-message").innerHTML = "";
 
     axios.get("/products/search", {
         params: {
@@ -56,23 +55,19 @@ form.addEventListener("submit", (event) => {
         }
     })
         .then(function (response) {
-            const grid = document.body.querySelector("#grid");
+            const grid = document.body.querySelector(".merchants-items");
             grid.innerHTML = "";
 
-            localStorage.setItem("state", "searching");
-            localStorage.setItem("searched-product-name", input_product_name_elem.value);
+            localStorage.setItem("searching", input_product_name_elem.value);
 
             let products = response.data.products;
 
             if (products.length === 0) {
-                if (document.getElementById("not-found-message")) {
-                    return;
-                }
+                const message_elem = document.getElementById("not-found-message");
 
-                const message = document.createElement("div");
-                message.innerHTML = "Ничего не найдено!";
-                message.id = "not-found-message";
-                grid.after(message)
+                if (message_elem.innerHTML === "") {
+                    message_elem.innerHTML = "Ничего не найдено!";
+                }
             }
 
             for (let i in products) {

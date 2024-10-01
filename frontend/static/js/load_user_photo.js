@@ -1,3 +1,6 @@
+window.addEventListener("load", load_user_photo);
+
+
 function load_user_photo() {
     const container_elem = document.querySelector(".user__manager");
     const access_token = get_token();

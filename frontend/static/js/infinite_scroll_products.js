@@ -1,8 +1,8 @@
 window.addEventListener('load', () => {
+    update_catalog(9);
     window.addEventListener('scroll', check_position);
 
-    localStorage.removeItem("state");
-    localStorage.removeItem("searched-product-name");
+    localStorage.removeItem("searching");
 });
 
 
@@ -18,10 +18,10 @@ function update_catalog(amount, last_product_id) {
         last_product_id: last_product_id
     };
 
-    if (localStorage.getItem("state") === "searching") {
+    if (localStorage.getItem("searching")) {
         url = "/products/search";
         params = {
-            product_name: localStorage.getItem("searched-product-name"),
+            product_name: localStorage.getItem("searching"),
             amount: 9,
             last_product_id: last_product_id
         }
@@ -82,7 +82,7 @@ function create_item(product) {
 function place_item(item) {
     // размещаем новый дом узел
 
-    const grid = document.body.querySelector("#grid");
+    const grid = document.body.querySelector(".merchants-items");
     grid.append(item);
 }
 
