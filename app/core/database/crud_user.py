@@ -70,7 +70,7 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def auth_user_data(self, user_name: str) -> list:
+    def get_user_by_user_name(self, user_name: str) -> list:
         #  для аутентификации, извлекается хеш пароля
 
         self._cursor.execute(
@@ -86,6 +86,24 @@ class UserDataBase(InterfaceDataBase):
                 WHERE user_name = %s;
             """,
             [user_name]
+        )
+
+        return self._cursor.fetchall()
+
+    def set_role(self, user_id: int, role_id: int) -> list:
+        self._cursor.execute(
+            """
+                UPDATE users
+                    SET role_id = %s
+                WHERE user_id = %s
+                RETURNING
+                    user_id,
+                    role_id, 
+                    user_name,
+                    user_email,
+                    user_photo_path;
+            """,
+            [role_id, user_id]
         )
 
         return self._cursor.fetchall()

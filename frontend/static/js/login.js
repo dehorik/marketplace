@@ -17,7 +17,7 @@ form.addEventListener("submit", (event) => {
             set_token(access_token);
             localStorage.setItem("user_id", user.user_id);
 
-            get_message(user, '/products/list');
+            get_message(user, '/');
         })
         .catch(function (error) {
            if (error.response.status === 401) {

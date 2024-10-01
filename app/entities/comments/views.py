@@ -5,6 +5,7 @@ from entities.comments.dependencies import (
     create_comment_dependency,
     load_comments_dependency,
     update_comment_dependency,
+    rewrite_comment_dependency,
     delete_comment_dependency
 )
 from entities.comments.models import CommentModel, CommentItemListModel
@@ -26,15 +27,24 @@ def create_comment(
 ):
     return comment
 
-@router.get("/latest", response_model=CommentItemListModel)
-def load_comment_list(
-        comments: Annotated[CommentItemListModel, Depends(load_comments_dependency)]
+@router.get("/latest/{product_id}", response_model=CommentItemListModel)
+def load_comments(
+        comments: Annotated[
+            CommentItemListModel,
+            Depends(load_comments_dependency)
+        ]
 ):
     return comments
 
-@router.patch('/{comment_id}', response_model=CommentModel)
+@router.patch("/{comment_id}", response_model=CommentModel)
 def update_comment(
         comment: Annotated[CommentModel, Depends(update_comment_dependency)]
+):
+    return comment
+
+@router.put("/{comment_id}", response_model=CommentModel)
+def rewrite_comment(
+        comment: Annotated[CommentModel, Depends(rewrite_comment_dependency)]
 ):
     return comment
 

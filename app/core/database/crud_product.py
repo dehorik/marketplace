@@ -62,6 +62,7 @@ class ProductDataBase(InterfaceDataBase):
                     product_name,
                     product_price, 
                     product_description,
+                    is_hidden,
                     product_photo_path,
                     (
                         SELECT 
@@ -103,7 +104,8 @@ class ProductDataBase(InterfaceDataBase):
                 set_values = set_values + f"{key} = '{value}', "
             else:
                 set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+        else:
+            set_values = set_values[:-2]
 
         self._cursor.execute(
             f"""
@@ -121,7 +123,6 @@ class ProductDataBase(InterfaceDataBase):
         deleted_items = {
             "product": None,
             "comments": [],
-            "orders": [],
             "shopping_bag_items": []
         }
 
@@ -135,17 +136,6 @@ class ProductDataBase(InterfaceDataBase):
             [product_id]
         )
         deleted_items['comments'].extend(self._cursor.fetchall())
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM orders 
-                WHERE product_id = %s
-                RETURNING *; 
-            """,
-            [product_id]
-        )
-        deleted_items['orders'].extend(self._cursor.fetchall())
 
         self._cursor.execute(
             """
@@ -176,18 +166,13 @@ class ProductDataBase(InterfaceDataBase):
             amount: int = 9,
             last_product_id: int | None = None
     ) -> list:
-        """
-        :param amount: количество возвращаемых товаров
-        :param last_product_id: product_id последнего товара
-               из предыдущей подгрузки;
-               при первом запросе оставить None
-        :return: список товаров
-        """
-
         if last_product_id:
-            condition = f"WHERE product.product_id < {last_product_id}"
+            condition = f"""
+                WHERE product.product_id < {last_product_id} 
+                AND product.is_hidden != true
+            """
         else:
-            condition = ""
+            condition = "WHERE product.is_hidden != true"
 
         self._cursor.execute(
             f"""
@@ -210,9 +195,53 @@ class ProductDataBase(InterfaceDataBase):
                     ON product.product_id = rating.product_id
                 {condition}
                 ORDER BY product.product_id DESC
-                LIMIT %s;
-            """,
-            [amount]
+                LIMIT {amount};
+            """
+        )
+
+        return self._cursor.fetchall()
+
+    def search_product(
+            self,
+            product_name: str,
+            amount: int = 9,
+            last_product_id: int = None
+    ) -> list:
+        if last_product_id:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.product_id < {last_product_id}
+                AND product.is_hidden != true
+            """
+        else:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.is_hidden != true
+            """
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    product.product_id,
+                    product.product_name,
+                    product.product_price,
+                    rating.product_rating,
+                    product.product_photo_path
+                FROM 
+                    product LEFT JOIN (
+                        SELECT 
+                            product.product_id,
+                            ROUND(AVG(comment_rating), 1) as product_rating
+                        FROM 
+                            product INNER JOIN comment 
+                            ON product.product_id = comment.product_id
+                        GROUP BY product.product_id
+                    ) AS rating
+                    ON product.product_id = rating.product_id                
+                {condition}
+                ORDER BY product.product_id DESC
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()

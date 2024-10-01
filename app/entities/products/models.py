@@ -9,6 +9,7 @@ class ProductModel(BaseModel):
     product_name: str = Field(min_length=2, max_length=20)
     product_price: int = Field(gt=0, le=100000)
     product_description: str = Field(min_length=2, max_length=300)
+    is_hidden: bool = False
     product_photo_path: str
 
 
@@ -18,12 +19,12 @@ class ExtendedProductModel(BaseModel):
     Например, для получения рейтинга и т.д
     """
 
-    product: ProductModel
+    product_data: ProductModel
     product_rating: float | None = Field(ge=1, le=5, default=None)
     amount_comments: int
 
 
-class ProductCatalogCardModel(BaseModel):
+class ProductCardModel(BaseModel):
     """Схема карточки товара в каталоге"""
 
     product_id: int
@@ -33,5 +34,5 @@ class ProductCatalogCardModel(BaseModel):
     product_photo_path: str
 
 
-class ProductCatalogModel(BaseModel):
-    products: List[ProductCatalogCardModel]
+class ProductCardListModel(BaseModel):
+    products: List[ProductCardModel]

@@ -1,14 +1,14 @@
 from typing import Annotated, Type, Callable
-from fastapi import Form, UploadFile, HTTPException, File, status
+from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
-    ProductCatalogCardModel,
-    ProductCatalogModel
+    ProductCardModel,
+    ProductCardListModel
 )
 from core.settings import config
-from core.database import ProductDataBase
+from core.database import ProductDataBase, OrderDataBase
 from utils import Converter, write_file, rewrite_file, delete_file
 
 
@@ -20,7 +20,8 @@ class BaseDependency:
             file_writer: Callable = write_file,
             file_rewriter: Callable = rewrite_file,
             file_deleter: Callable = delete_file,
-            product_database: Type = ProductDataBase
+            product_database: Type = ProductDataBase,
+            order_database: Type = OrderDataBase
     ):
         """
         :param file_writer: ссылка на функцию для записи файлов
@@ -33,37 +34,73 @@ class BaseDependency:
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
         self.product_database = product_database
+        self.order_database = order_database
 
 
 class CatalogLoader(BaseDependency):
     """Получение последних созданных товаров"""
 
-    def __init__(
-            self,
-            converter: Converter = Converter(ProductCatalogCardModel)
-    ):
+    def __init__(self, converter: Converter = Converter(ProductCardModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
-            amount: int = 9,
-            last_product_id: int | None = None
-    ) -> ProductCatalogModel:
+            amount: Annotated[int, Query(ge=0)] = 9,
+            last_product_id: Annotated[int | None, Query(ge=1)] = None
+    ) -> ProductCardListModel:
+        """
+        :param amount: количество возвращаемых товаров
+        :param last_product_id: product_id последнего товара
+               из предыдущей подгрузки;
+               при первом запросе оставить None
+
+        :return: список товаров
+        """
+
         with self.product_database() as product_db:
             products = product_db.get_catalog(
                 amount=amount,
                 last_product_id=last_product_id
             )
 
-            return ProductCatalogModel(
-                products=self.converter.serialization(products)
+        return ProductCardListModel(
+            products=self.converter.serialization(products)
+        )
+
+
+class ProductSearcher(BaseDependency):
+    def __init__(self, converter: Converter = Converter(ProductCardModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(
+            self,
+            product_name: Annotated[str, Query(min_length=2, max_length=20)],
+            amount: Annotated[int, Query(ge=0)] = 9,
+            last_product_id: Annotated[int | None, Query(ge=1)] = None
+    ) -> ProductCardListModel:
+        """
+        :param product_name: имя товара
+        :param amount: максимальное количество товаров в ответе
+        :param last_product_id: id товара из последней подгрузки
+
+        :return: список найденных товаров
+        """
+
+        with self.product_database() as product_db:
+            products = product_db.search_product(
+                product_name=product_name,
+                amount=amount,
+                last_product_id=last_product_id
             )
+
+        return ProductCardListModel(
+            products=self.converter.serialization(products)
+        )
 
 
 class ProductCreator(BaseDependency):
-    """Создание товара"""
-
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -72,7 +109,7 @@ class ProductCreator(BaseDependency):
             self,
             product_name: Annotated[
                 str,
-                Form(min_length=2, max_length=30)
+                Form(min_length=2, max_length=20)
             ],
             product_price: Annotated[
                 int,
@@ -110,12 +147,7 @@ class ProductCreator(BaseDependency):
 
 
 class ProductGetter(BaseDependency):
-    """Получение товара"""
-
-    def __init__(
-            self,
-            converter: Converter = Converter(ProductModel)
-    ):
+    def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
 
@@ -134,15 +166,13 @@ class ProductGetter(BaseDependency):
         amount_comments = product.pop(-1)
 
         return ExtendedProductModel(
-            product=self.converter.serialization([product])[0],
+            product_data=self.converter.serialization([product])[0],
             product_rating=product_rating,
             amount_comments=amount_comments
         )
 
 
 class ProductUpdater(BaseDependency):
-    """Обновление товара"""
-
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -162,6 +192,10 @@ class ProductUpdater(BaseDependency):
                 str | None,
                 Form(min_length=2, max_length=300)
             ] = None,
+            is_hidden: Annotated[
+                bool | None,
+                Form()
+            ] = None,
             product_photo: Annotated[
                 UploadFile,
                 File()
@@ -179,9 +213,10 @@ class ProductUpdater(BaseDependency):
             for key, value in {
                 'product_name': product_name,
                 'product_price': product_price,
-                'product_description': product_description
-            }
-            if value
+                'product_description': product_description,
+                'is_hidden': is_hidden
+            }.items()
+            if value is not None
         }
 
         with self.product_database() as product_db:
@@ -208,13 +243,18 @@ class ProductUpdater(BaseDependency):
 
 
 class ProductDeleter(BaseDependency):
-    """Удаление товара"""
-
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(self, product_id: int) -> ProductModel:
+        with self.order_database() as order_db:
+            if order_db.get_orders_by_product_id(product_id):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="there are orders with this product"
+                )
+
         with self.product_database() as product_db:
             deleted_items = product_db.delete(product_id)
 
@@ -238,6 +278,7 @@ class ProductDeleter(BaseDependency):
 
 # dependencies
 load_catalog_dependency = CatalogLoader()
+search_product_dependency = ProductSearcher()
 create_product_dependency = ProductCreator()
 get_product_dependency = ProductGetter()
 update_product_dependency = ProductUpdater()

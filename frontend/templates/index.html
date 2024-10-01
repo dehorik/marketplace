@@ -1,29 +1,77 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/static/js/auth_tokens.js"></script>
-    <title>Document</title>
+    <title>ItemHub</title>
 </head>
 <body>
-<input type="button" value="Logout"><br><br>
-<a href="/products/list">Catalog</a>
-<script>
-    delete_token();
 
-    const btn = document.querySelector("input");
+<header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <a href="/"><img src="/static/img/favicon.svg"></a>
+            </div>
+            <div class="navbar-wrap">
+                <ul class="navbar-menu">
+                    <li class="menu-item">
+                        <a data-link="home" href="/">Home</a>
+                    </li>
+                    <li class="menu-item">
+                        <a data-link="merchants" title="Catalog">Catalog</a>
+                    </li>
+                    <li class="menu-item menu-item__cart">
+                        <a data-link="cart" href="cart.html" title="cart">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25"
+                                 fill="none">
+                                <path d="M17 18.5C17.5304 18.5 18.0391 18.7107 18.4142 19.0858C18.7893 19.4609 19 19.9696 19 20.5C19 21.0304 18.7893 21.5391 18.4142 21.9142C18.0391 22.2893 17.5304 22.5 17 22.5C16.4696 22.5 15.9609 22.2893 15.5858 21.9142C15.2107 21.5391 15 21.0304 15 20.5C15 19.39 15.89 18.5 17 18.5ZM1 2.5H4.27L5.21 4.5H20C20.2652 4.5 20.5196 4.60536 20.7071 4.79289C20.8946 4.98043 21 5.23478 21 5.5C21 5.67 20.95 5.84 20.88 6L17.3 12.47C16.96 13.08 16.3 13.5 15.55 13.5H8.1L7.2 15.13L7.17 15.25C7.17 15.3163 7.19634 15.3799 7.24322 15.4268C7.29011 15.4737 7.3537 15.5 7.42 15.5H19V17.5H7C6.46957 17.5 5.96086 17.2893 5.58579 16.9142C5.21071 16.5391 5 16.0304 5 15.5C5 15.15 5.09 14.82 5.24 14.54L6.6 12.09L3 4.5H1V2.5ZM7 18.5C7.53043 18.5 8.03914 18.7107 8.41421 19.0858C8.78929 19.4609 9 19.9696 9 20.5C9 21.0304 8.78929 21.5391 8.41421 21.9142C8.03914 22.2893 7.53043 22.5 7 22.5C6.46957 22.5 5.96086 22.2893 5.58579 21.9142C5.21071 21.5391 5 21.0304 5 20.5C5 19.39 5.89 18.5 7 18.5ZM16 11.5L18.78 6.5H6.14L8.5 11.5H16Z"
+                                      fill="#191411"/>
+                            </svg>
+                        </a>
+                    </li>
+                    <li class="menu-item menu-item__order">
+                        <a data-link="orders" href="orders.html" title="orders">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                                 fill="#5f6368">
+                                <path d="M240-80q-33 0-56.5-23.5T160-160v-480q0-33 23.5-56.5T240-720h80q0-66 47-113t113-47q66 0 113 47t47 113h80q33 0 56.5 23.5T800-640v480q0 33-23.5 56.5T720-80H240Zm0-80h480v-480h-80v80q0 17-11.5 28.5T600-520q-17 0-28.5-11.5T560-560v-80H400v80q0 17-11.5 28.5T360-520q-17 0-28.5-11.5T320-560v-80h-80v480Zm160-560h160q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720ZM240-160v-480 480Z"/>
+                            </svg>
+                        </a>
+                    </li>
+                </ul>
 
-    btn.addEventListener("click", () => {
-        axios.post("/auth/logout")
-            .then((response) => {
-               console.log(response.data.message)
-            });
-    })
-</script>
+                <div class="user__manager"></div>
+            </div>
+        </div>
+    </nav>
+
+</header>
+
+<div class="search-field">
+    <form>
+        <label for="search-field-area"></label>
+        <input type="text" id="search-field-area" placeholder="Введите название товара">
+    </form>
+    <div id="exception-message-area"></div>
+</div>
+
+<section class="merchants" id="merchants">
+    <div class="container">
+        <div class="merchants-items">
+            <!-- сюда совать товары -->
+        </div>
+    </div>
+</section>
+
+<div id="not-found-message"></div>
+
+<script src="/static/js/load_user_photo.js"></script>
+<script src="/static/js/infinite_scroll_products.js"></script>
+<script src="/static/js/search_product.js"></script>
 </body>
 </html>

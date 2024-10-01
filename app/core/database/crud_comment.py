@@ -86,16 +86,17 @@ class CommentDataBase(InterfaceDataBase):
         for key, value in kwargs.items():
             if type(value) is str:
                 set_values = set_values + f"{key} = '{value}', "
-            elif not value:
+            elif value is None:
                 set_values = set_values + f"{key} = NULL, "
             else:
                 set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+        else:
+            set_values = set_values + "comment_date = CURRENT_DATE"
 
         self._cursor.execute(
             f"""
                 UPDATE comment 
-                    SET {set_values}
+                    SET {set_values}            
                 WHERE comment_id = %s
                 RETURNING *;
             """,
@@ -120,23 +121,16 @@ class CommentDataBase(InterfaceDataBase):
     def get_comment_item_list(
             self,
             product_id: int,
-            amount: int = 12,
+            amount: int = 10,
             last_comment_id: int = None
     ) -> list:
-        """
-        Для получения отзывов под товаром (от самых новых до старых)
-
-        :param product_id: product_id товара
-        :param amount: нужное количество отзывов
-        :param last_comment_id: comment_id последнего подгруженного отзыва;
-               (если это первый запрос на подгрузку отзывов - оставить None)
-        :return: список отзывов
-        """
-
         if last_comment_id:
-            condition = f"AND comment.comment_id < {last_comment_id}"
+            condition = f"""
+                WHERE product.product_id = {product_id} 
+                AND comment.comment_id < {last_comment_id}
+            """
         else:
-            condition = ""
+            condition = f"WHERE product.product_id = {product_id}"
 
         self._cursor.execute(
             f"""
@@ -153,11 +147,10 @@ class CommentDataBase(InterfaceDataBase):
                 FROM users 
                     INNER JOIN comment USING(user_id)
                     INNER JOIN product USING(product_id)
-                WHERE product.product_id = %s {condition}
+                {condition}
                 ORDER BY comment.comment_id DESC
-                LIMIT %s;
-            """,
-            [product_id, amount]
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()

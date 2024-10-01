@@ -1,3 +1,6 @@
+window.addEventListener("load", load_user_photo);
+
+
 function load_user_photo() {
     const container_elem = document.querySelector(".user__manager");
     const access_token = get_token();
@@ -6,7 +9,7 @@ function load_user_photo() {
         verify_token();
 
         axios.get(
-            "/users/me", {
+            "/users/me/data", {
                 headers: {
                     Authorization: `Bearer ${access_token}`
                 }
@@ -35,8 +38,8 @@ function load_user_photo() {
         const registration_elem = document.createElement("a");
         const login_elem = document.createElement("a");
 
-        registration_elem.href = '/auth/registration-page';
-        login_elem.href = '/auth/login-page';
+        registration_elem.href = '/auth/registration';
+        login_elem.href = '/auth/login';
         registration_elem.innerHTML = "Регистрация";
         login_elem.innerHTML = "Вход";
 

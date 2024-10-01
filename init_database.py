@@ -13,6 +13,7 @@ def init_database():
     )
     cursor = connection.cursor()
 
+    # создание всех таблиц
     cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS role (
@@ -37,6 +38,7 @@ def init_database():
                 product_name VARCHAR(255),
                 product_price INT,
                 product_description TEXT,
+                is_hidden BOOLEAN DEFAULT false,
                 product_photo_path VARCHAR(255)
             );
             
@@ -85,6 +87,7 @@ def init_database():
         """
     )
 
+    # доступные роли
     cursor.execute(
         """
             INSERT INTO role 
@@ -93,6 +96,22 @@ def init_database():
                 ('user'),
                 ('admin'),
                 ('owner');
+        """
+    )
+
+    # аккаунт владельца
+    cursor.execute(
+        """
+            INSERT INTO users (
+                role_id,
+                user_name,
+                user_hashed_password
+            )    
+            VALUES (
+                3,
+                'egortsipt',
+                '$2b$12$GuAMmq4nDDI9ZQ4OHrgT.O3Edz.ykxRc3ZL4RkqYYOtKSFPa4c..6'
+            );
         """
     )
 

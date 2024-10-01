@@ -3,17 +3,18 @@ from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from entities.products.models import (
-    ProductModel,
-    ExtendedProductModel,
-    ProductCatalogModel
-)
 from entities.products.dependencies import (
     load_catalog_dependency,
+    search_product_dependency,
     create_product_dependency,
     get_product_dependency,
     update_product_dependency,
     delete_product_dependency
+)
+from entities.products.models import (
+    ProductModel,
+    ExtendedProductModel,
+    ProductCardListModel
 )
 
 
@@ -28,24 +29,23 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/list", response_class=HTMLResponse)
-def get_catalog(
-        request: Request,
-        product_catalog: Annotated[ProductCatalogModel, Depends(load_catalog_dependency)]
-):
-    return templates.TemplateResponse(
-        name='catalog.html',
-        request=request,
-        context={
-            "product_catalog": product_catalog
-        }
-    )
-
-@router.get("/latest", response_model=ProductCatalogModel)
+@router.get("/latest", response_model=ProductCardListModel)
 def load_catalog(
-        product_catalog: Annotated[ProductCatalogModel, Depends(load_catalog_dependency)]
+        products_list: Annotated[
+            ProductCardListModel,
+            Depends(load_catalog_dependency)
+        ]
 ):
-    return product_catalog
+    return products_list
+
+@router.get("/search", response_model=ProductCardListModel)
+def search_product(
+        products: Annotated[
+            ProductCardListModel,
+            Depends(search_product_dependency)
+        ]
+):
+    return products
 
 @router.post(
     '/create',
@@ -60,7 +60,10 @@ def create_product(
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ExtendedProductModel, Depends(get_product_dependency)]
+        product: Annotated[
+            ExtendedProductModel,
+            Depends(get_product_dependency)
+        ]
 ):
     return templates.TemplateResponse(
         name='merchan.html',

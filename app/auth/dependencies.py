@@ -58,23 +58,21 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class UserCreator(BaseDependency):
-    """Создание пользователя при регистрации"""
-
+class Registration(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
+            response: Response,
             user_name: Annotated[str, Form(min_length=6, max_length=16)],
             user_password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> UserModel:
+    ) -> AuthenticationModel:
         with self.user_database() as user_db:
-            user = user_db.auth_user_data(user_name)
-            if user:
+            if user_db.get_user_by_user_name(user_name):
                 raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
+                    status_code=status.HTTP_400_CONFLICT,
                     detail='username is alredy taken'
                 )
 
@@ -83,17 +81,8 @@ class UserCreator(BaseDependency):
                 get_password_hash(user_password)
             )
 
-            return self.converter.serialization(user)[0]
+        user = self.converter.serialization(user)[0]
 
-
-class Registration(BaseDependency):
-    """Выпуск токенов для только что зарегистрировавшегося пользователя"""
-
-    def __call__(
-            self,
-            response: Response,
-            user: Annotated[UserModel, Depends(UserCreator())]
-    ) -> AuthenticationModel:
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
@@ -102,51 +91,43 @@ class Registration(BaseDependency):
 
         return AuthenticationModel(
             user=user,
-            token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(
+                access_token=access_token
+            )
         )
 
 
-class CredentialsVerifier(BaseDependency):
-    """Проверка данных для входа"""
-
+class Login(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
+            response: Response,
             user_name: Annotated[str, Form(min_length=6, max_length=16)],
             user_password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> UserModel:
-        with self.user_database() as user_db:
-            user = user_db.auth_user_data(user_name)
-
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            user = list(user[0])
-            user_hashed_password = user.pop(3)
-
-            if not verify_password(user_password, user_hashed_password):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            return self.converter.serialization([user])[0]
-
-
-class Login(BaseDependency):
-    """Выпуск токенов для только что вошедшего пользователя"""
-
-    def __call__(
-            self,
-            response: Response,
-            user: Annotated[UserModel, Depends(CredentialsVerifier())]
     ) -> AuthenticationModel:
+        with self.user_database() as user_db:
+            user = user_db.get_user_by_user_name(user_name)
+
+        if not user:
+            raise HTTPException(
+                 status_code=status.HTTP_401_UNAUTHORIZED,
+                 detail="incorrect username or password"
+            )
+
+        user[0] = list(user[0])
+        user_hashed_password = user[0].pop(3)
+
+        if not verify_password(user_password, user_hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="incorrect username or password"
+            )
+
+        user = self.converter.serialization(user)[0]
+
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
@@ -155,18 +136,18 @@ class Login(BaseDependency):
 
         return AuthenticationModel(
             user=user,
-            token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(
+                access_token=access_token
+            )
         )
 
 
 class Logout(BaseDependency):
-    """Выход из аккаунта"""
-
     def __call__(
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> str:
+    ) -> dict:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -175,10 +156,13 @@ class Logout(BaseDependency):
 
         try:
             response.delete_cookie('refresh_token')
+
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
 
-            return 'successful logout'
+            return {
+                "message": "successful logout"
+            }
 
         except InvalidTokenException:
             # если refresh токена в redis нет - им кто-то уже воспользовался
@@ -198,14 +182,12 @@ class Logout(BaseDependency):
             )
 
 
-class RefreshTokenValidator(BaseDependency):
-    """Валидация refresh токена"""
-
+class TokensRefresher(BaseDependency):
     def __call__(
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> PayloadTokenModel:
+    ) -> AccessTokenModel:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -214,10 +196,19 @@ class RefreshTokenValidator(BaseDependency):
 
         try:
             response.delete_cookie('refresh_token')
+
             payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
             self.redis_client.delete_token(payload.sub, refresh_token)
 
-            return payload
+            refresh_token = self.refresh_token_creator(payload)
+            access_token = self.access_token_creator(payload)
+
+            set_refresh_cookie(response, refresh_token)
+            self.redis_client.append_token(payload.sub, refresh_token)
+
+            return AccessTokenModel(
+                access_token=access_token
+            )
         except InvalidTokenException:
             # если рефреш токена нет в redis - им кто-то
             # воспользовался вместо пользователя
@@ -236,27 +227,6 @@ class RefreshTokenValidator(BaseDependency):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
-
-
-class Refresher(BaseDependency):
-    """Выпуск пары токенов refresh/access на основе refresh токена"""
-
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
-        self.converter = converter
-
-    def __call__(
-            self,
-            response: Response,
-            payload: Annotated[PayloadTokenModel, Depends(RefreshTokenValidator())]
-    ) -> AccessTokenModel:
-        refresh_token = self.refresh_token_creator(payload)
-        access_token = self.access_token_creator(payload)
-
-        set_refresh_cookie(response, refresh_token)
-        self.redis_client.append_token(payload.sub, refresh_token)
-
-        return AccessTokenModel(access_token=access_token)
 
 
 class AccessTokenValidator(BaseDependency):
@@ -295,15 +265,17 @@ class Authorization(BaseDependency):
             self,
             payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
     ) -> PayloadTokenModel:
-        with self.user_database() as user_db:
-            user = user_db.read(payload.sub)
+        if self.__min_role_id > 1:
+            with self.user_database() as user_db:
+                user = user_db.read(payload.sub)
 
-        user = self.converter.serialization(user)[0]
-        if not self.__min_role_id <= user.role_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='you have no such rights'
-            )
+            user = self.converter.serialization(user)[0]
+
+            if not self.__min_role_id <= user.role_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='you have no such rights'
+                )
 
         return payload
 
@@ -327,8 +299,7 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 # а __init__ для внедрения внешних зависимостей
 # (объктов БД, классов для работы с jwt и т.д)
 
-register_user_dependency = Registration()
-login_user_dependency = Login()
-logout_user_dependency = Logout()
-refresh_tokens_dependency = Refresher()
-validate_access_token_dependency = AccessTokenValidator()
+registration_dependency = Registration()
+login_dependency = Login()
+logout_dependency = Logout()
+refresh_dependency = TokensRefresher()
