@@ -17,7 +17,7 @@ class BaseDependency:
 
     def __init__(
             self,
-            user_database: Type = UserDataBase
+            user_database: Type[UserDataBase] = UserDataBase
     ):
         self.user_database = user_database
 

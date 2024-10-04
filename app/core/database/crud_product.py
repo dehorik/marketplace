@@ -30,15 +30,15 @@ class ProductDataBase(InterfaceDataBase):
             product_name: str,
             product_price: float,
             product_description: str,
-            product_photo_path: str
+            is_hidden: bool
     ) -> list:
         self._cursor.execute(
             """
                 INSERT INTO product (
                     product_name, 
                     product_price, 
-                    product_description, 
-                    product_photo_path
+                    product_description,
+                    is_hidden
                 )
                 VALUES
                     (%s, %s, %s, %s)
@@ -48,7 +48,7 @@ class ProductDataBase(InterfaceDataBase):
                 product_name,
                 product_price,
                 product_description,
-                product_photo_path
+                is_hidden
             ]
         )
 

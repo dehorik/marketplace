@@ -1,4 +1,5 @@
-from typing import Annotated, Type, Callable
+from typing import Annotated, Type
+from os.path import exists
 from fastapi import Form, UploadFile, HTTPException, File, Path, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
@@ -7,9 +8,15 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
+from utils import (
+    FileWriter,
+    FileRewriter,
+    FileDeleter,
+    PathGenerator,
+    Converter
+)
 from core.settings import config
 from core.database import CommentDataBase
-from utils import write_file, rewrite_file, delete_file, Converter
 
 
 class BaseDependency:
@@ -17,14 +24,24 @@ class BaseDependency:
 
     def __init__(
             self,
-            file_writer: Callable = write_file,
-            file_rewriter: Callable = rewrite_file,
-            file_deleter: Callable = delete_file,
+            file_writer: FileWriter = FileWriter(),
+            file_rewriter: FileRewriter = FileRewriter(),
+            file_deleter: FileDeleter = FileDeleter(),
+            path_generator: PathGenerator = PathGenerator(config.COMMENT_PHOTO_PATH),
             comment_database: Type[CommentDataBase] = CommentDataBase
     ):
+        """
+        :param file_writer: ссылка на объект для записи файлов
+        :param file_rewriter: ссылка на объект для перезаписи файлов
+        :param file_deleter: ссылка на объект для удаления файлов
+        :param path_generator: объект для генерации путей к изображениям
+        :param comment_database: ссылка на класс для работы с БД
+        """
+
         self.file_writer = file_writer
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
+        self.path_generator = path_generator
         self.comment_database = comment_database
 
 
@@ -38,16 +55,13 @@ class CommentCreator(BaseDependency):
             user_id: int,
             product_id: int,
             comment_rating: Annotated[
-                int,
-                Form(ge=1, le=5)
+                int, Form(ge=1, le=5)
             ],
             comment_text: Annotated[
-                str | None,
-                Form(min_length=2, max_length=100)
+                str | None, Form(min_length=2, max_length=100)
             ] = None,
             comment_photo: Annotated[
-                UploadFile,
-                File()
+                UploadFile, File()
             ] = None
     ) -> CommentModel:
         if comment_photo:
@@ -57,28 +71,35 @@ class CommentCreator(BaseDependency):
                     detail='invalid file type'
                 )
 
-            comment_photo_path = self.file_writer(
-                config.COMMENT_PHOTO_PATH,
-                comment_photo.file.read()
-            )
-        else:
-            comment_photo_path = None
-
         try:
             with self.comment_database() as comment_db:
                 comment = comment_db.create(
                     user_id,
                     product_id,
                     comment_rating,
-                    comment_text,
-                    comment_photo_path
+                    comment_text
                 )
 
-            return self.converter.serialization(comment)[0]
-        except ForeignKeyViolation:
-            if comment_photo_path:
-                self.file_deleter(comment_photo_path)
+            comment = self.converter.serialization(comment)[0]
 
+            if comment_photo:
+                comment_photo_path = self.path_generator(comment.comment_id)
+
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
+
+                with self.comment_database() as comment_db:
+                    comment = comment_db.update(
+                        comment_id=comment.comment_id,
+                        comment_photo_path=comment_photo_path
+                    )
+
+                comment = self.converter.serialization(comment)[0]
+
+            return comment
+        except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect user_id or product_id"
@@ -133,16 +154,13 @@ class CommentUpdater(BaseDependency):
             self,
             comment_id: int,
             comment_rating: Annotated[
-                int | None,
-                Form(ge=1, le=5)
+                int | None, Form(ge=1, le=5)
             ] = None,
             comment_text: Annotated[
-                str | None,
-                Form(min_length=2, max_length=100)
+                str | None, Form(min_length=2, max_length=100)
             ] = None,
             comment_photo: Annotated[
-                UploadFile,
-                File()
+                UploadFile, File()
             ] = None
     ) -> CommentModel:
         if comment_photo:
@@ -152,11 +170,27 @@ class CommentUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
+            comment_photo_path = self.path_generator(comment_id)
+
+            if exists(f"..../{comment_photo_path}"):
+                self.file_rewriter(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
+            else:
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
+        else:
+            comment_photo_path = None
+
         fields_for_update = {
             key: value
             for key, value in {
                 "comment_rating": comment_rating,
                 "comment_text": comment_text,
+                "comment_photo_path": comment_photo_path
             }.items()
             if value
         }
@@ -168,33 +202,15 @@ class CommentUpdater(BaseDependency):
             )
 
         if not comment:
+            if comment_photo_path:
+                self.file_deleter(comment_photo_path)
+
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="incorrect comment_id"
             )
 
-        comment = self.converter.serialization(comment)[0]
-
-        if comment_photo and comment.comment_photo_path:
-            self.file_rewriter(
-                comment.comment_photo_path,
-                comment_photo.file.read()
-            )
-        elif comment_photo and not comment.comment_photo_path:
-            comment_photo_path = self.file_writer(
-                config.COMMENT_PHOTO_PATH,
-                comment_photo.file.read()
-            )
-
-            with self.comment_database() as comment_db:
-                comment = comment_db.update(
-                    comment_id=comment_id,
-                    comment_photo_path=comment_photo_path
-                )
-
-            comment = self.converter.serialization(comment)[0]
-
-        return comment
+        return self.converter.serialization(comment)[0]
 
 
 class CommentRewriter(BaseDependency):
@@ -211,16 +227,13 @@ class CommentRewriter(BaseDependency):
             self,
             comment_id: int,
             comment_rating: Annotated[
-                int,
-                Form(ge=1, le=5)
+                int, Form(ge=1, le=5)
             ],
             comment_text: Annotated[
-                str | None,
-                Form(min_length=2, max_length=100)
+                str | None, Form(min_length=2, max_length=100)
             ] = None,
             comment_photo: Annotated[
-                UploadFile,
-                File()
+                UploadFile, File()
             ] = None
     ) -> CommentModel:
         """
@@ -235,52 +248,42 @@ class CommentRewriter(BaseDependency):
                     detail='invalid file type'
                 )
 
+            comment_photo_path = self.path_generator(comment_id)
+
+            if exists(f"..../{comment_photo_path}"):
+                self.file_rewriter(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
+            else:
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
+        else:
+            comment_photo_path = None
+
+            if exists(f"..../{self.path_generator(comment_id)}"):
+                self.file_deleter(self.path_generator(comment_id))
+
         with self.comment_database() as comment_db:
             comment = comment_db.update(
                 comment_id=comment_id,
                 comment_rating=comment_rating,
-                comment_text=comment_text
+                comment_text=comment_text,
+                comment_photo_path=comment_photo_path
             )
 
         if not comment:
+            if comment_photo_path:
+                self.file_deleter(comment_photo_path)
+
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="incorrect comment_id"
             )
 
-        comment = self.converter.serialization(comment)[0]
-
-        if comment_photo and comment.comment_photo_path:
-            self.file_rewriter(
-                comment.comment_photo_path,
-                comment_photo.file.read()
-            )
-        elif comment_photo and not comment.comment_photo_path:
-            comment_photo_path = self.file_writer(
-                config.COMMENT_PHOTO_PATH,
-                comment_photo.file.read()
-            )
-
-            with self.comment_database() as comment_db:
-                comment = comment_db.update(
-                    comment_id=comment_id,
-                    comment_photo_path=comment_photo_path
-                )
-
-            comment = self.converter.serialization(comment)[0]
-
-        elif not comment_photo and comment.comment_photo_path:
-            self.file_deleter(comment.comment_photo_path)
-
-            with self.comment_database() as comment_db:
-                comment = comment_db.update(
-                    comment_id=comment_id,
-                    comment_photo_path=None
-                )
-
-            comment = self.converter.serialization(comment)[0]
-
-        return comment
+        return self.converter.serialization(comment)[0]
 
 
 class CommentDeleter(BaseDependency):

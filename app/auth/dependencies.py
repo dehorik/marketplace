@@ -39,7 +39,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = RedisClient(),
-            user_database: Type = UserDataBase
+            user_database: Type[UserDataBase] = UserDataBase
     ):
         """
         :param jwt_encoder: объект для выпуска jwt

@@ -20,7 +20,7 @@ class BaseDependency:
 
     def __init__(
             self,
-            order_database: Type = OrderDataBase
+            order_database: Type[OrderDataBase] = OrderDataBase
     ):
         self.order_database = order_database
 

@@ -1,35 +1,40 @@
 import os
-from uuid import uuid4
 
 from core.settings import config
 
 
-def generate_file_name() -> str:
-    return str(uuid4())
+class PathGenerator:
+    def __init__(self, path: str):
+        if path not in [
+                config.USER_PHOTO_PATH,
+                config.PRODUCT_PHOTO_PATH,
+                config.COMMENT_PHOTO_PATH
+        ]:
+            raise ValueError("unavailable path")
 
-def write_file(path: str, file: bytes) -> str:
-    if path not in [
-        config.USER_PHOTO_PATH,
-        config.PRODUCT_PHOTO_PATH,
-        config.COMMENT_PHOTO_PATH
-    ]:
-        raise FileNotFoundError('invalid path!')
+        self.__path = path
 
-    path = f"{path}/{generate_file_name()}"
-    relative_path = f"../{path}"
-
-    with open(relative_path, 'wb') as photo:
-        photo.write(file)
-
-    return path
-
-def rewrite_file(path: str, file: bytes) -> None:
-    relative_path = f"../{path}"
-
-    with open(relative_path, 'wb') as photo:
-        photo.write(file)
+    def __call__(self, identifier: int) -> str:
+        return f"{self.__path}/{identifier}"
 
 
-def delete_file(path: str) -> None:
-    relative_path = f"../{path}"
-    os.remove(relative_path)
+class FileWriter:
+    def __call__(self, path: str, file: bytes) -> None:
+        relative_path = f"../{path}"
+
+        with open(relative_path, 'wb') as photo:
+            photo.write(file)
+
+
+class FileRewriter:
+    def __call__(self, path: str, file: bytes) -> None:
+        relative_path = f"../{path}"
+
+        with open(relative_path, 'wb') as photo:
+            photo.write(file)
+
+
+class FileDeleter:
+    def __call__(self, path: str) -> None:
+        relative_path = f"../{path}"
+        os.remove(relative_path)

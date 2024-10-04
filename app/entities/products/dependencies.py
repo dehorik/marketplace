@@ -1,4 +1,5 @@
-from typing import Annotated, Type, Callable
+from typing import Annotated, Type
+from os.path import exists
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
 from entities.products.models import (
@@ -7,9 +8,15 @@ from entities.products.models import (
     ProductCardModel,
     ProductCardListModel
 )
+from utils import (
+    FileWriter,
+    FileRewriter,
+    FileDeleter,
+    PathGenerator,
+    Converter
+)
 from core.settings import config
 from core.database import ProductDataBase, OrderDataBase
-from utils import Converter, write_file, rewrite_file, delete_file
 
 
 class BaseDependency:
@@ -17,22 +24,26 @@ class BaseDependency:
 
     def __init__(
             self,
-            file_writer: Callable = write_file,
-            file_rewriter: Callable = rewrite_file,
-            file_deleter: Callable = delete_file,
-            product_database: Type = ProductDataBase,
-            order_database: Type = OrderDataBase
+            file_writer: FileWriter = FileWriter(),
+            file_rewriter: FileRewriter = FileRewriter(),
+            file_deleter: FileDeleter = FileDeleter(),
+            path_generator: PathGenerator = PathGenerator(config.PRODUCT_PHOTO_PATH),
+            product_database: Type[ProductDataBase] = ProductDataBase,
+            order_database: Type[OrderDataBase] = OrderDataBase
     ):
         """
-        :param file_writer: ссылка на функцию для записи файлов
-        :param file_rewriter: ссылка на функцию для перезаписи файлов
-        :param file_deleter: ссылка на функцию для удаления файлов
-        :param : ссылка на класс для работы с БД (товар)
+        :param file_writer: ссылка на объект для записи файлов
+        :param file_rewriter: ссылка на объект для перезаписи файлов
+        :param file_deleter: ссылка на объект для удаления файлов
+        :param path_generator: объект для генерации путей к изображениям
+        :param product_database: ссылка на класс для работы с БД (товары)
+        :param order_database: ссылка на класс для работы с БД (заказы)
         """
 
         self.file_writer = file_writer
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
+        self.path_generator = path_generator
         self.product_database = product_database
         self.order_database = order_database
 
@@ -108,20 +119,19 @@ class ProductCreator(BaseDependency):
     def __call__(
             self,
             product_name: Annotated[
-                str,
-                Form(min_length=2, max_length=20)
+                str, Form(min_length=2, max_length=20)
             ],
             product_price: Annotated[
-                int,
-                Form(gt=0, le=1000000)
+                int, Form(gt=0, le=1000000)
             ],
             product_description: Annotated[
-                str,
-                Form(min_length=2, max_length=300)
+                str, Form(min_length=2, max_length=300)
+            ],
+            is_hidden: Annotated[
+                bool, Form()
             ],
             product_photo: Annotated[
-                UploadFile,
-                File()
+                UploadFile, File()
             ]
     ) -> ProductModel:
         if not product_photo.content_type.split('/')[0] == 'image':
@@ -130,20 +140,27 @@ class ProductCreator(BaseDependency):
                 detail='invalid file type'
             )
 
-        product_photo_path = self.file_writer(
-            config.PRODUCT_PHOTO_PATH,
-            product_photo.file.read()
-        )
-
         with self.product_database() as product_db:
             product = product_db.create(
                 product_name,
                 product_price,
                 product_description,
-                product_photo_path
+                is_hidden
             )
 
-        return self.converter.serialization(product)[0]
+            product = product_db.update(
+                product_id=product[0][0],
+                product_photo_path=self.path_generator(product[0][0])
+            )
+
+        product = self.converter.serialization(product)[0]
+
+        self.file_writer(
+            product.product_photo_path,
+            product_photo.file.read()
+        )
+
+        return product
 
 
 class ProductGetter(BaseDependency):
@@ -161,12 +178,12 @@ class ProductGetter(BaseDependency):
                 detail='incorrect product_id'
             )
 
-        product = list(product[0])
-        product_rating = product.pop(-2)
-        amount_comments = product.pop(-1)
+        product[0] = list(product[0])
+        product_rating = product[0].pop(-2)
+        amount_comments = product[0].pop(-1)
 
         return ExtendedProductModel(
-            product_data=self.converter.serialization([product])[0],
+            product_data=self.converter.serialization(product)[0],
             product_rating=product_rating,
             amount_comments=amount_comments
         )
@@ -181,24 +198,19 @@ class ProductUpdater(BaseDependency):
             self,
             product_id: int,
             product_name: Annotated[
-                str | None,
-                Form(min_length=2, max_length=30)
+                str | None, Form(min_length=2, max_length=30)
             ] = None,
             product_price: Annotated[
-                int | None,
-                Form(gt=0, le=1000000)
+                int | None, Form(gt=0, le=1000000)
             ] = None,
             product_description: Annotated[
-                str | None,
-                Form(min_length=2, max_length=300)
+                str | None, Form(min_length=2, max_length=300)
             ] = None,
             is_hidden: Annotated[
-                bool | None,
-                Form()
+                bool | None, Form()
             ] = None,
             product_photo: Annotated[
-                UploadFile,
-                File()
+                UploadFile, File()
             ] = None
     ) -> ProductModel:
         if product_photo:
@@ -206,6 +218,14 @@ class ProductUpdater(BaseDependency):
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
+                )
+
+            product_photo_path = self.path_generator(product_id)
+
+            if exists(product_photo_path):
+                self.file_rewriter(
+                    product_photo_path,
+                    product_photo.file.read()
                 )
 
         fields_for_update = {
@@ -231,15 +251,7 @@ class ProductUpdater(BaseDependency):
                 detail='incorrect product_id'
             )
 
-        product = self.converter.serialization(product)[0]
-
-        if product_photo:
-            self.file_rewriter(
-                product.product_photo_path,
-                product_photo.file.read()
-            )
-
-        return product
+        return self.converter.serialization(product)[0]
 
 
 class ProductDeleter(BaseDependency):
