@@ -78,7 +78,7 @@ class CatalogLoader(BaseDependency):
                 amount=amount,
                 last_product_id=last_product_id
             )
-
+        print(products)
         return ProductCardListModel(
             products=self.converter.serialization(products)
         )
@@ -268,6 +268,15 @@ class ProductDeleter(BaseDependency):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="there are orders with this product"
                 )
+            else:
+                order_db.delete_all_cart_items(product_id)
+
+        with self.comment_database() as comment_db:
+            comments = comment_db.delete_all_comments(product_id)
+
+        for comment in self.comment_converter.serialization(comments):
+            if comment.photo_path:
+                self.file_deleter(comment.photo_path)
 
         with self.product_database() as product_db:
             product = product_db.delete(product_id)
@@ -280,16 +289,6 @@ class ProductDeleter(BaseDependency):
 
         product = self.product_converter.serialization(product)[0]
         self.file_deleter(product.photo_path)
-
-        with self.order_database() as order_db:
-            order_db.delete_all_shopping_bag_items(product_id)
-
-        with self.comment_database() as comment_db:
-            comments = comment_db.delete_all_comments(product_id)
-
-        for comment in self.comment_converter.serialization(comments):
-            if comment.photo_path:
-                self.file_deleter(comment.photo_path)
 
         return product
 

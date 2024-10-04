@@ -30,28 +30,25 @@ class CommentDataBase(InterfaceDataBase):
             user_id: int,
             product_id: int,
             comment_rating: int,
-            comment_text: str | None = None,
-            comment_photo_path: str | None = None
+            comment_text: str | None = None
     ) -> list:
         self._cursor.execute(
             """
                 INSERT INTO comment (
                     user_id,
                     product_id,
-                    comment_date,
-                    comment_text,
                     comment_rating,
-                    comment_photo_path
+                    comment_date,
+                    comment_text
                 )
-                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s)
+                VALUES (%s, %s, %s, CURRENT_DATE, %s)
                 RETURNING *;
             """,
             [
                 user_id,
                 product_id,
-                comment_text,
                 comment_rating,
-                comment_photo_path
+                comment_text,
             ]
         )
 
@@ -138,12 +135,12 @@ class CommentDataBase(InterfaceDataBase):
                     comment.comment_id, 
                     users.user_id,
                     product.product_id, 
-                    users.user_name,
-                    users.user_photo_path,
+                    users.username,
+                    users.photo_path,
                     comment.comment_rating,
                     comment.comment_date,
                     comment.comment_text,
-                    comment.comment_photo_path   
+                    comment.photo_path   
                 FROM users 
                     INNER JOIN comment USING(user_id)
                     INNER JOIN product USING(product_id)
@@ -163,7 +160,7 @@ class CommentDataBase(InterfaceDataBase):
                 DELETE
                 FROM comment
                 WHERE product_id = %s
-                RETURNING %;
+                RETURNING *;
             """,
             [product_id]
         )

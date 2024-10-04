@@ -18,8 +18,8 @@ function load_user_photo() {
                 const profile_elem = document.createElement('div');
                 profile_elem.className = "user__profile";
                 const profile_elem_photo = document.createElement('img');
-
-                const user_photo_path = response.data.user_photo_path;
+                console.log(data)
+                const user_photo_path = response.data.photo_path;
 
                 if (user_photo_path) {
                     profile_elem_photo.src = user_photo_path;
