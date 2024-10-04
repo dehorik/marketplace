@@ -83,13 +83,17 @@ class CommentCreator(BaseDependency):
             comment = self.converter.serialization(comment)[0]
 
             if comment_photo:
-                photo_path = self.path_generator(comment.comment_id)
-                self.file_writer(photo_path, comment_photo.file.read())
+                comment_photo_path = self.path_generator(comment.comment_id)
+
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
 
                 with self.comment_database() as comment_db:
                     comment = comment_db.update(
                         comment_id=comment.comment_id,
-                        photo_path=photo_path
+                        comment_photo_path=comment_photo_path
                     )
 
                 comment = self.converter.serialization(comment)[0]
@@ -166,21 +170,27 @@ class CommentUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = self.path_generator(comment_id)
+            comment_photo_path = self.path_generator(comment_id)
 
-            if exists(f"..../{photo_path}"):
-                self.file_rewriter(photo_path, comment_photo.file.read())
+            if exists(f"..../{comment_photo_path}"):
+                self.file_rewriter(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
             else:
-                self.file_writer(photo_path, comment_photo.file.read())
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
         else:
-            photo_path = None
+            comment_photo_path = None
 
         fields_for_update = {
             key: value
             for key, value in {
                 "comment_rating": comment_rating,
                 "comment_text": comment_text,
-                "photo_path": photo_path
+                "comment_photo_path": comment_photo_path
             }.items()
             if value
         }
@@ -192,8 +202,8 @@ class CommentUpdater(BaseDependency):
             )
 
         if not comment:
-            if photo_path:
-                self.file_deleter(photo_path)
+            if comment_photo_path:
+                self.file_deleter(comment_photo_path)
 
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -238,14 +248,20 @@ class CommentRewriter(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = self.path_generator(comment_id)
+            comment_photo_path = self.path_generator(comment_id)
 
-            if exists(f"..../{photo_path}"):
-                self.file_rewriter(photo_path, comment_photo.file.read())
+            if exists(f"..../{comment_photo_path}"):
+                self.file_rewriter(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
             else:
-                self.file_writer(photo_path, comment_photo.file.read())
+                self.file_writer(
+                    comment_photo_path,
+                    comment_photo.file.read()
+                )
         else:
-            photo_path = None
+            comment_photo_path = None
 
             if exists(f"..../{self.path_generator(comment_id)}"):
                 self.file_deleter(self.path_generator(comment_id))
@@ -255,12 +271,12 @@ class CommentRewriter(BaseDependency):
                 comment_id=comment_id,
                 comment_rating=comment_rating,
                 comment_text=comment_text,
-                photo_path=photo_path
+                comment_photo_path=comment_photo_path
             )
 
         if not comment:
-            if photo_path:
-                self.file_deleter(photo_path)
+            if comment_photo_path:
+                self.file_deleter(comment_photo_path)
 
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -287,8 +303,8 @@ class CommentDeleter(BaseDependency):
 
         comment = self.converter.serialization(comment)[0]
 
-        if comment.photo_path:
-            self.file_deleter(comment.photo_path)
+        if comment.comment_photo_path:
+            self.file_deleter(comment.comment_photo_path)
 
         return comment
 

@@ -44,9 +44,9 @@ class OrderDataBase(InterfaceDataBase):
                     orders.order_id,
                     orders.product_id,
                     orders.user_id,
-                    orders.date_start,
-                    orders.date_end,
-                    orders.delivery_address
+                    orders.order_date_start,
+                    orders.order_date_end,
+                    orders.order_address
                 FROM 
                     orders INNER JOIN product 
                     ON orders.product_id = product.product_id
@@ -57,10 +57,10 @@ class OrderDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def add_to_cart(self, user_id: int, product_id: int) -> list:
+    def add_to_shopping_bag(self, user_id: int, product_id: int) -> list:
         self._cursor.execute(
             """
-                INSERT INTO cart_item (
+                INSERT INTO shopping_bag_item (
                     product_id,
                     user_id
                 )
@@ -74,24 +74,24 @@ class OrderDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def delete_from_cart(
+    def delete_from_shopping_bag(
             self,
             user_id: int,
-            cart_item_id: int
+            shopping_bag_item_id: int
     ) -> list:
         self._cursor.execute(
             """
                 DELETE 
-                FROM cart_item
-                WHERE cart_item_id = %s AND user_id = %s
+                FROM shopping_bag_item
+                WHERE shopping_bag_item_id = %s AND user_id = %s
                 RETURNING *;   
             """,
-            [cart_item_id, user_id]
+            [shopping_bag_item_id, user_id]
         )
 
         return self._cursor.fetchall()
 
-    def get_cart(
+    def get_shopping_bag_items(
             self,
             user_id: int,
             amount: int = 10,
@@ -99,38 +99,38 @@ class OrderDataBase(InterfaceDataBase):
     ) -> list:
         if last_item_id:
             condition = f"""
-                WHERE cart_item.user_id = {user_id} 
-                AND cart_item.cart_item_id < {last_item_id}
+                WHERE shopping_bag_item.user_id = {user_id} 
+                AND shopping_bag_item.shopping_bag_item_id < {last_item_id}
             """
         else:
-            condition = f"WHERE cart.user_id = {user_id}"
+            condition = f"WHERE shopping_bag_item.user_id = {user_id}"
 
         self._cursor.execute(
             f"""
                 SELECT
-                    cart_item.cart_item_id,
-                    cart_item.user_id,
-                    cart_item.product_id,
-                    cart_item.product_name,
-                    cart_item.product_price
+                    shopping_bag_item.shopping_bag_item_id,
+                    shopping_bag_item.user_id,
+                    shopping_bag_item.product_id,
+                    product.product_name,
+                    product.product_price
                 FROM 
-                    cart_item INNER JOIN product
-                    ON cart_item.product_id = product.product_id
+                    shopping_bag_item INNER JOIN product
+                    ON shopping_bag_item.product_id = product.product_id
                 {condition}
-                ORDER BY cart_item.cart_item_id DESC
+                ORDER BY shopping_bag_item.shopping_bag_item_id DESC
                 LIMIT {amount};
             """
         )
 
         return self._cursor.fetchall()
 
-    def delete_all_cart_items(self, product_id: int) -> list:
+    def delete_all_shopping_bag_items(self, product_id: int) -> list:
         """Удаление товара из корзины у всех"""
 
         self._cursor.execute(
             """
                 DELETE 
-                FROM cart_item
+                FROM shopping_bag_item
                 WHERE product_id = %s
                 RETURNING *;
             """,

@@ -25,24 +25,24 @@ class UserDataBase(InterfaceDataBase):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self, username: str, hashed_password: str) -> list:
+    def create(self, user_name: str, user_hashed_password: str) -> list:
         self._cursor.execute(
             """
                 INSERT INTO users (
                     role_id, 
-                    username, 
-                    hashed_password
+                    user_name, 
+                    user_hashed_password
                 )
                 VALUES
                     (1, %s, %s)
                 RETURNING 
                     user_id,
                     role_id, 
-                    username,
-                    email,
-                    photo_path;
+                    user_name,
+                    user_email,
+                    user_photo_path;
             """,
-            [username, hashed_password]
+            [user_name, user_hashed_password]
         )
 
         return self._cursor.fetchall()
@@ -53,9 +53,9 @@ class UserDataBase(InterfaceDataBase):
                 SELECT 
                     user_id, 
                     role_id, 
-                    username, 
-                    email, 
-                    photo_path
+                    user_name, 
+                    user_email, 
+                    user_photo_path
                 FROM users
                 WHERE user_id = %s;
             """,
@@ -70,7 +70,7 @@ class UserDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def get_user_by_username(self, username: str) -> list:
+    def get_user_by_user_name(self, user_name: str) -> list:
         #  для аутентификации, извлекается хеш пароля
 
         self._cursor.execute(
@@ -78,14 +78,14 @@ class UserDataBase(InterfaceDataBase):
                 SELECT 
                     user_id,
                     role_id, 
-                    username,
-                    email,
-                    photo_path,
-                    hashed_password
+                    user_name,
+                    user_hashed_password,
+                    user_email,
+                    user_photo_path
                 FROM users
-                WHERE username = %s;
+                WHERE user_name = %s;
             """,
-            [username]
+            [user_name]
         )
 
         return self._cursor.fetchall()
@@ -99,9 +99,9 @@ class UserDataBase(InterfaceDataBase):
                 RETURNING
                     user_id,
                     role_id, 
-                    username,
-                    email,
-                    photo_path;
+                    user_name,
+                    user_email,
+                    user_photo_path;
             """,
             [role_id, user_id]
         )

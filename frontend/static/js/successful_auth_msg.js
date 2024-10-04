@@ -14,7 +14,7 @@ function get_message(user, redirected_url) {
     const body = document.createElement("body");
     const message_elem = document.createElement('div');
     message_elem.id = "successful_auth_message";
-    message_elem.innerHTML = `Добро пожаловать, ${user.username}!`;
+    message_elem.innerHTML = `Добро пожаловать, ${user.user_name}!`;
 
     body.append(message_elem);
     document.body.replaceWith(body);

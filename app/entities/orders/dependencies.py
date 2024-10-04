@@ -3,9 +3,9 @@ from fastapi import HTTPException, Depends, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.orders.models import (
-    CartItemModel,
-    CartItemCardModel,
-    CartItemCardListModel
+    ShoppingBagItemModel,
+    ShoppingBagItemCardModel,
+    ShoppingBagItemCardListModel
 )
 from auth import Authorization, PayloadTokenModel
 from core.database import OrderDataBase
@@ -25,10 +25,10 @@ class BaseDependency:
         self.order_database = order_database
 
 
-class CartItemSaver(BaseDependency):
+class ShoppingBagItemSaver(BaseDependency):
     """Добавление товара в корзину"""
 
-    def __init__(self, converter: Converter = Converter(CartItemModel)):
+    def __init__(self, converter: Converter = Converter(ShoppingBagItemModel)):
         super().__init__()
         self.converter = converter
 
@@ -36,15 +36,15 @@ class CartItemSaver(BaseDependency):
             self,
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
             product_id: int
-    ) -> CartItemModel:
+    ) -> ShoppingBagItemModel:
         try:
             with self.order_database() as order_db:
-                cart_item = order_db.add_to_cart(
+                shopping_bag_item = order_db.add_to_shopping_bag(
                     user_id=payload.sub,
                     product_id=product_id
                 )
 
-            return self.converter.serialization(cart_item)[0]
+            return self.converter.serialization(shopping_bag_item)[0]
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -52,39 +52,39 @@ class CartItemSaver(BaseDependency):
             )
 
 
-class CartItemDeleter(BaseDependency):
+class ShoppingBagItemDeleter(BaseDependency):
     """Удаление товара из корзины"""
 
-    def __init__(self, converter: Converter = Converter(CartItemModel)):
+    def __init__(self, converter: Converter = Converter(ShoppingBagItemModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
-            cart_item_id: int
-    ) -> CartItemModel:
+            item_id: int
+    ) -> ShoppingBagItemModel:
         with self.order_database() as order_db:
-            cart_item = order_db.delete_from_shopping_bag(
-                payload.sub,
-                cart_item_id
+            shopping_bag_item = order_db.delete_from_shopping_bag(
+                user_id=payload.sub,
+                shopping_bag_item_id=item_id
             )
 
-        if not cart_item:
+        if not shopping_bag_item:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="incorrect item_id"
             )
 
-        return self.converter.serialization(cart_item)[0]
+        return self.converter.serialization(shopping_bag_item)[0]
 
 
-class CartItemLoader(BaseDependency):
+class ShoppingBagItemLoader(BaseDependency):
     """Загрузка карточек товаров в корзине"""
 
     def __init__(
             self,
-            converter: Converter = Converter(CartItemCardModel)
+            converter: Converter = Converter(ShoppingBagItemCardModel)
     ):
         super().__init__()
         self.converter = converter
@@ -94,7 +94,7 @@ class CartItemLoader(BaseDependency):
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
             amount: Annotated[int, Query(ge=0)] = 10,
             last_item_id: Annotated[int | None, Query(ge=1)] = None
-    ) -> CartItemCardListModel:
+    ) -> ShoppingBagItemCardListModel:
         """
         :param amount: требуемое количество карточек
         :param last_item_id: id карточки из последней подгрузки;
@@ -106,14 +106,14 @@ class CartItemLoader(BaseDependency):
 
         try:
             with self.order_database() as order_db:
-                cart_items = order_db.get_cart(
+                shopping_bag_items = order_db.get_shopping_bag_items(
                     user_id=payload.sub,
                     amount=amount,
                     last_item_id=last_item_id
                 )
 
-            return CartItemCardListModel(
-                cart_items=self.converter.serialization(cart_items)
+            return ShoppingBagItemCardListModel(
+                shopping_bag_items=self.converter.serialization(shopping_bag_items)
             )
 
         except ForeignKeyViolation:
@@ -124,6 +124,6 @@ class CartItemLoader(BaseDependency):
 
 
 # dependencies
-add_to_cart_dependency = CartItemSaver()
-delete_from_cart_dependency = CartItemDeleter()
-get_cart_dependency = CartItemLoader()
+add_to_shopping_bag_dependency = ShoppingBagItemSaver()
+delete_from_shopping_bag_dependency = ShoppingBagItemDeleter()
+get_shopping_bag_dependency = ShoppingBagItemLoader()
