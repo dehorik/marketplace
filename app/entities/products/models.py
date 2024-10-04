@@ -10,7 +10,7 @@ class ProductModel(BaseModel):
     product_price: int = Field(gt=0, le=100000)
     product_description: str = Field(min_length=2, max_length=300)
     is_hidden: bool = False
-    product_photo_path: str
+    photo_path: str
 
 
 class ExtendedProductModel(BaseModel):
@@ -31,7 +31,7 @@ class ProductCardModel(BaseModel):
     product_name: str = Field(min_length=2, max_length=20)
     product_price: int = Field(gt=0, le=100000)
     product_rating: float | None = Field(ge=1, le=5, default=None)
-    product_photo_path: str
+    photo_path: str
 
 
 class ProductCardListModel(BaseModel):

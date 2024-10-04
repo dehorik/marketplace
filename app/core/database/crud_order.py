@@ -123,3 +123,18 @@ class OrderDataBase(InterfaceDataBase):
         )
 
         return self._cursor.fetchall()
+
+    def delete_all_shopping_bag_items(self, product_id: int) -> list:
+        """Удаление товара из корзины у всех"""
+
+        self._cursor.execute(
+            """
+                DELETE 
+                FROM shopping_bag_item
+                WHERE product_id = %s
+                RETURNING *;
+            """,
+            [product_id]
+        )
+
+        return self._cursor.fetchall()

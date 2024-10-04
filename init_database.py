@@ -39,7 +39,7 @@ def init_database():
                 product_price INT,
                 product_description TEXT,
                 is_hidden BOOLEAN DEFAULT false,
-                product_photo_path VARCHAR(255)
+                photo_path VARCHAR(255)
             );
             
             CREATE TABLE IF NOT EXISTS comment (

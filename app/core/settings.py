@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     REDIS_PORT: int
 
     # path to database photos
-    USER_PHOTO_PATH: str
-    PRODUCT_PHOTO_PATH: str
-    COMMENT_PHOTO_PATH: str
+    USER_CONTENT_PATH: str
+    PRODUCT_CONTENT_PATH: str
+    COMMENT_CONTENT_PATH: str
 
     # auth
     PRIVATE_KEY_PATH: str

@@ -6,9 +6,9 @@ from core.settings import config
 class PathGenerator:
     def __init__(self, path: str):
         if path not in [
-                config.USER_PHOTO_PATH,
-                config.PRODUCT_PHOTO_PATH,
-                config.COMMENT_PHOTO_PATH
+                config.USER_CONTENT_PATH,
+                config.PRODUCT_CONTENT_PATH,
+                config.COMMENT_CONTENT_PATH
         ]:
             raise ValueError("unavailable path")
 

@@ -63,7 +63,7 @@ class ProductDataBase(InterfaceDataBase):
                     product_price, 
                     product_description,
                     is_hidden,
-                    product_photo_path,
+                    photo_path,
                     (
                         SELECT 
                             ROUND(AVG(comment_rating), 1) as product_rating
@@ -119,35 +119,7 @@ class ProductDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def delete(self, product_id: int) -> dict:
-        deleted_items = {
-            "product": None,
-            "comments": [],
-            "shopping_bag_items": []
-        }
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM comment
-                WHERE product_id = %s
-                RETURNING *;
-            """,
-            [product_id]
-        )
-        deleted_items['comments'].extend(self._cursor.fetchall())
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM shopping_bag_item
-                WHERE product_id = %s
-                RETURNING *; 
-            """,
-            [product_id]
-        )
-        deleted_items["shopping_bag_items"].extend(self._cursor.fetchall())
-
+    def delete(self, product_id: int) -> list:
         self._cursor.execute(
             """
                 DELETE 
@@ -157,9 +129,8 @@ class ProductDataBase(InterfaceDataBase):
             """,
             [product_id]
         )
-        deleted_items['product'] = self._cursor.fetchone()
 
-        return deleted_items
+        return self._cursor.fetchall()
 
     def get_catalog(
             self,
@@ -181,7 +152,7 @@ class ProductDataBase(InterfaceDataBase):
                     product.product_name, 
                     product.product_price, 
                     rating.product_rating,
-                    product.product_photo_path
+                    product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
@@ -226,7 +197,7 @@ class ProductDataBase(InterfaceDataBase):
                     product.product_name,
                     product.product_price,
                     rating.product_rating,
-                    product.product_photo_path
+                    product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 

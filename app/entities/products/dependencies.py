@@ -2,6 +2,7 @@ from typing import Annotated, Type
 from os.path import exists
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
+from entities.comments.models import CommentModel
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
@@ -16,7 +17,7 @@ from utils import (
     Converter
 )
 from core.settings import config
-from core.database import ProductDataBase, OrderDataBase
+from core.database import ProductDataBase, OrderDataBase, CommentDataBase
 
 
 class BaseDependency:
@@ -27,9 +28,10 @@ class BaseDependency:
             file_writer: FileWriter = FileWriter(),
             file_rewriter: FileRewriter = FileRewriter(),
             file_deleter: FileDeleter = FileDeleter(),
-            path_generator: PathGenerator = PathGenerator(config.PRODUCT_PHOTO_PATH),
+            path_generator: PathGenerator = PathGenerator(config.PRODUCT_CONTENT_PATH),
             product_database: Type[ProductDataBase] = ProductDataBase,
-            order_database: Type[OrderDataBase] = OrderDataBase
+            order_database: Type[OrderDataBase] = OrderDataBase,
+            comment_database: Type[CommentDataBase] = CommentDataBase
     ):
         """
         :param file_writer: ссылка на объект для записи файлов
@@ -38,6 +40,7 @@ class BaseDependency:
         :param path_generator: объект для генерации путей к изображениям
         :param product_database: ссылка на класс для работы с БД (товары)
         :param order_database: ссылка на класс для работы с БД (заказы)
+        :param comment_database: ссылка на класс для работы с БД (отзывы)
         """
 
         self.file_writer = file_writer
@@ -46,6 +49,7 @@ class BaseDependency:
         self.path_generator = path_generator
         self.product_database = product_database
         self.order_database = order_database
+        self.comment_database = comment_database
 
 
 class CatalogLoader(BaseDependency):
@@ -150,15 +154,11 @@ class ProductCreator(BaseDependency):
 
             product = product_db.update(
                 product_id=product[0][0],
-                product_photo_path=self.path_generator(product[0][0])
+                photo_path=self.path_generator(product[0][0])
             )
 
         product = self.converter.serialization(product)[0]
-
-        self.file_writer(
-            product.product_photo_path,
-            product_photo.file.read()
-        )
+        self.file_writer(product.photo_path, product_photo.file.read())
 
         return product
 
@@ -220,13 +220,10 @@ class ProductUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
-            product_photo_path = self.path_generator(product_id)
+            photo_path = self.path_generator(product_id)
 
-            if exists(product_photo_path):
-                self.file_rewriter(
-                    product_photo_path,
-                    product_photo.file.read()
-                )
+            if exists(photo_path):
+                self.file_rewriter(photo_path, product_photo.file.read())
 
         fields_for_update = {
             key: value
@@ -255,9 +252,14 @@ class ProductUpdater(BaseDependency):
 
 
 class ProductDeleter(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ProductModel)):
+    def __init__(
+            self,
+            product_converter: Converter = Converter(ProductModel),
+            comment_converter: Converter = Converter(CommentModel)
+    ):
         super().__init__()
-        self.converter = converter
+        self.product_converter = product_converter
+        self.comment_converter = comment_converter
 
     def __call__(self, product_id: int) -> ProductModel:
         with self.order_database() as order_db:
@@ -268,22 +270,26 @@ class ProductDeleter(BaseDependency):
                 )
 
         with self.product_database() as product_db:
-            deleted_items = product_db.delete(product_id)
+            product = product_db.delete(product_id)
 
-        if not deleted_items['product']:
+        if not product:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="incorrect product_id"
             )
 
-        product = self.converter.serialization([deleted_items['product']])[0]
-        self.file_deleter(product.product_photo_path)
+        product = self.product_converter.serialization(product)[0]
+        self.file_deleter(product.photo_path)
 
-        for comment in deleted_items['comments']:
-            comment_photo_path = comment[-1]
+        with self.order_database() as order_db:
+            order_db.delete_all_shopping_bag_items(product_id)
 
-            if comment_photo_path:
-                self.file_deleter(comment_photo_path)
+        with self.comment_database() as comment_db:
+            comments = comment_db.delete_all_comments(product_id)
+
+        for comment in self.comment_converter.serialization(comments):
+            if comment.photo_path:
+                self.file_deleter(comment.photo_path)
 
         return product
 

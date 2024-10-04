@@ -27,7 +27,7 @@ class BaseDependency:
             file_writer: FileWriter = FileWriter(),
             file_rewriter: FileRewriter = FileRewriter(),
             file_deleter: FileDeleter = FileDeleter(),
-            path_generator: PathGenerator = PathGenerator(config.COMMENT_PHOTO_PATH),
+            path_generator: PathGenerator = PathGenerator(config.COMMENT_CONTENT_PATH),
             comment_database: Type[CommentDataBase] = CommentDataBase
     ):
         """

@@ -154,3 +154,18 @@ class CommentDataBase(InterfaceDataBase):
         )
 
         return self._cursor.fetchall()
+
+    def delete_all_comments(self, product_id: int) -> list:
+        """Удаление всех отзывов под товаром"""
+
+        self._cursor.execute(
+            """
+                DELETE
+                FROM comment
+                WHERE product_id = %s
+                RETURNING %;
+            """,
+            [product_id]
+        )
+
+        return self._cursor.fetchall()
