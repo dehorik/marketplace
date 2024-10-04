@@ -49,7 +49,7 @@ function create_item(product) {
     const product_photo = document.createElement('div');
     product_photo.className = "merchants-item-image";
     const img = document.createElement('img');
-    img.src = product.product_photo_path;
+    img.src = product.photo_path;
     product_photo.append(img);
 
     const product_name = document.createElement('div');

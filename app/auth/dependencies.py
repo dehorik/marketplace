@@ -66,20 +66,17 @@ class Registration(BaseDependency):
     def __call__(
             self,
             response: Response,
-            user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=18)]
+            username: Annotated[str, Form(min_length=6, max_length=16)],
+            password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> AuthenticationModel:
         with self.user_database() as user_db:
-            if user_db.get_user_by_user_name(user_name):
+            if user_db.get_user_by_username(username):
                 raise HTTPException(
                     status_code=status.HTTP_400_CONFLICT,
                     detail='username is alredy taken'
                 )
 
-            user = user_db.create(
-                user_name,
-                get_password_hash(user_password)
-            )
+            user = user_db.create(username, get_password_hash(password))
 
         user = self.converter.serialization(user)[0]
 
@@ -105,11 +102,11 @@ class Login(BaseDependency):
     def __call__(
             self,
             response: Response,
-            user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=18)]
+            username: Annotated[str, Form(min_length=6, max_length=16)],
+            password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> AuthenticationModel:
         with self.user_database() as user_db:
-            user = user_db.get_user_by_user_name(user_name)
+            user = user_db.get_user_by_username(username)
 
         if not user:
             raise HTTPException(
@@ -118,9 +115,9 @@ class Login(BaseDependency):
             )
 
         user[0] = list(user[0])
-        user_hashed_password = user[0].pop(3)
+        hashed_password = user[0].pop(-1)
 
-        if not verify_password(user_password, user_hashed_password):
+        if not verify_password(password, hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="incorrect username or password"
