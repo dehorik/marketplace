@@ -14,10 +14,7 @@ class ProductModel(BaseModel):
 
 
 class ExtendedProductModel(BaseModel):
-    """
-    Расширенная схема товара с дополнительными полями.
-    Например, для получения рейтинга и т.д
-    """
+    """Расширенная схема товара с дополнительными полями"""
 
     product_data: ProductModel
     product_rating: float | None = Field(ge=1, le=5, default=None)

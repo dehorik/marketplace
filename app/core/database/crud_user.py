@@ -9,9 +9,6 @@ class UserDataBase(InterfaceDataBase):
         self.__session = session
         self._cursor = session.get_cursor()
 
-    def __del__(self):
-        self.close()
-
     def __enter__(self):
         return self
 

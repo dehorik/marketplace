@@ -10,9 +10,6 @@ class CommentDataBase(InterfaceDataBase):
         self.__session = session
         self._cursor = session.get_cursor()
 
-    def __del__(self):
-        self.close()
-
     def __enter__(self):
         return self
 
@@ -91,14 +88,39 @@ class CommentDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def read(self, product_id):
-        self._cursor.execute(
+    def read(
+            self,
+            product_id: int,
+            amount: int = 10,
+            last_comment_id: int = None
+    ) -> list:
+        if last_comment_id:
+            condition = f"""
+                WHERE product.product_id = {product_id} 
+                AND comment.comment_id < {last_comment_id}
             """
-                SELECT * 
-                FROM comment 
-                WHERE product_id = %s;
-            """,
-            [product_id]
+        else:
+            condition = f"WHERE product.product_id = {product_id}"
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    comment.comment_id, 
+                    users.user_id,
+                    product.product_id, 
+                    users.username,
+                    users.photo_path,
+                    comment.comment_rating,
+                    comment.comment_date,
+                    comment.comment_text,
+                    comment.photo_path   
+                FROM users 
+                    INNER JOIN comment USING(user_id)
+                    INNER JOIN product USING(product_id)
+                {condition}
+                ORDER BY comment.comment_id DESC
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()
@@ -148,43 +170,6 @@ class CommentDataBase(InterfaceDataBase):
                 RETURNING *;
             """,
             [comment_id]
-        )
-
-        return self._cursor.fetchall()
-
-    def get_comment_item_list(
-            self,
-            product_id: int,
-            amount: int = 10,
-            last_comment_id: int = None
-    ) -> list:
-        if last_comment_id:
-            condition = f"""
-                WHERE product.product_id = {product_id} 
-                AND comment.comment_id < {last_comment_id}
-            """
-        else:
-            condition = f"WHERE product.product_id = {product_id}"
-
-        self._cursor.execute(
-            f"""
-                SELECT 
-                    comment.comment_id, 
-                    users.user_id,
-                    product.product_id, 
-                    users.username,
-                    users.photo_path,
-                    comment.comment_rating,
-                    comment.comment_date,
-                    comment.comment_text,
-                    comment.photo_path   
-                FROM users 
-                    INNER JOIN comment USING(user_id)
-                    INNER JOIN product USING(product_id)
-                {condition}
-                ORDER BY comment.comment_id DESC
-                LIMIT {amount};
-            """
         )
 
         return self._cursor.fetchall()

@@ -1,3 +1,4 @@
+from os.path import exists
 from typing import Annotated, Type, Callable
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
@@ -9,40 +10,35 @@ from entities.products.models import (
     ProductCardListModel
 )
 from core.settings import config
-from core.database import ProductDataBase, OrderDataBase, CommentDataBase
-from utils import Converter, write_file, rewrite_file, delete_file
+from core.database import ProductDataBase, CommentDataBase, OrderDataBase
+from utils import Converter, write_file, delete_file
 
 
 class BaseDependency:
-    """Базовый класс для других классов-зависимостей"""
-
     def __init__(
             self,
             file_writer: Callable = write_file,
-            file_rewriter: Callable = rewrite_file,
             file_deleter: Callable = delete_file,
             product_database: Type[ProductDataBase] = ProductDataBase,
-            order_database: Type[OrderDataBase] = OrderDataBase,
-            comment_database: Type[CommentDataBase] = CommentDataBase
+            comment_database: Type[CommentDataBase] = CommentDataBase,
+            order_database: Type[OrderDataBase] = OrderDataBase
     ):
         """
-        :param file_writer: ссылка на объект для записи файлов
-        :param file_rewriter: ссылка на объект для перезаписи файлов
+        :param file_writer: ссылка на объект для записи и перезаписи файлов
         :param file_deleter: ссылка на объект для удаления файлов
         :param product_database: ссылка на класс для работы с БД (товары)
-        :param order_database: ссылка на класс для работы с БД (заказы)
         :param comment_database: ссылка на класс для работы с БД (отзывы)
+        :param order_database: ссылка на класс для работы с БД (заказы)
         """
 
         self.file_writer = file_writer
-        self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
         self.product_database = product_database
-        self.order_database = order_database
         self.comment_database = comment_database
+        self.order_database = order_database
 
 
-class CatalogLoader(BaseDependency):
+class CatalogLoaderService(BaseDependency):
     """Получение последних созданных товаров"""
 
     def __init__(self, converter: Converter = Converter(ProductCardModel)):
@@ -59,8 +55,6 @@ class CatalogLoader(BaseDependency):
         :param last_product_id: product_id последнего товара
                из предыдущей подгрузки;
                при первом запросе оставить None
-
-        :return: список товаров
         """
 
         with self.product_database() as product_db:
@@ -68,13 +62,15 @@ class CatalogLoader(BaseDependency):
                 amount=amount,
                 last_product_id=last_product_id
             )
-        print(products)
+
         return ProductCardListModel(
-            products=self.converter.serialization(products)
+            products=self.converter(products)
         )
 
 
-class ProductSearcher(BaseDependency):
+class ProductSearchService(BaseDependency):
+    """Поиск товара по названию"""
+
     def __init__(self, converter: Converter = Converter(ProductCardModel)):
         super().__init__()
         self.converter = converter
@@ -89,8 +85,6 @@ class ProductSearcher(BaseDependency):
         :param product_name: имя товара
         :param amount: максимальное количество товаров в ответе
         :param last_product_id: id товара из последней подгрузки
-
-        :return: список найденных товаров
         """
 
         with self.product_database() as product_db:
@@ -101,11 +95,11 @@ class ProductSearcher(BaseDependency):
             )
 
         return ProductCardListModel(
-            products=self.converter.serialization(products)
+            products=self.converter(products)
         )
 
 
-class ProductCreator(BaseDependency):
+class ProductCreationService(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -142,13 +136,13 @@ class ProductCreator(BaseDependency):
                 is_hidden
             )
 
-        product = self.converter.serialization(product)[0]
+        product = self.converter(product)[0]
         self.file_writer(product.photo_path, product_photo.file.read())
 
         return product
 
 
-class ProductGetter(BaseDependency):
+class ProductGettingService(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -168,13 +162,13 @@ class ProductGetter(BaseDependency):
         amount_comments = product[0].pop(-1)
 
         return ExtendedProductModel(
-            product_data=self.converter.serialization(product)[0],
+            product_data=self.converter(product)[0],
             product_rating=product_rating,
             amount_comments=amount_comments
         )
 
 
-class ProductUpdater(BaseDependency):
+class ProductUpdateService(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -206,7 +200,12 @@ class ProductUpdater(BaseDependency):
                 )
 
             photo_path = f"{config.PRODUCT_CONTENT_PATH}/{product_id}"
-            self.file_rewriter(photo_path, product_photo.file.read())
+
+            if exists(photo_path):
+                self.file_writer(
+                    photo_path,
+                    product_photo.file.read()
+                )
 
         fields_for_update = {
             key: value
@@ -231,10 +230,10 @@ class ProductUpdater(BaseDependency):
                 detail='incorrect product_id'
             )
 
-        return self.converter.serialization(product)[0]
+        return self.converter(product)[0]
 
 
-class ProductDeleter(BaseDependency):
+class ProductRemovalService(BaseDependency):
     def __init__(
             self,
             product_converter: Converter = Converter(ProductModel),
@@ -246,18 +245,16 @@ class ProductDeleter(BaseDependency):
 
     def __call__(self, product_id: int) -> ProductModel:
         with self.order_database() as order_db:
-            if order_db.get_orders_by_product_id(product_id):
+            if order_db.get_all_orders(product_id):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="there are orders with this product"
                 )
-            else:
-                order_db.delete_all_cart_items(product_id)
 
         with self.comment_database() as comment_db:
             comments = comment_db.delete_all_comments(product_id)
 
-        for comment in self.comment_converter.serialization(comments):
+        for comment in self.comment_converter(comments):
             if comment.photo_path:
                 self.file_deleter(comment.photo_path)
 
@@ -270,16 +267,16 @@ class ProductDeleter(BaseDependency):
                 detail="incorrect product_id"
             )
 
-        product = self.product_converter.serialization(product)[0]
+        product = self.product_converter(product)[0]
         self.file_deleter(product.photo_path)
 
         return product
 
 
 # dependencies
-load_catalog_dependency = CatalogLoader()
-search_product_dependency = ProductSearcher()
-create_product_dependency = ProductCreator()
-get_product_dependency = ProductGetter()
-update_product_dependency = ProductUpdater()
-delete_product_dependency = ProductDeleter()
+catalog_loader_service = CatalogLoaderService()
+product_search_service = ProductSearchService()
+product_creation_service = ProductCreationService()
+product_getting_service = ProductGettingService()
+product_update_service = ProductUpdateService()
+product_removal_service = ProductRemovalService()

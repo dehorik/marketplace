@@ -2,44 +2,40 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from entities.orders.dependencies import (
-    add_to_cart_dependency,
-    delete_from_cart_dependency,
-    get_cart_dependency
+    cart_item_save_service,
+    cart_item_removal_service,
+    cart_item_loader_service
 )
 from entities.orders.models import CartItemModel, CartItemCardListModel
 
 
-orders_router = APIRouter(
+router = APIRouter(
     prefix='/orders',
     tags=['orders']
 )
 
-cart_router = APIRouter(
-    prefix='/cart',
-    tags=['cart items']
-)
 
-orders_router.include_router(cart_router)
-
-
-@cart_router.post(
-    "/create",
+@router.post(
+    "/cart",
     response_model=CartItemModel,
     status_code=status.HTTP_201_CREATED
 )
 def add_to_cart(
-        cart_item: Annotated[CartItemModel, Depends(add_to_cart_dependency)]
+        cart_item: Annotated[CartItemModel, Depends(cart_item_save_service)]
 ):
     return cart_item
 
-@cart_router.delete("/{cart_item_id}", response_model=CartItemModel)
+@router.delete("/cart/{cart_item_id}", response_model=CartItemModel)
 def delete_from_cart(
-        cart_item: Annotated[CartItemModel, Depends(delete_from_cart_dependency)]
+        cart_item: Annotated[CartItemModel, Depends(cart_item_removal_service)]
 ):
     return cart_item
 
-@cart_router.get("/", response_model=CartItemCardListModel)
+@router.get("/cart", response_model=CartItemCardListModel)
 def get_cart(
-        cart_items: Annotated[CartItemCardListModel, Depends(get_cart_dependency)]
+        cart_items: Annotated[
+            CartItemCardListModel,
+            Depends(cart_item_loader_service)
+        ]
 ):
     return cart_items

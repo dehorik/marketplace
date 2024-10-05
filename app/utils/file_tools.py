@@ -2,12 +2,8 @@ import os
 
 
 def write_file(path: str, file: bytes) -> None:
-    relative_path = f"../{path}"
+    # используется и для записи, и для перезаписи файлов
 
-    with open(relative_path, 'wb') as photo:
-        photo.write(file)
-
-def rewrite_file(path: str, file: bytes) -> None:
     relative_path = f"../{path}"
 
     with open(relative_path, 'wb') as photo:

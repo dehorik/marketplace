@@ -3,7 +3,6 @@ import datetime
 from pathlib import Path
 
 from auth.models import PayloadTokenModel
-from auth.exceptions import InvalidPayloadObjectException
 from entities.users.models import UserModel
 from core.settings import config
 
@@ -63,7 +62,7 @@ class AccessTokenCreator:
 
     def __call__(self, data: UserModel | PayloadTokenModel) -> str:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
-            raise InvalidPayloadObjectException('invalid payload object')
+            raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub
         now = datetime.datetime.now(datetime.UTC)
@@ -90,7 +89,7 @@ class RefreshTokenCreator:
 
     def __call__(self, data: UserModel | PayloadTokenModel) -> str:
         if type(data) is not UserModel and type(data) is not PayloadTokenModel:
-            raise InvalidPayloadObjectException('invalid payload object')
+            raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub
         now = datetime.datetime.now(datetime.UTC)

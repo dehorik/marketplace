@@ -71,6 +71,7 @@ def init_database():
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
+                ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS cart_item (
@@ -79,10 +80,12 @@ def init_database():
                 user_id INT,
                 
                 FOREIGN KEY (product_id) 
-                REFERENCES product (product_id),
+                REFERENCES product (product_id)
+                ON DELETE CASCADE,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
+                ON DELETE CASCADE
             ); 
         """
     )
@@ -93,9 +96,9 @@ def init_database():
             INSERT INTO role 
                 (role_name)
             VALUES
-                ('user'),
-                ('admin'),
-                ('owner');
+                ('пользователь'),
+                ('администратор'),
+                ('владелец');
         """
     )
 

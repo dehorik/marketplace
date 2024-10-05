@@ -16,7 +16,7 @@ from auth.models import (
     PayloadTokenModel
 )
 from auth.redis_client import RedisClient
-from auth.exceptions import InvalidUserException, InvalidTokenException
+from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
 from core.settings import config
 from core.database import UserDataBase
@@ -27,11 +27,6 @@ http_bearer = HTTPBearer()
 
 
 class BaseDependency:
-    """
-    Базовый класс, предоставляющий дочерним ссылки на необходимые объекты,
-    тем самым реализуя эффективную систему внедрения зависимостей
-    """
-
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
@@ -58,7 +53,7 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class Registration(BaseDependency):
+class RegistrationService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
@@ -78,7 +73,7 @@ class Registration(BaseDependency):
 
             user = user_db.create(username, get_password_hash(password))
 
-        user = self.converter.serialization(user)[0]
+        user = self.converter(user)[0]
 
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
@@ -94,7 +89,7 @@ class Registration(BaseDependency):
         )
 
 
-class Login(BaseDependency):
+class LoginService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
@@ -123,7 +118,7 @@ class Login(BaseDependency):
                 detail="incorrect username or password"
             )
 
-        user = self.converter.serialization(user)[0]
+        user = self.converter(user)[0]
 
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
@@ -139,7 +134,7 @@ class Login(BaseDependency):
         )
 
 
-class Logout(BaseDependency):
+class LogoutService(BaseDependency):
     def __call__(
             self,
             response: Response,
@@ -161,9 +156,10 @@ class Logout(BaseDependency):
                 "message": "successful logout"
             }
 
-        except InvalidTokenException:
+        except NonExistentTokenError:
             # если refresh токена в redis нет - им кто-то уже воспользовался
-            # для безопасности пользователя следует удалить все его refresh jwt
+            # для безопасности пользователя
+            # следует удалить все его refresh токены
 
             # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload['sub'])
@@ -172,14 +168,14 @@ class Logout(BaseDependency):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='invalid token'
             )
-        except (InvalidTokenError, InvalidUserException):
+        except (InvalidTokenError, NonExistentUserError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
 
 
-class TokensRefresher(BaseDependency):
+class TokenRefreshService(BaseDependency):
     def __call__(
             self,
             response: Response,
@@ -206,7 +202,7 @@ class TokensRefresher(BaseDependency):
             return AccessTokenModel(
                 access_token=access_token
             )
-        except InvalidTokenException:
+        except NonExistentTokenError:
             # если рефреш токена нет в redis - им кто-то
             # воспользовался вместо пользователя
             # (удалим все рефреш токены пользователя у себя,
@@ -219,23 +215,22 @@ class TokensRefresher(BaseDependency):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='invalid token'
             )
-        except (InvalidTokenError, InvalidUserException):
+        except (InvalidTokenError, NonExistentUserError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
 
 
-class AccessTokenValidator(BaseDependency):
-    """Для декодирования access токена из заголовков"""
+class AccessTokenValidationService(BaseDependency):
+    """Валидация access токена из заголовков"""
 
     def __call__(
             self,
             token: Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
     ) -> PayloadTokenModel:
         try:
-            payload = self.jwt_decoder(token.credentials)
-            return PayloadTokenModel(**payload)
+            return PayloadTokenModel(**self.jwt_decoder(token.credentials))
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -244,11 +239,6 @@ class AccessTokenValidator(BaseDependency):
 
 
 class Authorization(BaseDependency):
-    """
-    Авторизация пользователя
-    (проверяем наличие прав на совершение каких-либо действий)
-    """
-
     def __init__(
             self,
             min_role_id: int,
@@ -260,13 +250,15 @@ class Authorization(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
+            payload: Annotated[
+                PayloadTokenModel, Depends(AccessTokenValidationService())
+            ]
     ) -> PayloadTokenModel:
         if self.__min_role_id > 1:
             with self.user_database() as user_db:
                 user = user_db.read(payload.sub)
 
-            user = self.converter.serialization(user)[0]
+            user = self.converter(user)[0]
 
             if not self.__min_role_id <= user.role_id:
                 raise HTTPException(
@@ -289,14 +281,8 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-# создание объектов-зависимостей для конечных точек;
-# для корректной работы требуется прокинуть переменную
-# аргументом в Depends() (не вызывать внутри);
-# каждая зависимость использует метод __call__ для исполнения,
-# а __init__ для внедрения внешних зависимостей
-# (объктов БД, классов для работы с jwt и т.д)
-
-registration_dependency = Registration()
-login_dependency = Login()
-logout_dependency = Logout()
-refresh_dependency = TokensRefresher()
+# dependencies
+registration_service = RegistrationService()
+login_service = LoginService()
+logout_service = LogoutService()
+token_refresh_service = TokenRefreshService()

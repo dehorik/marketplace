@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class CartItemModel(BaseModel):
-    """Базовая модель товара в корзине"""
+    """Базовая схема элемента корзины"""
 
     cart_item_id: int
     product_id: int
@@ -11,7 +11,7 @@ class CartItemModel(BaseModel):
 
 
 class CartItemCardModel(BaseModel):
-    """Модель товара в корзине для подгрузки на страницу"""
+    """Схема товара в корзине для подгрузки на страницу"""
 
     cart_item_id: int
     user_id: int

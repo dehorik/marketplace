@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
 from entities.users.dependencies import (
-    get_user_data_dependency,
-    update_role_dependency
+    user_data_getting_service,
+    role_update_service
 )
 from entities.users.models import UserModel
 
@@ -21,10 +21,10 @@ def get_user_page():
 
 @router.get("/me/data", response_model=UserModel)
 def get_user_data(
-        user: Annotated[UserModel, Depends(get_user_data_dependency)]
+        user: Annotated[UserModel, Depends(user_data_getting_service)]
 ):
     return user
 
 @router.patch("/role", response_model=UserModel)
-def update_role(user: Annotated[UserModel, Depends(update_role_dependency)]):
+def update_role(user: Annotated[UserModel, Depends(role_update_service)]):
     return user

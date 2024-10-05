@@ -1,1 +1,1 @@
-from entities.orders.views import orders_router
+from entities.orders.views import router as orders_router

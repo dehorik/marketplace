@@ -9,12 +9,11 @@ from utils import Converter
 
 
 base_user_dependency = Authorization(min_role_id=1)
+admin_dependency = Authorization(min_role_id=2)
 owner_dependency = Authorization(min_role_id=3)
 
 
 class BaseDependency:
-    """Базовый класс для других классов-зависимостей"""
-
     def __init__(
             self,
             user_database: Type[UserDataBase] = UserDataBase
@@ -22,7 +21,7 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class UserDataGetter(BaseDependency):
+class UserDataGettingService(BaseDependency):
     """
     Получение пользовательских данных
     путём валидации access токена из заголовков
@@ -39,10 +38,10 @@ class UserDataGetter(BaseDependency):
         with self.user_database() as user_db:
             user = user_db.read(payload.sub)
 
-        return self.converter.serialization(user)[0]
+        return self.converter(user)[0]
 
 
-class RoleUpdater(BaseDependency):
+class RoleUpdateService(BaseDependency):
     """Управление ролями пользователей"""
 
     def __init__(self, converter: Converter = Converter(UserModel)):
@@ -57,7 +56,7 @@ class RoleUpdater(BaseDependency):
     ) -> UserModel:
         if payload.sub == user_id:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_400_CONFLICT,
                 detail="you cannot change your role"
             )
 
@@ -76,8 +75,8 @@ class RoleUpdater(BaseDependency):
                 detail="incorrect role_id"
             )
 
-        return self.converter.serialization(user)[0]
+        return self.converter(user)[0]
 
 
-get_user_data_dependency = UserDataGetter()
-update_role_dependency = RoleUpdater()
+user_data_getting_service = UserDataGettingService()
+role_update_service = RoleUpdateService()

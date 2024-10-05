@@ -9,9 +9,6 @@ class OrderDataBase(InterfaceDataBase):
         self.__session = session
         self._cursor = session.get_cursor()
 
-    def __del__(self):
-        self.close()
-
     def __enter__(self):
         return self
 
@@ -37,7 +34,9 @@ class OrderDataBase(InterfaceDataBase):
     def delete(self):
         pass
 
-    def get_orders_by_product_id(self, product_id: int) -> list:
+    def get_all_orders(self, product_id: int) -> list:
+        """Получить все заказы определенного товара"""
+
         self._cursor.execute(
             """
                 SELECT 
@@ -64,9 +63,7 @@ class OrderDataBase(InterfaceDataBase):
                     product_id,
                     user_id
                 )
-                VALUES (
-                    %s, %s
-                )
+                VALUES (%s, %s)
                 RETURNING *;
             """,
             [product_id, user_id]
@@ -74,11 +71,7 @@ class OrderDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def delete_from_cart(
-            self,
-            user_id: int,
-            cart_item_id: int
-    ) -> list:
+    def delete_from_cart(self, user_id: int, cart_item_id: int) -> list:
         self._cursor.execute(
             """
                 DELETE 
@@ -120,21 +113,6 @@ class OrderDataBase(InterfaceDataBase):
                 ORDER BY cart_item.cart_item_id DESC
                 LIMIT {amount};
             """
-        )
-
-        return self._cursor.fetchall()
-
-    def delete_all_cart_items(self, product_id: int) -> list:
-        """Удаление товара из корзины у всех"""
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM cart_item
-                WHERE product_id = %s
-                RETURNING *;
-            """,
-            [product_id]
         )
 
         return self._cursor.fetchall()

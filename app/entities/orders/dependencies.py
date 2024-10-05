@@ -16,8 +16,6 @@ base_user_dependency = Authorization(min_role_id=1)
 
 
 class BaseDependency:
-    """Базовый класс для других классов-зависимостей"""
-
     def __init__(
             self,
             order_database: Type[OrderDataBase] = OrderDataBase
@@ -25,7 +23,7 @@ class BaseDependency:
         self.order_database = order_database
 
 
-class CartItemSaver(BaseDependency):
+class CartItemSaveService(BaseDependency):
     """Добавление товара в корзину"""
 
     def __init__(self, converter: Converter = Converter(CartItemModel)):
@@ -39,12 +37,9 @@ class CartItemSaver(BaseDependency):
     ) -> CartItemModel:
         try:
             with self.order_database() as order_db:
-                cart_item = order_db.add_to_cart(
-                    user_id=payload.sub,
-                    product_id=product_id
-                )
+                cart_item = order_db.add_to_cart(payload.sub, product_id)
 
-            return self.converter.serialization(cart_item)[0]
+            return self.converter(cart_item)[0]
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -52,7 +47,7 @@ class CartItemSaver(BaseDependency):
             )
 
 
-class CartItemDeleter(BaseDependency):
+class CartItemRemovalService(BaseDependency):
     """Удаление товара из корзины"""
 
     def __init__(self, converter: Converter = Converter(CartItemModel)):
@@ -65,10 +60,7 @@ class CartItemDeleter(BaseDependency):
             cart_item_id: int
     ) -> CartItemModel:
         with self.order_database() as order_db:
-            cart_item = order_db.delete_from_shopping_bag(
-                payload.sub,
-                cart_item_id
-            )
+            cart_item = order_db.delete_from_cart(payload.sub, cart_item_id)
 
         if not cart_item:
             raise HTTPException(
@@ -76,10 +68,10 @@ class CartItemDeleter(BaseDependency):
                 detail="incorrect item_id"
             )
 
-        return self.converter.serialization(cart_item)[0]
+        return self.converter(cart_item)[0]
 
 
-class CartItemLoader(BaseDependency):
+class CartItemLoaderService(BaseDependency):
     """Загрузка карточек товаров в корзине"""
 
     def __init__(
@@ -97,11 +89,9 @@ class CartItemLoader(BaseDependency):
     ) -> CartItemCardListModel:
         """
         :param amount: требуемое количество карточек
-        :param last_item_id: id карточки из последней подгрузки;
-                             если это первый запрос на получение карточек,
-                             оставить None
-
-        :return: список из карточек товаров
+        :param last_item_id: cart_item_id карточки товара в корзине из
+                             последней подгрузки (если это первый запрос
+                             на получение карточек - оставить None)
         """
 
         try:
@@ -113,7 +103,7 @@ class CartItemLoader(BaseDependency):
                 )
 
             return CartItemCardListModel(
-                cart_items=self.converter.serialization(cart_items)
+                cart_items=self.converter(cart_items)
             )
 
         except ForeignKeyViolation:
@@ -124,6 +114,6 @@ class CartItemLoader(BaseDependency):
 
 
 # dependencies
-add_to_cart_dependency = CartItemSaver()
-delete_from_cart_dependency = CartItemDeleter()
-get_cart_dependency = CartItemLoader()
+cart_item_save_service = CartItemSaveService()
+cart_item_removal_service = CartItemRemovalService()
+cart_item_loader_service = CartItemLoaderService()

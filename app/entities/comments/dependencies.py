@@ -10,33 +10,28 @@ from entities.comments.models import (
 )
 from core.settings import config
 from core.database import CommentDataBase
-from utils import Converter, write_file, rewrite_file, delete_file
+from utils import Converter, write_file, delete_file
 
 
 class BaseDependency:
-    """Базовый класс для других классов-зависимостей"""
-
     def __init__(
             self,
             file_writer: Callable = write_file,
-            file_rewriter: Callable = rewrite_file,
             file_deleter: Callable = delete_file,
             comment_database: Type[CommentDataBase] = CommentDataBase
     ):
         """
-        :param file_writer: ссылка на функцию для записи файлов
-        :param file_rewriter: ссылка на функцию для перезаписи файлов
+        :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
         :param comment_database: ссылка на класс для работы с БД
         """
 
         self.file_writer = file_writer
-        self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
         self.comment_database = comment_database
 
 
-class CommentCreator(BaseDependency):
+class CommentCreationService(BaseDependency):
     def __init__(self, converter: Converter = Converter(CommentModel)):
         super().__init__()
         self.converter = converter
@@ -64,15 +59,17 @@ class CommentCreator(BaseDependency):
 
         try:
             with self.comment_database() as comment_db:
+                has_photo = True if comment_photo else False
+
                 comment = comment_db.create(
                     user_id=user_id,
                     product_id=product_id,
                     comment_rating=comment_rating,
                     comment_text=comment_text,
-                    has_photo=(True if comment_photo else False)
+                    has_photo=has_photo
                 )
 
-            comment = self.converter.serialization(comment)[0]
+            comment = self.converter(comment)[0]
 
             if comment_photo:
                 self.file_writer(comment.photo_path, comment_photo.file.read())
@@ -85,7 +82,7 @@ class CommentCreator(BaseDependency):
             )
 
 
-class CommentsLoader(BaseDependency):
+class CommentLoaderService(BaseDependency):
     """Подгрузка отзывов под товаром"""
 
     def __init__(self, converter: Converter = Converter(CommentItemModel)):
@@ -94,7 +91,7 @@ class CommentsLoader(BaseDependency):
 
     def __call__(
             self,
-            product_id: Annotated[int, Path(ge=1)],
+            product_id: Annotated[int, Query(ge=1)],
             amount: Annotated[int, Query(ge=0)] = 10,
             last_comment_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CommentItemListModel:
@@ -103,23 +100,21 @@ class CommentsLoader(BaseDependency):
         :param amount: нужное количество отзывов
         :param last_comment_id: comment_id последнего подгруженного отзыва;
                (если это первый запрос на подгрузку отзывов - оставить None)
-
-        :return: список отзывов
         """
 
         with self.comment_database() as comment_db:
-            comments = comment_db.get_comment_item_list(
+            comments = comment_db.read(
                 product_id=product_id,
                 amount=amount,
                 last_comment_id=last_comment_id
             )
 
         return CommentItemListModel(
-            comments=self.converter.serialization(comments)
+            comments=self.converter(comments)
         )
 
 
-class CommentUpdater(BaseDependency):
+class CommentUpdateService(BaseDependency):
     """
     Обновление отзыва. Соответствует http методу patch,
     обновляет только те поля, для которых были переданы значения
@@ -150,11 +145,7 @@ class CommentUpdater(BaseDependency):
                 )
 
             photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
-
-            if exists(f"..../{photo_path}"):
-                self.file_rewriter(photo_path, comment_photo.file.read())
-            else:
-                self.file_writer(photo_path, comment_photo.file.read())
+            self.file_writer(photo_path, comment_photo.file.read())
         else:
             photo_path = None
 
@@ -183,10 +174,10 @@ class CommentUpdater(BaseDependency):
                 detail="incorrect comment_id"
             )
 
-        return self.converter.serialization(comment)[0]
+        return self.converter(comment)[0]
 
 
-class CommentRewriter(BaseDependency):
+class CommentRewritingService(BaseDependency):
     """
     Обновление отзыва. Соответствует http методу put,
     обновляет все поля отзыва.
@@ -223,10 +214,7 @@ class CommentRewriter(BaseDependency):
                     detail='invalid file type'
                 )
 
-            if exists(f"..../{photo_path}"):
-                self.file_rewriter(photo_path, comment_photo.file.read())
-            else:
-                self.file_writer(photo_path, comment_photo.file.read())
+            self.file_writer(photo_path, comment_photo.file.read())
         else:
             if exists(f"..../{photo_path}"):
                 self.file_deleter(photo_path)
@@ -249,10 +237,10 @@ class CommentRewriter(BaseDependency):
                 detail="incorrect comment_id"
             )
 
-        return self.converter.serialization(comment)[0]
+        return self.converter(comment)[0]
 
 
-class CommentDeleter(BaseDependency):
+class CommentRemovalService(BaseDependency):
     def __init__(self, converter: Converter = Converter(CommentModel)):
         super().__init__()
         self.converter = converter
@@ -267,7 +255,7 @@ class CommentDeleter(BaseDependency):
                 detail='incorrect comment_id'
             )
 
-        comment = self.converter.serialization(comment)[0]
+        comment = self.converter(comment)[0]
 
         if comment.photo_path:
             self.file_deleter(comment.photo_path)
@@ -276,8 +264,8 @@ class CommentDeleter(BaseDependency):
 
 
 # dependencies
-create_comment_dependency = CommentCreator()
-load_comments_dependency = CommentsLoader()
-update_comment_dependency = CommentUpdater()
-rewrite_comment_dependency = CommentRewriter()
-delete_comment_dependency = CommentDeleter()
+comment_creation_service = CommentCreationService()
+comment_loader_service = CommentLoaderService()
+comment_update_service = CommentUpdateService()
+comment_rewriting_service = CommentRewritingService()
+comment_removal_service = CommentRemovalService()
