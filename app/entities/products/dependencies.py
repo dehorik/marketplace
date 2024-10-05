@@ -152,11 +152,6 @@ class ProductCreator(BaseDependency):
                 is_hidden
             )
 
-            product = product_db.update(
-                product_id=product[0][0],
-                photo_path=self.path_generator(product[0][0])
-            )
-
         product = self.converter.serialization(product)[0]
         self.file_writer(product.photo_path, product_photo.file.read())
 

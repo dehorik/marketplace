@@ -74,25 +74,17 @@ class CommentCreator(BaseDependency):
         try:
             with self.comment_database() as comment_db:
                 comment = comment_db.create(
-                    user_id,
-                    product_id,
-                    comment_rating,
-                    comment_text
+                    user_id=user_id,
+                    product_id=product_id,
+                    comment_rating=comment_rating,
+                    comment_text=comment_text,
+                    has_photo=(True if comment_photo else False)
                 )
 
             comment = self.converter.serialization(comment)[0]
 
             if comment_photo:
-                photo_path = self.path_generator(comment.comment_id)
-                self.file_writer(photo_path, comment_photo.file.read())
-
-                with self.comment_database() as comment_db:
-                    comment = comment_db.update(
-                        comment_id=comment.comment_id,
-                        photo_path=photo_path
-                    )
-
-                comment = self.converter.serialization(comment)[0]
+                self.file_writer(comment.photo_path, comment_photo.file.read())
 
             return comment
         except ForeignKeyViolation:

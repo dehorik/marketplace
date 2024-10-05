@@ -1,3 +1,4 @@
+from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
@@ -30,27 +31,63 @@ class CommentDataBase(InterfaceDataBase):
             user_id: int,
             product_id: int,
             comment_rating: int,
-            comment_text: str | None = None
+            comment_text: str | None = None,
+            has_photo: bool = False,
+            comment_content_path: str = config.COMMENT_CONTENT_PATH
     ) -> list:
-        self._cursor.execute(
-            """
-                INSERT INTO comment (
+        if has_photo:
+            self._cursor.execute(
+                """
+                    INSERT INTO comment (
+                        user_id,
+                        product_id,
+                        comment_rating,
+                        comment_date,
+                        comment_text
+                    )
+                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
+                    RETURNING comment_id;
+                """,
+                [
                     user_id,
                     product_id,
                     comment_rating,
-                    comment_date,
                     comment_text
-                )
-                VALUES (%s, %s, %s, CURRENT_DATE, %s)
-                RETURNING *;
-            """,
-            [
-                user_id,
-                product_id,
-                comment_rating,
-                comment_text,
-            ]
-        )
+                ]
+            )
+
+            comment_id = self._cursor.fetchone()[0]
+            photo_path = f"{comment_content_path}/{comment_id}"
+
+            self._cursor.execute(
+                """
+                    UPDATE comment 
+                        SET photo_path = %s
+                    WHERE comment_id = %s
+                    RETURNING *;
+                """,
+                [photo_path, comment_id]
+            )
+        else:
+            self._cursor.execute(
+                """
+                    INSERT INTO comment (
+                        user_id,
+                        product_id,
+                        comment_rating,
+                        comment_date,
+                        comment_text
+                    )
+                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
+                    RETURNING *;
+                """,
+                [
+                    user_id,
+                    product_id,
+                    comment_rating,
+                    comment_text
+                ]
+            )
 
         return self._cursor.fetchall()
 

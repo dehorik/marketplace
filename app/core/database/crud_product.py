@@ -1,3 +1,4 @@
+from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
@@ -30,7 +31,8 @@ class ProductDataBase(InterfaceDataBase):
             product_name: str,
             product_price: float,
             product_description: str,
-            is_hidden: bool
+            is_hidden: bool,
+            product_content_path: str = config.PRODUCT_CONTENT_PATH
     ) -> list:
         self._cursor.execute(
             """
@@ -42,7 +44,7 @@ class ProductDataBase(InterfaceDataBase):
                 )
                 VALUES
                     (%s, %s, %s, %s)
-                RETURNING *
+                RETURNING product_id;
             """,
             [
                 product_name,
@@ -50,6 +52,19 @@ class ProductDataBase(InterfaceDataBase):
                 product_description,
                 is_hidden
             ]
+        )
+
+        product_id = self._cursor.fetchone()[0]
+        photo_path = f"{product_content_path}/{product_id}"
+
+        self._cursor.execute(
+            """                 
+                UPDATE product
+                    SET photo_path = %s
+                WHERE product_id = %s
+                RETURNING *;
+            """,
+            [photo_path, product_id]
         )
 
         return self._cursor.fetchall()
