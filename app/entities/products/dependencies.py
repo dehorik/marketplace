@@ -1,5 +1,4 @@
-from typing import Annotated, Type
-from os.path import exists
+from typing import Annotated, Type, Callable
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
 from entities.comments.models import CommentModel
@@ -9,15 +8,9 @@ from entities.products.models import (
     ProductCardModel,
     ProductCardListModel
 )
-from utils import (
-    FileWriter,
-    FileRewriter,
-    FileDeleter,
-    PathGenerator,
-    Converter
-)
 from core.settings import config
 from core.database import ProductDataBase, OrderDataBase, CommentDataBase
+from utils import Converter, write_file, rewrite_file, delete_file
 
 
 class BaseDependency:
@@ -25,10 +18,9 @@ class BaseDependency:
 
     def __init__(
             self,
-            file_writer: FileWriter = FileWriter(),
-            file_rewriter: FileRewriter = FileRewriter(),
-            file_deleter: FileDeleter = FileDeleter(),
-            path_generator: PathGenerator = PathGenerator(config.PRODUCT_CONTENT_PATH),
+            file_writer: Callable = write_file,
+            file_rewriter: Callable = rewrite_file,
+            file_deleter: Callable = delete_file,
             product_database: Type[ProductDataBase] = ProductDataBase,
             order_database: Type[OrderDataBase] = OrderDataBase,
             comment_database: Type[CommentDataBase] = CommentDataBase
@@ -37,7 +29,6 @@ class BaseDependency:
         :param file_writer: ссылка на объект для записи файлов
         :param file_rewriter: ссылка на объект для перезаписи файлов
         :param file_deleter: ссылка на объект для удаления файлов
-        :param path_generator: объект для генерации путей к изображениям
         :param product_database: ссылка на класс для работы с БД (товары)
         :param order_database: ссылка на класс для работы с БД (заказы)
         :param comment_database: ссылка на класс для работы с БД (отзывы)
@@ -46,7 +37,6 @@ class BaseDependency:
         self.file_writer = file_writer
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
-        self.path_generator = path_generator
         self.product_database = product_database
         self.order_database = order_database
         self.comment_database = comment_database
@@ -215,10 +205,8 @@ class ProductUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = self.path_generator(product_id)
-
-            if exists(photo_path):
-                self.file_rewriter(photo_path, product_photo.file.read())
+            photo_path = f"{config.PRODUCT_CONTENT_PATH}/{product_id}"
+            self.file_rewriter(photo_path, product_photo.file.read())
 
         fields_for_update = {
             key: value

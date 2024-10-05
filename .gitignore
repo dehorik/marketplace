@@ -3,6 +3,5 @@ __pycache__/
 .venv/
 images/
 certificates/
-node_modules/
-.env
 /app/data/
+.env

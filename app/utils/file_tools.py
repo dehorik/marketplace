@@ -1,40 +1,18 @@
 import os
 
-from core.settings import config
 
+def write_file(path: str, file: bytes) -> None:
+    relative_path = f"../{path}"
 
-class PathGenerator:
-    def __init__(self, path: str):
-        if path not in [
-                config.USER_CONTENT_PATH,
-                config.PRODUCT_CONTENT_PATH,
-                config.COMMENT_CONTENT_PATH
-        ]:
-            raise ValueError("unavailable path")
+    with open(relative_path, 'wb') as photo:
+        photo.write(file)
 
-        self.__path = path
+def rewrite_file(path: str, file: bytes) -> None:
+    relative_path = f"../{path}"
 
-    def __call__(self, identifier: int) -> str:
-        return f"{self.__path}/{identifier}"
+    with open(relative_path, 'wb') as photo:
+        photo.write(file)
 
-
-class FileWriter:
-    def __call__(self, path: str, file: bytes) -> None:
-        relative_path = f"../{path}"
-
-        with open(relative_path, 'wb') as photo:
-            photo.write(file)
-
-
-class FileRewriter:
-    def __call__(self, path: str, file: bytes) -> None:
-        relative_path = f"../{path}"
-
-        with open(relative_path, 'wb') as photo:
-            photo.write(file)
-
-
-class FileDeleter:
-    def __call__(self, path: str) -> None:
-        relative_path = f"../{path}"
-        os.remove(relative_path)
+def delete_file(path: str) -> None:
+    relative_path = f"../{path}"
+    os.remove(relative_path)

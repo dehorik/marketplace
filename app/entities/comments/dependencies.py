@@ -1,5 +1,5 @@
-from typing import Annotated, Type
 from os.path import exists
+from typing import Annotated, Type, Callable
 from fastapi import Form, UploadFile, HTTPException, File, Path, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
@@ -8,15 +8,9 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
-from utils import (
-    FileWriter,
-    FileRewriter,
-    FileDeleter,
-    PathGenerator,
-    Converter
-)
 from core.settings import config
 from core.database import CommentDataBase
+from utils import Converter, write_file, rewrite_file, delete_file
 
 
 class BaseDependency:
@@ -24,24 +18,21 @@ class BaseDependency:
 
     def __init__(
             self,
-            file_writer: FileWriter = FileWriter(),
-            file_rewriter: FileRewriter = FileRewriter(),
-            file_deleter: FileDeleter = FileDeleter(),
-            path_generator: PathGenerator = PathGenerator(config.COMMENT_CONTENT_PATH),
+            file_writer: Callable = write_file,
+            file_rewriter: Callable = rewrite_file,
+            file_deleter: Callable = delete_file,
             comment_database: Type[CommentDataBase] = CommentDataBase
     ):
         """
-        :param file_writer: ссылка на объект для записи файлов
-        :param file_rewriter: ссылка на объект для перезаписи файлов
-        :param file_deleter: ссылка на объект для удаления файлов
-        :param path_generator: объект для генерации путей к изображениям
+        :param file_writer: ссылка на функцию для записи файлов
+        :param file_rewriter: ссылка на функцию для перезаписи файлов
+        :param file_deleter: ссылка на функцию для удаления файлов
         :param comment_database: ссылка на класс для работы с БД
         """
 
         self.file_writer = file_writer
         self.file_rewriter = file_rewriter
         self.file_deleter = file_deleter
-        self.path_generator = path_generator
         self.comment_database = comment_database
 
 
@@ -158,7 +149,7 @@ class CommentUpdater(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = self.path_generator(comment_id)
+            photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
 
             if exists(f"..../{photo_path}"):
                 self.file_rewriter(photo_path, comment_photo.file.read())
@@ -223,6 +214,8 @@ class CommentRewriter(BaseDependency):
         то это поле перезапишется со значением null
         """
 
+        photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
+
         if comment_photo:
             if not comment_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
@@ -230,17 +223,14 @@ class CommentRewriter(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = self.path_generator(comment_id)
-
             if exists(f"..../{photo_path}"):
                 self.file_rewriter(photo_path, comment_photo.file.read())
             else:
                 self.file_writer(photo_path, comment_photo.file.read())
         else:
-            photo_path = None
-
-            if exists(f"..../{self.path_generator(comment_id)}"):
-                self.file_deleter(self.path_generator(comment_id))
+            if exists(f"..../{photo_path}"):
+                self.file_deleter(photo_path)
+                photo_path = None
 
         with self.comment_database() as comment_db:
             comment = comment_db.update(
