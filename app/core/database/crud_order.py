@@ -93,10 +93,14 @@ class OrderDataBase(InterfaceDataBase):
         if last_item_id:
             condition = f"""
                 WHERE cart_item.user_id = {user_id} 
+                AND product.is_hidden = false
                 AND cart_item.cart_item_id < {last_item_id}
             """
         else:
-            condition = f"WHERE cart.user_id = {user_id}"
+            condition = f"""
+                WHERE cart_item.user_id = {user_id}
+                AND product.is_hidden = false
+            """
 
         self._cursor.execute(
             f"""
@@ -104,8 +108,8 @@ class OrderDataBase(InterfaceDataBase):
                     cart_item.cart_item_id,
                     cart_item.user_id,
                     cart_item.product_id,
-                    cart_item.product_name,
-                    cart_item.product_price
+                    product.product_name,
+                    product.product_price
                 FROM 
                     cart_item INNER JOIN product
                     ON cart_item.product_id = product.product_id

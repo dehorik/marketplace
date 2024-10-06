@@ -1,6 +1,6 @@
 from os.path import exists
 from typing import Annotated, Type, Callable
-from fastapi import Form, UploadFile, HTTPException, File, Path, Query, status
+from fastapi import Form, UploadFile, HTTPException, File, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.comments.models import (
@@ -216,7 +216,7 @@ class CommentRewritingService(BaseDependency):
 
             self.file_writer(photo_path, comment_photo.file.read())
         else:
-            if exists(f"..../{photo_path}"):
+            if exists(f"../{photo_path}"):
                 self.file_deleter(photo_path)
                 photo_path = None
 

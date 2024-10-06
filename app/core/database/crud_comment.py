@@ -141,13 +141,13 @@ class CommentDataBase(InterfaceDataBase):
         set_values = ""
         for key, value in kwargs.items():
             if type(value) is str:
-                set_values = set_values + f"{key} = '{value}', "
+                set_values += f"{key} = '{value}', "
             elif value is None:
-                set_values = set_values + f"{key} = NULL, "
+                set_values += f"{key} = NULL, "
             else:
-                set_values = set_values + f"{key} = {value}, "
+                set_values += f"{key} = {value}, "
         else:
-            set_values = set_values + "comment_date = CURRENT_DATE"
+            set_values += "comment_date = CURRENT_DATE"
 
         self._cursor.execute(
             f"""

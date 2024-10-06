@@ -201,7 +201,7 @@ class ProductUpdateService(BaseDependency):
 
             photo_path = f"{config.PRODUCT_CONTENT_PATH}/{product_id}"
 
-            if exists(photo_path):
+            if exists(f"../{photo_path}"):
                 self.file_writer(
                     photo_path,
                     product_photo.file.read()

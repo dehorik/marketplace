@@ -3,14 +3,14 @@ from fastapi import Depends, HTTPException, Form, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel
-from auth import PayloadTokenModel, Authorization
+from auth import PayloadTokenModel, AuthorizationService
 from core.database import UserDataBase
 from utils import Converter
 
 
-base_user_dependency = Authorization(min_role_id=1)
-admin_dependency = Authorization(min_role_id=2)
-owner_dependency = Authorization(min_role_id=3)
+base_user_dependency = AuthorizationService(min_role_id=1)
+admin_dependency = AuthorizationService(min_role_id=2)
+owner_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -56,7 +56,7 @@ class RoleUpdateService(BaseDependency):
     ) -> UserModel:
         if payload.sub == user_id:
             raise HTTPException(
-                status_code=status.HTTP_400_CONFLICT,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot change your role"
             )
 

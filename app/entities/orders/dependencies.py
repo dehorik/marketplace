@@ -7,12 +7,12 @@ from entities.orders.models import (
     CartItemCardModel,
     CartItemCardListModel
 )
-from auth import Authorization, PayloadTokenModel
+from auth import AuthorizationService, PayloadTokenModel
 from core.database import OrderDataBase
 from utils import Converter
 
 
-base_user_dependency = Authorization(min_role_id=1)
+base_user_dependency = AuthorizationService(min_role_id=1)
 
 
 class BaseDependency:
@@ -57,10 +57,10 @@ class CartItemRemovalService(BaseDependency):
     def __call__(
             self,
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
-            cart_item_id: int
+            item_id: int
     ) -> CartItemModel:
         with self.order_database() as order_db:
-            cart_item = order_db.delete_from_cart(payload.sub, cart_item_id)
+            cart_item = order_db.delete_from_cart(payload.sub, item_id)
 
         if not cart_item:
             raise HTTPException(

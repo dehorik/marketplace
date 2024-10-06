@@ -9,7 +9,7 @@ from auth.dependencies import (
     logout_service,
     token_refresh_service,
 )
-from auth.models import AuthenticationModel, AccessTokenModel
+from auth.models import ExtendedUserModel, AccessTokenModel
 
 
 router = APIRouter(
@@ -25,19 +25,19 @@ templates = Jinja2Templates(
 
 @router.post(
     "/registration",
-    response_model=AuthenticationModel,
+    response_model=ExtendedUserModel,
     status_code=status.HTTP_201_CREATED
 )
 def registration(
-        auth_model: Annotated[AuthenticationModel, Depends(registration_service)]
+        user: Annotated[ExtendedUserModel, Depends(registration_service)]
 ):
-    return auth_model
+    return user
 
-@router.post("/login", response_model=AuthenticationModel)
+@router.post("/login", response_model=ExtendedUserModel)
 def login(
-        auth_model: Annotated[AuthenticationModel, Depends(login_service)]
+        user: Annotated[ExtendedUserModel, Depends(login_service)]
 ):
-    return auth_model
+    return user
 
 @router.post("/logout")
 def logout(response: Annotated[dict, Depends(logout_service)]):

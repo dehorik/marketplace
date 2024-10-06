@@ -113,9 +113,9 @@ class ProductDataBase(InterfaceDataBase):
         set_values = ""
         for key, value in kwargs.items():
             if type(value) is str:
-                set_values = set_values + f"{key} = '{value}', "
+                set_values += f"{key} = '{value}', "
             else:
-                set_values = set_values + f"{key} = {value}, "
+                set_values += f"{key} = {value}, "
         else:
             set_values = set_values[:-2]
 

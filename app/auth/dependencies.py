@@ -11,7 +11,7 @@ from auth.tokens import (
 )
 from auth.models import (
     UserModel,
-    AuthenticationModel,
+    ExtendedUserModel,
     AccessTokenModel,
     PayloadTokenModel
 )
@@ -63,11 +63,11 @@ class RegistrationService(BaseDependency):
             response: Response,
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> AuthenticationModel:
+    ) -> ExtendedUserModel:
         with self.user_database() as user_db:
             if user_db.get_user_by_username(username):
                 raise HTTPException(
-                    status_code=status.HTTP_400_CONFLICT,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail='username is alredy taken'
                 )
 
@@ -81,7 +81,7 @@ class RegistrationService(BaseDependency):
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
-        return AuthenticationModel(
+        return ExtendedUserModel(
             user=user,
             token=AccessTokenModel(
                 access_token=access_token
@@ -99,7 +99,7 @@ class LoginService(BaseDependency):
             response: Response,
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> AuthenticationModel:
+    ) -> ExtendedUserModel:
         with self.user_database() as user_db:
             user = user_db.get_user_by_username(username)
 
@@ -126,7 +126,7 @@ class LoginService(BaseDependency):
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
-        return AuthenticationModel(
+        return ExtendedUserModel(
             user=user,
             token=AccessTokenModel(
                 access_token=access_token
@@ -148,20 +148,17 @@ class LogoutService(BaseDependency):
 
         try:
             response.delete_cookie('refresh_token')
-
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
 
             return {
                 "message": "successful logout"
             }
-
         except NonExistentTokenError:
             # если refresh токена в redis нет - им кто-то уже воспользовался
             # для безопасности пользователя
             # следует удалить все его refresh токены
 
-            # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload['sub'])
 
             raise HTTPException(
@@ -189,7 +186,6 @@ class TokenRefreshService(BaseDependency):
 
         try:
             response.delete_cookie('refresh_token')
-
             payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
             self.redis_client.delete_token(payload.sub, refresh_token)
 
@@ -208,7 +204,6 @@ class TokenRefreshService(BaseDependency):
             # (удалим все рефреш токены пользователя у себя,
             # тем самым удалив и токен злоумышленника)
 
-            # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload.sub)
 
             raise HTTPException(
@@ -238,7 +233,7 @@ class AccessTokenValidationService(BaseDependency):
             )
 
 
-class Authorization(BaseDependency):
+class AuthorizationService(BaseDependency):
     def __init__(
             self,
             min_role_id: int,
@@ -263,7 +258,7 @@ class Authorization(BaseDependency):
             if not self.__min_role_id <= user.role_id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail='you have no such rights'
+                    detail='you do not have such rights'
                 )
 
         return payload

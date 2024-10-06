@@ -25,7 +25,7 @@ def add_to_cart(
 ):
     return cart_item
 
-@router.delete("/cart/{cart_item_id}", response_model=CartItemModel)
+@router.delete("/cart/{item_id}", response_model=CartItemModel)
 def delete_from_cart(
         cart_item: Annotated[CartItemModel, Depends(cart_item_removal_service)]
 ):
