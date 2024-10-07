@@ -1,5 +1,5 @@
 from os.path import exists
-from typing import Annotated, Type, Callable
+from typing import Annotated, Type, Callable, Dict
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
@@ -115,11 +115,6 @@ class CommentLoaderService(BaseDependency):
 
 
 class CommentUpdateService(BaseDependency):
-    """
-    Обновление отзыва. Соответствует http методу patch,
-    обновляет только те поля, для которых были переданы значения
-    """
-
     def __init__(self, converter: Converter = Converter(CommentModel)):
         super().__init__()
         self.converter = converter
@@ -127,6 +122,10 @@ class CommentUpdateService(BaseDependency):
     def __call__(
             self,
             comment_id: int,
+
+            clear_text: Annotated[bool, Form()] = False,
+            clear_photo: Annotated[bool, Form()] = False,
+
             comment_rating: Annotated[
                 int | None, Form(ge=1, le=5)
             ] = None,
@@ -137,6 +136,22 @@ class CommentUpdateService(BaseDependency):
                 UploadFile, File()
             ] = None
     ) -> CommentModel:
+        """
+        :param comment_id: id отзыва
+
+        :param clear_text: флаг очистки поля с текстом
+        :param clear_photo: флаг удаления фотографии
+
+        :param comment_rating: рейтинг для обновления
+        :param comment_text: текст отзыва для обновления
+        :param comment_photo: фото к отзыву для записи или перезаписи
+
+        ВАЖНО
+        Флаги используются для того, чтобы указать те поля, значения из
+        которых нужно удалить. Одновременная передача значения true во флаг и
+        отправка данных для соответствующего поля приведет к ошибке.
+        """
+
         if comment_photo:
             if not comment_photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
@@ -144,93 +159,47 @@ class CommentUpdateService(BaseDependency):
                     detail='invalid file type'
                 )
 
+        if clear_text and comment_text or clear_photo and comment_photo:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="conflict between flags and request body"
+            )
+
+        fields_for_update: Dict[str, str | int | None] = {}
+
+        if comment_rating:
+            fields_for_update["comment_rating"] = comment_rating
+
+        if clear_text:
+            fields_for_update["comment_text"] = None
+        elif comment_text:
+            fields_for_update["comment_text"] = comment_text
+
+        if comment_photo:
             photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
             self.file_writer(photo_path, comment_photo.file.read())
-        else:
-            photo_path = None
+            fields_for_update["photo_path"] = photo_path
+        elif clear_photo:
+            photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
 
-        fields_for_update = {
-            key: value
-            for key, value in {
-                "comment_rating": comment_rating,
-                "comment_text": comment_text,
-                "photo_path": photo_path
-            }.items()
-            if value
-        }
+            if not exists(f"../{photo_path}"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="photo does not exist"
+                )
 
-        with self.comment_database() as comment_db:
-            comment = comment_db.update(
+            self.file_deleter(photo_path)
+            fields_for_update["photo_path"] = None
+
+        with self.comment_database() as commend_db:
+            comment = commend_db.update(
                 comment_id=comment_id,
                 **fields_for_update
             )
 
         if not comment:
-            if photo_path:
-                self.file_deleter(photo_path)
-
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="incorrect comment_id"
-            )
-
-        return self.converter(comment)[0]
-
-
-class CommentRewritingService(BaseDependency):
-    """
-    Обновление отзыва. Соответствует http методу put,
-    обновляет все поля отзыва.
-    """
-
-    def __init__(self, converter: Converter = Converter(CommentModel)):
-        super().__init__()
-        self.converter = converter
-
-    def __call__(
-            self,
-            comment_id: int,
-            comment_rating: Annotated[
-                int, Form(ge=1, le=5)
-            ],
-            comment_text: Annotated[
-                str | None, Form(min_length=2, max_length=100)
-            ] = None,
-            comment_photo: Annotated[
-                UploadFile, File()
-            ] = None
-    ) -> CommentModel:
-        """
-        Если для какого-то из полей не будет передано значение,
-        то это поле перезапишется со значением null
-        """
-
-        photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
-
-        if comment_photo:
-            if not comment_photo.content_type.split('/')[0] == 'image':
-                raise HTTPException(
-                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail='invalid file type'
-                )
-
-            self.file_writer(photo_path, comment_photo.file.read())
-        else:
-            if exists(f"../{photo_path}"):
-                self.file_deleter(photo_path)
-                photo_path = None
-
-        with self.comment_database() as comment_db:
-            comment = comment_db.update(
-                comment_id=comment_id,
-                comment_rating=comment_rating,
-                comment_text=comment_text,
-                photo_path=photo_path
-            )
-
-        if not comment:
-            if photo_path:
-                self.file_deleter(photo_path)
+            if fields_for_update["photo_path"]:
+                self.file_deleter(fields_for_update["photo_path"])
 
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -267,5 +236,4 @@ class CommentRemovalService(BaseDependency):
 comment_creation_service = CommentCreationService()
 comment_loader_service = CommentLoaderService()
 comment_update_service = CommentUpdateService()
-comment_rewriting_service = CommentRewritingService()
 comment_removal_service = CommentRemovalService()

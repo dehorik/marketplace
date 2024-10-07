@@ -5,7 +5,6 @@ from entities.comments.dependencies import (
     comment_creation_service,
     comment_loader_service,
     comment_update_service,
-    comment_rewriting_service,
     comment_removal_service
 )
 from entities.comments.models import CommentModel, CommentItemListModel
@@ -38,12 +37,6 @@ def load_comments(
 @router.patch("/{comment_id}", response_model=CommentModel)
 def update_comment(
         comment: Annotated[CommentModel, Depends(comment_update_service)]
-):
-    return comment
-
-@router.put("/{comment_id}", response_model=CommentModel)
-def rewrite_comment(
-        comment: Annotated[CommentModel, Depends(comment_rewriting_service)]
 ):
     return comment
 
