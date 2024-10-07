@@ -194,19 +194,19 @@ body {
   flex-flow: row nowrap;
 }
 
-.search-field {
+.search {
   height: 64px;
   width: 400px;
   margin: 20px auto;
 }
 
-.search-field form {
+.search form {
   width: 100%;
   height: 35px;
   border-radius: 15px;
 }
 
-#search-field-area {
+#search-area {
   width: 100%;
   height: 35px;
   padding: 10px;
@@ -215,21 +215,21 @@ body {
   font-size: 16px;
 }
 
-#exception-message-area {
+#warning {
   margin: 8px;
   text-align: center;
   color: red;
 }
 
-#search-field-area:hover {
+#search-area:hover {
   border: 2px solid blue;
 }
 
-#search-field-area:focus {
+#search-area:focus {
   border: 2px solid blue;
 }
 
-#not-found-message {
+#message-area {
   text-align: center;
   font-size: 35px;
   font-weight: bold;;

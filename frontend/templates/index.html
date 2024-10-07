@@ -24,7 +24,7 @@
                         <a data-link="home" href="/">Home</a>
                     </li>
                     <li class="menu-item">
-                        <a data-link="merchants" title="Catalog">Catalog</a>
+                        <a data-link="merchants" title="Catalog" href="/">Catalog</a>
                     </li>
                     <li class="menu-item menu-item__cart">
                         <a data-link="cart" href="cart.html" title="cart">
@@ -52,26 +52,25 @@
 
 </header>
 
-<div class="search-field">
+<div class="search">
     <form>
-        <label for="search-field-area"></label>
-        <input type="text" id="search-field-area" placeholder="Введите название товара">
+        <label for="search-area"></label>
+        <input type="text" id="search-area" placeholder="Введите название товара">
     </form>
-    <div id="exception-message-area"></div>
+    <div id="warning"></div>
 </div>
 
 <section class="merchants" id="merchants">
     <div class="container">
-        <div class="merchants-items">
-            <!-- сюда совать товары -->
-        </div>
+        <div class="merchants-items"></div>
     </div>
 </section>
 
-<div id="not-found-message"></div>
+<div id="message-area"></div>
 
 <script src="/static/js/load_user_photo.js"></script>
-<script src="/static/js/infinite_scroll_products.js"></script>
+<script src="/static/js/states.js"></script>
+<script src="/static/js/scroll_products.js"></script>
 <script src="/static/js/search_product.js"></script>
 </body>
 </html>
