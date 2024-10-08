@@ -1,0 +1,49 @@
+.merchants-items {
+  display: grid;
+  grid-template-columns: repeat(3, 384px);
+  gap: 25px;
+  margin-top: 60px;
+}
+
+.merchants-item {
+  padding: 30px;
+  background: #ffffff;
+  border: 2px solid #7a7a7a;
+}
+
+.merchants-item-image {
+  height: 320px;
+
+  img {
+    max-width: 100%;
+
+  }
+}
+
+
+.merchants-item-text {
+  font-size: 16px;
+  line-height: 140%;
+  margin: 10px 0;
+
+  a {
+    color: black;
+  }
+}
+
+.merchants-item-extra {
+  display: flex;
+  justify-content: space-between;
+}
+
+.merchants-item-price {
+  font-size: 32px;
+  line-height: 39px;
+  margin-bottom: 8px;
+}
+
+.merchants-item-weight {
+  font-size: 16px;
+  line-height: 18px;
+  color: #757575;
+}
