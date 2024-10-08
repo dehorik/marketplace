@@ -3,17 +3,18 @@ from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from entities.products.dependencies import (
+    catalog_loader_service,
+    product_search_service,
+    product_creation_service,
+    product_getting_service,
+    product_update_service,
+    product_removal_service
+)
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
-    ProductCatalogModel
-)
-from entities.products.dependencies import (
-    load_catalog_dependency,
-    create_product_dependency,
-    get_product_dependency,
-    update_product_dependency,
-    delete_product_dependency
+    ProductCardListModel
 )
 
 
@@ -28,39 +29,38 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/list", response_class=HTMLResponse)
-def get_catalog(
-        request: Request,
-        product_catalog: Annotated[ProductCatalogModel, Depends(load_catalog_dependency)]
-):
-    return templates.TemplateResponse(
-        name='catalog.html',
-        request=request,
-        context={
-            "product_catalog": product_catalog
-        }
-    )
-
-@router.get("/latest", response_model=ProductCatalogModel)
+@router.get("/latest", response_model=ProductCardListModel)
 def load_catalog(
-        product_catalog: Annotated[ProductCatalogModel, Depends(load_catalog_dependency)]
+        products: Annotated[
+            ProductCardListModel, Depends(catalog_loader_service)
+        ]
 ):
-    return product_catalog
+    return products
+
+@router.get("/search", response_model=ProductCardListModel)
+def search_product(
+        products: Annotated[
+            ProductCardListModel, Depends(product_search_service)
+        ]
+):
+    return products
 
 @router.post(
-    '/create',
+    "/",
     response_model=ProductModel,
     status_code=status.HTTP_201_CREATED
 )
 def create_product(
-        product: Annotated[ProductModel, Depends(create_product_dependency)]
+        product: Annotated[ProductModel, Depends(product_creation_service)]
 ):
     return product
 
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ExtendedProductModel, Depends(get_product_dependency)]
+        product: Annotated[
+            ExtendedProductModel, Depends(product_getting_service)
+        ]
 ):
     return templates.TemplateResponse(
         name='merchan.html',
@@ -72,12 +72,12 @@ def get_product(
 
 @router.patch("/{product_id}", response_model=ProductModel)
 def update_product(
-        product: Annotated[ProductModel, Depends(update_product_dependency)]
+        product: Annotated[ProductModel, Depends(product_update_service)]
 ):
     return product
 
 @router.delete("/{product_id}", response_model=ProductModel)
 def delete_product(
-        product: Annotated[ProductModel, Depends(delete_product_dependency)]
+        product: Annotated[ProductModel, Depends(product_removal_service)]
 ):
     return product

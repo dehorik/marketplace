@@ -9,29 +9,27 @@ class ProductModel(BaseModel):
     product_name: str = Field(min_length=2, max_length=20)
     product_price: int = Field(gt=0, le=100000)
     product_description: str = Field(min_length=2, max_length=300)
-    product_photo_path: str
+    is_hidden: bool = False
+    photo_path: str
 
 
 class ExtendedProductModel(BaseModel):
-    """
-    Расширенная схема товара с дополнительными полями.
-    Например, для получения рейтинга и т.д
-    """
+    """Расширенная схема товара с дополнительными полями"""
 
-    product: ProductModel
+    product_data: ProductModel
     product_rating: float | None = Field(ge=1, le=5, default=None)
     amount_comments: int
 
 
-class ProductCatalogCardModel(BaseModel):
+class ProductCardModel(BaseModel):
     """Схема карточки товара в каталоге"""
 
     product_id: int
     product_name: str = Field(min_length=2, max_length=20)
     product_price: int = Field(gt=0, le=100000)
     product_rating: float | None = Field(ge=1, le=5, default=None)
-    product_photo_path: str
+    photo_path: str
 
 
-class ProductCatalogModel(BaseModel):
-    products: List[ProductCatalogCardModel]
+class ProductCardListModel(BaseModel):
+    products: List[ProductCardModel]

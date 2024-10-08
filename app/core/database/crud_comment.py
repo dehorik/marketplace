@@ -1,3 +1,4 @@
+from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
@@ -8,9 +9,6 @@ class CommentDataBase(InterfaceDataBase):
     def __init__(self, session: Session = Session()):
         self.__session = session
         self._cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
 
     def __enter__(self):
         return self
@@ -31,40 +29,98 @@ class CommentDataBase(InterfaceDataBase):
             product_id: int,
             comment_rating: int,
             comment_text: str | None = None,
-            comment_photo_path: str | None = None
+            has_photo: bool = False,
+            comment_content_path: str = config.COMMENT_CONTENT_PATH
     ) -> list:
-        self._cursor.execute(
-            """
-                INSERT INTO comment (
+        if has_photo:
+            self._cursor.execute(
+                """
+                    INSERT INTO comment (
+                        user_id,
+                        product_id,
+                        comment_rating,
+                        comment_date,
+                        comment_text
+                    )
+                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
+                    RETURNING comment_id;
+                """,
+                [
                     user_id,
                     product_id,
-                    comment_date,
-                    comment_text,
                     comment_rating,
-                    comment_photo_path
-                )
-                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s)
-                RETURNING *;
-            """,
-            [
-                user_id,
-                product_id,
-                comment_text,
-                comment_rating,
-                comment_photo_path
-            ]
-        )
+                    comment_text
+                ]
+            )
+
+            comment_id = self._cursor.fetchone()[0]
+            photo_path = f"{comment_content_path}/{comment_id}"
+
+            self._cursor.execute(
+                """
+                    UPDATE comment 
+                        SET photo_path = %s
+                    WHERE comment_id = %s
+                    RETURNING *;
+                """,
+                [photo_path, comment_id]
+            )
+        else:
+            self._cursor.execute(
+                """
+                    INSERT INTO comment (
+                        user_id,
+                        product_id,
+                        comment_rating,
+                        comment_date,
+                        comment_text
+                    )
+                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
+                    RETURNING *;
+                """,
+                [
+                    user_id,
+                    product_id,
+                    comment_rating,
+                    comment_text
+                ]
+            )
 
         return self._cursor.fetchall()
 
-    def read(self, product_id):
-        self._cursor.execute(
+    def read(
+            self,
+            product_id: int,
+            amount: int = 10,
+            last_comment_id: int = None
+    ) -> list:
+        if last_comment_id:
+            condition = f"""
+                WHERE product.product_id = {product_id} 
+                AND comment.comment_id < {last_comment_id}
             """
-                SELECT * 
-                FROM comment 
-                WHERE product_id = %s;
-            """,
-            [product_id]
+        else:
+            condition = f"WHERE product.product_id = {product_id}"
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    comment.comment_id, 
+                    users.user_id,
+                    product.product_id, 
+                    users.username,
+                    users.photo_path,
+                    comment.comment_rating,
+                    comment.comment_date,
+                    comment.comment_text,
+                    comment.photo_path   
+                FROM users 
+                    INNER JOIN comment USING(user_id)
+                    INNER JOIN product USING(product_id)
+                {condition}
+                ORDER BY comment.comment_id DESC
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()
@@ -85,17 +141,18 @@ class CommentDataBase(InterfaceDataBase):
         set_values = ""
         for key, value in kwargs.items():
             if type(value) is str:
-                set_values = set_values + f"{key} = '{value}', "
-            elif not value:
-                set_values = set_values + f"{key} = NULL, "
+                set_values += f"{key} = '{value}', "
+            elif value is None:
+                set_values += f"{key} = NULL, "
             else:
-                set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+                set_values += f"{key} = {value}, "
+        else:
+            set_values += "comment_date = CURRENT_DATE"
 
         self._cursor.execute(
             f"""
                 UPDATE comment 
-                    SET {set_values}
+                    SET {set_values}            
                 WHERE comment_id = %s
                 RETURNING *;
             """,
@@ -117,47 +174,17 @@ class CommentDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def get_comment_item_list(
-            self,
-            product_id: int,
-            amount: int = 12,
-            last_comment_id: int = None
-    ) -> list:
-        """
-        Для получения отзывов под товаром (от самых новых до старых)
-
-        :param product_id: product_id товара
-        :param amount: нужное количество отзывов
-        :param last_comment_id: comment_id последнего подгруженного отзыва;
-               (если это первый запрос на подгрузку отзывов - оставить None)
-        :return: список отзывов
-        """
-
-        if last_comment_id:
-            condition = f"AND comment.comment_id < {last_comment_id}"
-        else:
-            condition = ""
+    def delete_all_comments(self, product_id: int) -> list:
+        """Удаление всех отзывов под товаром"""
 
         self._cursor.execute(
-            f"""
-                SELECT 
-                    comment.comment_id, 
-                    users.user_id,
-                    product.product_id, 
-                    users.user_name,
-                    users.user_photo_path,
-                    comment.comment_rating,
-                    comment.comment_date,
-                    comment.comment_text,
-                    comment.comment_photo_path   
-                FROM users 
-                    INNER JOIN comment USING(user_id)
-                    INNER JOIN product USING(product_id)
-                WHERE product.product_id = %s {condition}
-                ORDER BY comment.comment_id DESC
-                LIMIT %s;
+            """
+                DELETE
+                FROM comment
+                WHERE product_id = %s
+                RETURNING *;
             """,
-            [product_id, amount]
+            [product_id]
         )
 
         return self._cursor.fetchall()

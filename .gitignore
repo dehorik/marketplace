@@ -1,8 +1,7 @@
 .idea/
 __pycache__/
 .venv/
-database_data/
+images/
 certificates/
-node_modules/
-.env
 /app/data/
+.env

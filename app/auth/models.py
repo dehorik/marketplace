@@ -9,8 +9,11 @@ class AccessTokenModel(BaseModel):
     type: str = "Bearer"
 
 
-class AuthenticationModel(BaseModel):
-    """Отдаётся при прохождении аутентификации"""
+class ExtendedUserModel(BaseModel):
+    """
+    Расширенная схема пользователя.
+    Отдаётся после входа в аккаунт или регистрации
+    """
 
     user: UserModel
     token: AccessTokenModel

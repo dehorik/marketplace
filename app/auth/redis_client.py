@@ -1,10 +1,6 @@
 from redis import Redis
 
-from auth.exceptions import (
-    InvalidDataObject,
-    InvalidUserException,
-    InvalidTokenException
-)
+from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from core.settings import Settings, config
 from utils import Singleton
 
@@ -32,7 +28,7 @@ class RedisClient(Singleton):
             return
 
         if type(data) is not dict and type(data) is not ConnectionData:
-            raise InvalidDataObject("invalid database data object")
+            raise TypeError("invalid database data object")
 
         if type(data) is ConnectionData:
             data = data()
@@ -44,7 +40,7 @@ class RedisClient(Singleton):
                 decode_responses=True
             )
         except KeyError:
-            raise InvalidDataObject("invalid database data object")
+            raise ValueError("invalid database data object")
 
     def close(self) -> None:
         # сброс всех данных
@@ -62,20 +58,20 @@ class RedisClient(Singleton):
             self.__client.lpop(user_id)
 
     def delete_token(self, user_id: str | int, token: str) -> None:
-        # удаление токена из списка
+        # удаление токена из списка токенов пользователя
 
         if not self.__client.exists(str(user_id)):
-            raise InvalidUserException('user_id does not exist')
+            raise NonExistentUserError('user_id does not exist')
 
         operation = self.__client.lrem(str(user_id), 1, token)
         if not operation:
-            raise InvalidTokenException('token does not exist')
+            raise NonExistentTokenError('token does not exist')
 
     def get_tokens(self, user_id: str | int) -> list:
         # получение всех токенов пользователя
 
         if not self.__client.exists(str(user_id)):
-            raise InvalidUserException('user_id does not exist')
+            raise NonExistentUserError('user_id does not exist')
         else:
             return self.__client.lrange(user_id, 0, -1)
 
@@ -84,4 +80,4 @@ class RedisClient(Singleton):
 
         operation = self.__client.delete(str(user_id))
         if not operation:
-            raise InvalidUserException('user_id does not exist')
+            raise NonExistentUserError('user_id does not exist')

@@ -26,17 +26,14 @@ class ConnectionData:
 
 
 class Session(Singleton):
-    """
-    Класс для создания сессий БД и курсоров - объектов,
-    с помощью которых производится работа с БД.
-    """
+    """Класс для создания сессий базы данных"""
 
     def __init__(self, data: ConnectionData | dict = ConnectionData()):
         if self.__dict__:
             return
 
         if type(data) is not dict and type(data) is not ConnectionData:
-            raise ValueError("invalid database data object")
+            raise TypeError("invalid database data object")
 
         if type(data) is ConnectionData:
             data = data()
@@ -59,7 +56,8 @@ class Session(Singleton):
             return
 
     def close(self) -> None:
-        # закрытие подключения к БД (сессии)
+        # закрытие подключения к базе данных (сессии)
+
         self.__connection.commit()
         self.__connection.close()
 

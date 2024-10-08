@@ -1,10 +1,10 @@
 class Converter:
-    """Класс-конвертер данных из строк БД в Pydantic модели"""
+    """Конвертер данных из строк базы данных в Pydantic модель"""
 
     def __init__(self, model):
         self.__model = model
 
-    def serialization(self, rows: list) -> list:
+    def __call__(self, rows: list) -> list:
         # из вида [(), ()...] в Pydantic модель
 
         lst = []

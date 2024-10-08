@@ -1,6 +1,8 @@
 window.addEventListener('load', () => {
-    // вешаем на событие скролла обработчик, только когда страница полностью загрузится
+    update_catalog(9);
     window.addEventListener('scroll', check_position);
+
+    localStorage.removeItem("searching");
 });
 
 
@@ -10,13 +12,22 @@ function update_catalog(amount, last_product_id) {
     // я добавил к тегу div, содержащему карточку товара, атрибут data-product-id;
     // он необходим для корректной работы скрипта
 
-    axios.get(
-        "/products/latest", {
-        params: {
-            amount: amount,
+    let url = "/products/latest";
+    let params = {
+        amount: amount,
+        last_product_id: last_product_id
+    };
+
+    if (localStorage.getItem("searching")) {
+        url = "/products/search";
+        params = {
+            product_name: localStorage.getItem("searching"),
+            amount: 9,
             last_product_id: last_product_id
         }
-    })
+    }
+
+    axios.get(url, {params})
         .then(function (response) {
             let products = response.data.products;
 
@@ -38,7 +49,7 @@ function create_item(product) {
     const product_photo = document.createElement('div');
     product_photo.className = "merchants-item-image";
     const img = document.createElement('img');
-    img.src = product.product_photo_path;
+    img.src = product.photo_path;
     product_photo.append(img);
 
     const product_name = document.createElement('div');
@@ -71,7 +82,7 @@ function create_item(product) {
 function place_item(item) {
     // размещаем новый дом узел
 
-    const grid = document.body.querySelector("#grid");
+    const grid = document.body.querySelector(".merchants-items");
     grid.append(item);
 }
 

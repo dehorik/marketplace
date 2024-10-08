@@ -13,6 +13,7 @@ def init_database():
     )
     cursor = connection.cursor()
 
+    # создание всех таблиц
     cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS role (
@@ -23,10 +24,10 @@ def init_database():
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
                 role_id INT DEFAULT 1,
-                user_name VARCHAR(255),
-                user_hashed_password VARCHAR(255),
-                user_email VARCHAR(255) DEFAULT NULL,
-                user_photo_path VARCHAR(255) DEFAULT NULL,
+                username VARCHAR(255),
+                hashed_password VARCHAR(255),
+                email VARCHAR(255) DEFAULT NULL,
+                photo_path VARCHAR(255) DEFAULT NULL,
                 
                 FOREIGN KEY (role_id) 
                 REFERENCES role (role_id)
@@ -37,7 +38,8 @@ def init_database():
                 product_name VARCHAR(255),
                 product_price INT,
                 product_description TEXT,
-                product_photo_path VARCHAR(255)
+                is_hidden BOOLEAN DEFAULT false,
+                photo_path VARCHAR(255)
             );
             
             CREATE TABLE IF NOT EXISTS comment (
@@ -47,7 +49,7 @@ def init_database():
                 comment_rating INT,
                 comment_date DATE,
                 comment_text VARCHAR(255) DEFAULT NULL,
-                comment_photo_path VARCHAR(255) DEFAULT NULL,
+                photo_path VARCHAR(255) DEFAULT NULL,
             
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id),
@@ -60,39 +62,59 @@ def init_database():
                 order_id SERIAL PRIMARY KEY,
                 product_id INT,
                 user_id INT,
-                order_date_start DATE,
-                order_date_end DATE,
-                order_address VARCHAR(255),
+                date_start DATE,
+                date_end DATE,
+                delivery_address VARCHAR(255),
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id),
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
+                ON DELETE CASCADE
             );
             
-            CREATE TABLE IF NOT EXISTS shopping_bag_item (
-                shopping_bag_item_id SERIAL PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS cart_item (
+                cart_item_id SERIAL PRIMARY KEY,
                 product_id INT,
                 user_id INT,
                 
                 FOREIGN KEY (product_id) 
-                REFERENCES product (product_id),
+                REFERENCES product (product_id)
+                ON DELETE CASCADE,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
+                ON DELETE CASCADE
             ); 
         """
     )
 
+    # доступные роли
     cursor.execute(
         """
             INSERT INTO role 
                 (role_name)
             VALUES
-                ('user'),
-                ('admin'),
-                ('owner');
+                ('пользователь'),
+                ('администратор'),
+                ('владелец');
+        """
+    )
+
+    # аккаунт владельца
+    cursor.execute(
+        """
+            INSERT INTO users (
+                role_id,
+                username,
+                hashed_password
+            )    
+            VALUES (
+                3,
+                'egortsipt',
+                '$2b$12$GuAMmq4nDDI9ZQ4OHrgT.O3Edz.ykxRc3ZL4RkqYYOtKSFPa4c..6'
+            );
         """
     )
 

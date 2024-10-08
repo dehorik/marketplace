@@ -34,9 +34,9 @@ app.mount(
     name='static'
 )
 app.mount(
-    '/database_data',
-    StaticFiles(directory='../database_data'),
-    name='database_data'
+    '/images',
+    StaticFiles(directory='../images'),
+    name='images'
 )
 
 app.include_router(auth_router)

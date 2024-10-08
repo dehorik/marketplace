@@ -11,12 +11,12 @@ from auth.tokens import (
 )
 from auth.models import (
     UserModel,
-    AuthenticationModel,
+    ExtendedUserModel,
     AccessTokenModel,
     PayloadTokenModel
 )
 from auth.redis_client import RedisClient
-from auth.exceptions import InvalidUserException, InvalidTokenException
+from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
 from core.settings import config
 from core.database import UserDataBase
@@ -27,11 +27,6 @@ http_bearer = HTTPBearer()
 
 
 class BaseDependency:
-    """
-    Базовый класс, предоставляющий дочерним ссылки на необходимые объекты,
-    тем самым реализуя эффективную систему внедрения зависимостей
-    """
-
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
@@ -39,7 +34,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = RedisClient(),
-            user_database: Type = UserDataBase
+            user_database: Type[UserDataBase] = UserDataBase
     ):
         """
         :param jwt_encoder: объект для выпуска jwt
@@ -58,115 +53,93 @@ class BaseDependency:
         self.user_database = user_database
 
 
-class UserCreator(BaseDependency):
-    """Создание пользователя при регистрации"""
-
+class RegistrationService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
-            user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> UserModel:
+            response: Response,
+            username: Annotated[str, Form(min_length=6, max_length=16)],
+            password: Annotated[str, Form(min_length=8, max_length=18)]
+    ) -> ExtendedUserModel:
         with self.user_database() as user_db:
-            user = user_db.auth_user_data(user_name)
-            if user:
+            if user_db.get_user_by_username(username):
                 raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail='username is alredy taken'
                 )
 
-            user = user_db.create(
-                user_name,
-                get_password_hash(user_password)
-            )
+            user = user_db.create(username, get_password_hash(password))
 
-            return self.converter.serialization(user)[0]
+        user = self.converter(user)[0]
 
-
-class Registration(BaseDependency):
-    """Выпуск токенов для только что зарегистрировавшегося пользователя"""
-
-    def __call__(
-            self,
-            response: Response,
-            user: Annotated[UserModel, Depends(UserCreator())]
-    ) -> AuthenticationModel:
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
-        return AuthenticationModel(
+        return ExtendedUserModel(
             user=user,
-            token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(
+                access_token=access_token
+            )
         )
 
 
-class CredentialsVerifier(BaseDependency):
-    """Проверка данных для входа"""
-
+class LoginService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
 
     def __call__(
             self,
-            user_name: Annotated[str, Form(min_length=6, max_length=16)],
-            user_password: Annotated[str, Form(min_length=8, max_length=18)]
-    ) -> UserModel:
-        with self.user_database() as user_db:
-            user = user_db.auth_user_data(user_name)
-
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            user = list(user[0])
-            user_hashed_password = user.pop(3)
-
-            if not verify_password(user_password, user_hashed_password):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="incorrect username or password"
-                )
-
-            return self.converter.serialization([user])[0]
-
-
-class Login(BaseDependency):
-    """Выпуск токенов для только что вошедшего пользователя"""
-
-    def __call__(
-            self,
             response: Response,
-            user: Annotated[UserModel, Depends(CredentialsVerifier())]
-    ) -> AuthenticationModel:
+            username: Annotated[str, Form(min_length=6, max_length=16)],
+            password: Annotated[str, Form(min_length=8, max_length=18)]
+    ) -> ExtendedUserModel:
+        with self.user_database() as user_db:
+            user = user_db.get_user_by_username(username)
+
+        if not user:
+            raise HTTPException(
+                 status_code=status.HTTP_401_UNAUTHORIZED,
+                 detail="incorrect username or password"
+            )
+
+        user[0] = list(user[0])
+        hashed_password = user[0].pop(-1)
+
+        if not verify_password(password, hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="incorrect username or password"
+            )
+
+        user = self.converter(user)[0]
+
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
 
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
-        return AuthenticationModel(
+        return ExtendedUserModel(
             user=user,
-            token=AccessTokenModel(access_token=access_token)
+            token=AccessTokenModel(
+                access_token=access_token
+            )
         )
 
 
-class Logout(BaseDependency):
-    """Выход из аккаунта"""
-
+class LogoutService(BaseDependency):
     def __call__(
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> str:
+    ) -> dict:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -178,34 +151,33 @@ class Logout(BaseDependency):
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
 
-            return 'successful logout'
-
-        except InvalidTokenException:
+            return {
+                "message": "successful logout"
+            }
+        except NonExistentTokenError:
             # если refresh токена в redis нет - им кто-то уже воспользовался
-            # для безопасности пользователя следует удалить все его refresh jwt
+            # для безопасности пользователя
+            # следует удалить все его refresh токены
 
-            # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload['sub'])
 
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='invalid token'
             )
-        except (InvalidTokenError, InvalidUserException):
+        except (InvalidTokenError, NonExistentUserError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
 
 
-class RefreshTokenValidator(BaseDependency):
-    """Валидация refresh токена"""
-
+class TokenRefreshService(BaseDependency):
     def __call__(
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> PayloadTokenModel:
+    ) -> AccessTokenModel:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -217,58 +189,43 @@ class RefreshTokenValidator(BaseDependency):
             payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
             self.redis_client.delete_token(payload.sub, refresh_token)
 
-            return payload
-        except InvalidTokenException:
+            refresh_token = self.refresh_token_creator(payload)
+            access_token = self.access_token_creator(payload)
+
+            set_refresh_cookie(response, refresh_token)
+            self.redis_client.append_token(payload.sub, refresh_token)
+
+            return AccessTokenModel(
+                access_token=access_token
+            )
+        except NonExistentTokenError:
             # если рефреш токена нет в redis - им кто-то
             # воспользовался вместо пользователя
             # (удалим все рефреш токены пользователя у себя,
             # тем самым удалив и токен злоумышленника)
 
-            # noinspection PyUnboundLocalVariable
             self.redis_client.delete_user(payload.sub)
 
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='invalid token'
             )
-        except (InvalidTokenError, InvalidUserException):
+        except (InvalidTokenError, NonExistentUserError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
 
 
-class Refresher(BaseDependency):
-    """Выпуск пары токенов refresh/access на основе refresh токена"""
-
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
-        self.converter = converter
-
-    def __call__(
-            self,
-            response: Response,
-            payload: Annotated[PayloadTokenModel, Depends(RefreshTokenValidator())]
-    ) -> AccessTokenModel:
-        refresh_token = self.refresh_token_creator(payload)
-        access_token = self.access_token_creator(payload)
-
-        set_refresh_cookie(response, refresh_token)
-        self.redis_client.append_token(payload.sub, refresh_token)
-
-        return AccessTokenModel(access_token=access_token)
-
-
-class AccessTokenValidator(BaseDependency):
-    """Для декодирования access токена из заголовков"""
+class AccessTokenValidationService(BaseDependency):
+    """Валидация access токена из заголовков"""
 
     def __call__(
             self,
             token: Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
     ) -> PayloadTokenModel:
         try:
-            payload = self.jwt_decoder(token.credentials)
-            return PayloadTokenModel(**payload)
+            return PayloadTokenModel(**self.jwt_decoder(token.credentials))
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -276,12 +233,7 @@ class AccessTokenValidator(BaseDependency):
             )
 
 
-class Authorization(BaseDependency):
-    """
-    Авторизация пользователя
-    (проверяем наличие прав на совершение каких-либо действий)
-    """
-
+class AuthorizationService(BaseDependency):
     def __init__(
             self,
             min_role_id: int,
@@ -293,17 +245,21 @@ class Authorization(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(AccessTokenValidator())]
+            payload: Annotated[
+                PayloadTokenModel, Depends(AccessTokenValidationService())
+            ]
     ) -> PayloadTokenModel:
-        with self.user_database() as user_db:
-            user = user_db.read(payload.sub)
+        if self.__min_role_id > 1:
+            with self.user_database() as user_db:
+                user = user_db.read(payload.sub)
 
-        user = self.converter.serialization(user)[0]
-        if not self.__min_role_id <= user.role_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='you have no such rights'
-            )
+            user = self.converter(user)[0]
+
+            if not self.__min_role_id <= user.role_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='you do not have such rights'
+                )
 
         return payload
 
@@ -320,15 +276,8 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-# создание объектов-зависимостей для конечных точек;
-# для корректной работы требуется прокинуть переменную
-# аргументом в Depends() (не вызывать внутри);
-# каждая зависимость использует метод __call__ для исполнения,
-# а __init__ для внедрения внешних зависимостей
-# (объктов БД, классов для работы с jwt и т.д)
-
-register_user_dependency = Registration()
-login_user_dependency = Login()
-logout_user_dependency = Logout()
-refresh_tokens_dependency = Refresher()
-validate_access_token_dependency = AccessTokenValidator()
+# dependencies
+registration_service = RegistrationService()
+login_service = LoginService()
+logout_service = LogoutService()
+token_refresh_service = TokenRefreshService()

@@ -1,3 +1,4 @@
+from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDataBase
 
@@ -8,9 +9,6 @@ class ProductDataBase(InterfaceDataBase):
     def __init__(self, session: Session = Session()):
         self.__session = session
         self._cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
 
     def __enter__(self):
         return self
@@ -30,26 +28,40 @@ class ProductDataBase(InterfaceDataBase):
             product_name: str,
             product_price: float,
             product_description: str,
-            product_photo_path: str
+            is_hidden: bool,
+            product_content_path: str = config.PRODUCT_CONTENT_PATH
     ) -> list:
         self._cursor.execute(
             """
                 INSERT INTO product (
                     product_name, 
                     product_price, 
-                    product_description, 
-                    product_photo_path
+                    product_description,
+                    is_hidden
                 )
                 VALUES
                     (%s, %s, %s, %s)
-                RETURNING *
+                RETURNING product_id;
             """,
             [
                 product_name,
                 product_price,
                 product_description,
-                product_photo_path
+                is_hidden
             ]
+        )
+
+        product_id = self._cursor.fetchone()[0]
+        photo_path = f"{product_content_path}/{product_id}"
+
+        self._cursor.execute(
+            """                 
+                UPDATE product
+                    SET photo_path = %s
+                WHERE product_id = %s
+                RETURNING *;
+            """,
+            [photo_path, product_id]
         )
 
         return self._cursor.fetchall()
@@ -62,7 +74,8 @@ class ProductDataBase(InterfaceDataBase):
                     product_name,
                     product_price, 
                     product_description,
-                    product_photo_path,
+                    is_hidden,
+                    photo_path,
                     (
                         SELECT 
                             ROUND(AVG(comment_rating), 1) as product_rating
@@ -100,10 +113,11 @@ class ProductDataBase(InterfaceDataBase):
         set_values = ""
         for key, value in kwargs.items():
             if type(value) is str:
-                set_values = set_values + f"{key} = '{value}', "
+                set_values += f"{key} = '{value}', "
             else:
-                set_values = set_values + f"{key} = {value}, "
-        set_values = set_values[:-2]
+                set_values += f"{key} = {value}, "
+        else:
+            set_values = set_values[:-2]
 
         self._cursor.execute(
             f"""
@@ -117,47 +131,7 @@ class ProductDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def delete(self, product_id: int) -> dict:
-        deleted_items = {
-            "product": None,
-            "comments": [],
-            "orders": [],
-            "shopping_bag_items": []
-        }
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM comment
-                WHERE product_id = %s
-                RETURNING *;
-            """,
-            [product_id]
-        )
-        deleted_items['comments'].extend(self._cursor.fetchall())
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM orders 
-                WHERE product_id = %s
-                RETURNING *; 
-            """,
-            [product_id]
-        )
-        deleted_items['orders'].extend(self._cursor.fetchall())
-
-        self._cursor.execute(
-            """
-                DELETE 
-                FROM shopping_bag_item
-                WHERE product_id = %s
-                RETURNING *; 
-            """,
-            [product_id]
-        )
-        deleted_items["shopping_bag_items"].extend(self._cursor.fetchall())
-
+    def delete(self, product_id: int) -> list:
         self._cursor.execute(
             """
                 DELETE 
@@ -167,27 +141,21 @@ class ProductDataBase(InterfaceDataBase):
             """,
             [product_id]
         )
-        deleted_items['product'] = self._cursor.fetchone()
 
-        return deleted_items
+        return self._cursor.fetchall()
 
     def get_catalog(
             self,
             amount: int = 9,
             last_product_id: int | None = None
     ) -> list:
-        """
-        :param amount: количество возвращаемых товаров
-        :param last_product_id: product_id последнего товара
-               из предыдущей подгрузки;
-               при первом запросе оставить None
-        :return: список товаров
-        """
-
         if last_product_id:
-            condition = f"WHERE product.product_id < {last_product_id}"
+            condition = f"""
+                WHERE product.product_id < {last_product_id} 
+                AND product.is_hidden != true
+            """
         else:
-            condition = ""
+            condition = "WHERE product.is_hidden != true"
 
         self._cursor.execute(
             f"""
@@ -196,7 +164,7 @@ class ProductDataBase(InterfaceDataBase):
                     product.product_name, 
                     product.product_price, 
                     rating.product_rating,
-                    product.product_photo_path
+                    product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
@@ -210,9 +178,53 @@ class ProductDataBase(InterfaceDataBase):
                     ON product.product_id = rating.product_id
                 {condition}
                 ORDER BY product.product_id DESC
-                LIMIT %s;
-            """,
-            [amount]
+                LIMIT {amount};
+            """
+        )
+
+        return self._cursor.fetchall()
+
+    def search_product(
+            self,
+            product_name: str,
+            amount: int = 9,
+            last_product_id: int = None
+    ) -> list:
+        if last_product_id:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.product_id < {last_product_id}
+                AND product.is_hidden != true
+            """
+        else:
+            condition = f"""
+                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+                AND product.is_hidden != true
+            """
+
+        self._cursor.execute(
+            f"""
+                SELECT 
+                    product.product_id,
+                    product.product_name,
+                    product.product_price,
+                    rating.product_rating,
+                    product.photo_path
+                FROM 
+                    product LEFT JOIN (
+                        SELECT 
+                            product.product_id,
+                            ROUND(AVG(comment_rating), 1) as product_rating
+                        FROM 
+                            product INNER JOIN comment 
+                            ON product.product_id = comment.product_id
+                        GROUP BY product.product_id
+                    ) AS rating
+                    ON product.product_id = rating.product_id                
+                {condition}
+                ORDER BY product.product_id DESC
+                LIMIT {amount};
+            """
         )
 
         return self._cursor.fetchall()
