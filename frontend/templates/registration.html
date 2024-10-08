@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -10,42 +10,42 @@
     <title>ItemHub</title>
 </head>
 <body>
-<div id="registration-form-container">
-    <div id="registration-method">Регистрация</div>
+<div class="elements-container">
+    <div class="authentication-type">Регистрация</div>
 
-    <form action="/auth/registration" method="post" name="registration">
-        <div id="form-elements">
-            <div id="input-containers">
-                <div id="username-input-container" class="input-container">
-                    <label for="input-username">Имя пользователя</label>
-                    <input type="text" name="username" id="input-username" required>
-                    <div class="invalid-input-msg"></div>
+    <form>
+        <div class="form-elements">
+            <div class="fields">
+                <div id="username-node" class="input">
+                    <label for="username-field">Имя пользователя</label>
+                    <input type="text" name="username" id="username-field" required>
+                    <div class="invalid-input"></div>
                 </div>
-                <div id="password-input-container" class="input-container">
-                    <label for="input-password">Пароль</label>
-                    <input type="text" name="password" id="input-password" required>
-                    <div id="password-view">
-                        <input type="checkbox" id="password-view-checkbox">
-                        <label for="password-view-checkbox">Скрыть пароль</label>
+                <div id="password-node" class="input">
+                    <label for="password-field">Пароль</label>
+                    <input type="password" name="password" id="password-field" required>
+                    <div class="password-hider">
+                        <input type="checkbox" id="password-checkbox" checked>
+                        <label for="password-checkbox">Скрыть пароль</label>
                     </div>
-                    <div class="invalid-input-msg"></div>
+                    <div class="invalid-input"></div>
                 </div>
             </div>
 
-            <div id="send-data-button">
+            <div id="send-button">
                 <input type="submit" value="Создать аккаунт">
             </div>
         </div>
     </form>
 
-    <div id="cancel-registration-button">
+    <div id="cancel-button">
         <a href="/">Назад</a>
     </div>
 </div>
 
-<script src="/static/js/auth_form_validators.js"></script>
-<script src="/static/js/auth_tokens.js"></script>
+<script src="/static/js/auth.js"></script>
+<script src="/static/js/credentials_validators.js"></script>
 <script src="/static/js/registration.js"></script>
-<script src="/static/js/successful_auth_msg.js"></script>
+<script src="/static/js/welcome_message.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const form = document.querySelector("#registration-form-container form");
+const form = document.querySelector(".elements-container form");
 
 
 form.addEventListener("submit", (event) => {
@@ -14,13 +14,14 @@ form.addEventListener("submit", (event) => {
         .then(function (response) {
             const user = response.data.user;
             const access_token = response.data.token.access_token;
+
             set_token(access_token);
             localStorage.setItem("user_id", user.user_id);
 
-            get_message(user, '/');
+            welcome_user(user.username);
         })
         .catch(function (error) {
-           if (error.response.status === 401) {
+           if (error.response.status === 403) {
                invalid_username_msg.innerHTML = "Некорректное имя пользователя или пароль";
                invalid_password_msg.innerHTML = "Некорректное имя пользователя или пароль";
            }

@@ -105,7 +105,7 @@ class LoginService(BaseDependency):
 
         if not user:
             raise HTTPException(
-                 status_code=status.HTTP_401_UNAUTHORIZED,
+                 status_code=status.HTTP_403_FORBIDDEN,
                  detail="incorrect username or password"
             )
 
@@ -114,7 +114,7 @@ class LoginService(BaseDependency):
 
         if not verify_password(password, hashed_password):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="incorrect username or password"
             )
 

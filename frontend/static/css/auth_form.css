@@ -19,60 +19,56 @@ html, body {
     -webkit-text-size-adjust: 100%;
 }
 
-#registration-form-container {
+.elements-container {
     border: black solid 1px;
     border-radius: 15px;
     height: 465px;
     width: 440px;
-    margin: 8.5% 0 0 36%;
+    margin: 100px 0 auto 36%;
 }
 
-#registration-method{
+.authentication-type {
     text-align: center;
     font-size: 24px;
     font-weight: 600;
     margin: 18px 0 0 0;
 }
 
-#form-elements {
+.form-elements {
     margin: 32px 0 0 42px;
 }
 
-.input-container {
+.input {
     color: #3b3b3b;
     font-weight: 450;
     margin: 0 0 15px 0;
 }
 
-#password-view {
+.password-hider {
     display: flex;
     margin: 12px 0 0 0;
 }
 
-#password-view input{
+#password-checkbox{
     display: inline-block;
     width: 18px;
     height: 18px;
     border-radius: 25px;
+    margin: 0 5px 0 0;
 }
 
-#password-view input:hover {
+#password-checkbox:hover {
     box-shadow: none;
 }
 
-#password-view label {
-    display: inline-block;
-    margin: 0 0 0 5px;
-}
-
-.invalid-input-msg {
+.invalid-input {
     margin: 10px 0 0 0;
     font-size: 15px;
     height: 17px;
     color: red;
 }
 
-.input-container input {
+.input input {
     display: block;
     border: #bcbcbc solid 1px;
     border-radius: 4px;
@@ -82,21 +78,21 @@ html, body {
     padding: 4px;
 }
 
-.input-container input:hover {
+.input input:hover {
     border: #5197ff solid 2px;
     box-shadow: 1px 1px #6bbdff, -1px -1px #6bbdff;
 }
 
-.input-container label {
+.input label {
     display: block;
     margin: 0 0 8px 0;
 }
 
-#send-data-button {
+#send-button {
     margin: 38px 0 0 0;
 }
 
-#send-data-button input {
+#send-button input {
     background-color: #492eff;
     padding: 10px;
     border-radius: 5px;
@@ -106,15 +102,15 @@ html, body {
     margin: 0 10px 0 0;
 }
 
-#send-data-button input:hover {
+#send-button input:hover {
     background-color: #3f72ff;
 }
 
-#cancel-registration-button {
-    margin: 35px 0 0 42%;
+#cancel-button {
+    margin: 25px 0 0 42%;
 }
 
-#cancel-registration-button a{
+#cancel-button a{
     font-size: 15px;
     border: #7a7a7a solid 2px;
     border-radius: 5px;
@@ -127,11 +123,11 @@ html, body {
     color: #191411;
 }
 
-#cancel-registration-button a:hover {
+#cancel-button a:hover {
     background-color: rgba(233,233,233,0.94);
 }
 
-#successful_auth_message {
+#welcome-message {
     margin: 160px 0 0 110px;
     display: inline-block;
     font-size: 35px;
@@ -139,11 +135,11 @@ html, body {
     line-height: 1.4;
 }
 
-#successful_auth_message .new {
+#welcome-message .new {
     opacity: 0;
 }
 
-#successful_auth_message .div_opacity {
+#welcome-message .div_opacity {
     -webkit-transition: opacity .2s ease-in-out;
     -moz-transition: opacity .2s ease-in-out;
     -ms-transition: opacity .2s ease-in-out;

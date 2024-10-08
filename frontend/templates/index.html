@@ -7,7 +7,6 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="/static/js/auth_tokens.js"></script>
     <title>ItemHub</title>
 </head>
 <body>
@@ -45,19 +44,18 @@
                     </li>
                 </ul>
 
-                <div class="user__manager"></div>
+                <div class="account"></div>
             </div>
         </div>
     </nav>
 
 </header>
-
-<div class="search">
-    <form>
+<div class="search-container">
+    <form class="search-form">
         <label for="search-area"></label>
         <input type="text" id="search-area" placeholder="Введите название товара">
     </form>
-    <div id="warning"></div>
+    <div class="search-warning"></div>
 </div>
 
 <section class="merchants" id="merchants">
@@ -66,9 +64,13 @@
     </div>
 </section>
 
-<div id="message-area"></div>
+<div class="message-area"></div>
 
-<script src="/static/js/load_user_photo.js"></script>
+<script src="../static/js/auth.js"></script>
+<script>
+    // delete_token()
+</script>
+<script src="/static/js/account_check.js"></script>
 <script src="/static/js/states.js"></script>
 <script src="/static/js/scroll_products.js"></script>
 <script src="/static/js/search_product.js"></script>

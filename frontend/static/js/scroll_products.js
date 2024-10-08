@@ -1,5 +1,5 @@
-const product_grid = document.body.querySelector(".merchants-items");
-const message_area = document.getElementById("message-area");
+const product_grid = document.querySelector(".merchants-items");
+const message_area = document.querySelector(".message-area");
 
 
 window.addEventListener('load', () => {
