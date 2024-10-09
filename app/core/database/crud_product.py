@@ -123,10 +123,9 @@ class ProductDataBase(InterfaceDataBase):
             f"""
                 UPDATE product 
                     SET {set_values}                
-                WHERE product_id = %s
+                WHERE product_id = {product_id}
                 RETURNING *;
-            """,
-            [product_id]
+            """
         )
 
         return self._cursor.fetchall()

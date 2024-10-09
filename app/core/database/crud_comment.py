@@ -153,10 +153,9 @@ class CommentDataBase(InterfaceDataBase):
             f"""
                 UPDATE comment 
                     SET {set_values}            
-                WHERE comment_id = %s
+                WHERE comment_id = {comment_id}
                 RETURNING *;
-            """,
-            [comment_id]
+            """
         )
 
         return self._cursor.fetchall()

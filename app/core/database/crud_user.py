@@ -61,14 +61,55 @@ class UserDataBase(InterfaceDataBase):
 
         return self._cursor.fetchall()
 
-    def update(self):
-        pass
+    def update(self, user_id: int, **kwargs) -> list:
+        if not kwargs:
+            self._cursor.execute(
+                f"""
+                    SELECT 
+                        user_id,
+                        role_id, 
+                        username,
+                        email,
+                        photo_path
+                    FROM users
+                    WHERE user_id = {user_id};
+                """
+            )
+
+            return self._cursor.fetchall()
+
+        set_values = ""
+        for key, value in kwargs.items():
+            if type(value) is str:
+                set_values += f"{key} = '{value}', "
+            elif value is None:
+                set_values += f"{key} = NULL, "
+            else:
+                set_values += f"{key} = {value}, "
+        else:
+            set_values = set_values[:-2]
+
+        self._cursor.execute(
+            f"""
+                UPDATE users
+                    SET {set_values}
+                WHERE user_id = {user_id}
+                RETURNING 
+                    user_id,
+                    role_id, 
+                    username,
+                    email,
+                    photo_path;
+            """
+        )
+
+        return self._cursor.fetchall()
 
     def delete(self):
         pass
 
     def get_user_by_username(self, username: str) -> list:
-        #  для аутентификации, извлекается хеш пароля
+        # извлекается хеш пароля!
 
         self._cursor.execute(
             """

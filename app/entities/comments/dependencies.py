@@ -8,9 +8,15 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
+from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
 from core.database import CommentDataBase
 from utils import Converter, write_file, delete_file
+
+
+base_user_dependency = AuthorizationService(min_role_id=1)
+admin_dependency = AuthorizationService(min_role_id=2)
+owner_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -46,12 +52,12 @@ class CommentCreationService(BaseDependency):
             comment_text: Annotated[
                 str | None, Form(min_length=2, max_length=100)
             ] = None,
-            comment_photo: Annotated[
+            photo: Annotated[
                 UploadFile, File()
             ] = None
     ) -> CommentModel:
-        if comment_photo:
-            if not comment_photo.content_type.split('/')[0] == 'image':
+        if photo:
+            if not photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
@@ -59,7 +65,7 @@ class CommentCreationService(BaseDependency):
 
         try:
             with self.comment_database() as comment_db:
-                has_photo = True if comment_photo else False
+                has_photo = True if photo else False
 
                 comment = comment_db.create(
                     user_id=user_id,
@@ -71,8 +77,8 @@ class CommentCreationService(BaseDependency):
 
             comment = self.converter(comment)[0]
 
-            if comment_photo:
-                self.file_writer(comment.photo_path, comment_photo.file.read())
+            if photo:
+                self.file_writer(comment.photo_path, photo.file.read())
 
             return comment
         except ForeignKeyViolation:
@@ -132,7 +138,7 @@ class CommentUpdateService(BaseDependency):
             comment_text: Annotated[
                 str | None, Form(min_length=2, max_length=100)
             ] = None,
-            comment_photo: Annotated[
+            photo: Annotated[
                 UploadFile, File()
             ] = None
     ) -> CommentModel:
@@ -144,7 +150,7 @@ class CommentUpdateService(BaseDependency):
 
         :param comment_rating: рейтинг для обновления
         :param comment_text: текст отзыва для обновления
-        :param comment_photo: фото к отзыву для записи или перезаписи
+        :param photo: фото к отзыву для записи или перезаписи
 
         ВАЖНО
         Флаги используются для того, чтобы указать те поля, значения из
@@ -152,14 +158,14 @@ class CommentUpdateService(BaseDependency):
         отправка данных для соответствующего поля приведет к ошибке.
         """
 
-        if comment_photo:
-            if not comment_photo.content_type.split('/')[0] == 'image':
+        if photo:
+            if not photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
                 )
 
-        if clear_text and comment_text or clear_photo and comment_photo:
+        if clear_text and comment_text or clear_photo and photo:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="conflict between flags and request body"
@@ -170,14 +176,14 @@ class CommentUpdateService(BaseDependency):
         if comment_rating:
             fields_for_update["comment_rating"] = comment_rating
 
-        if clear_text:
-            fields_for_update["comment_text"] = None
-        elif comment_text:
+        if comment_text:
             fields_for_update["comment_text"] = comment_text
+        elif clear_text:
+            fields_for_update["comment_text"] = None
 
-        if comment_photo:
+        if photo:
             photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
-            self.file_writer(photo_path, comment_photo.file.read())
+            self.file_writer(photo_path, photo.file.read())
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
             photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"

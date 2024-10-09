@@ -1,11 +1,14 @@
-from typing import Type, Annotated
-from fastapi import Depends, HTTPException, Form, status
+from os.path import exists
+from pydantic import EmailStr
+from typing import Type, Annotated, Dict, Callable
+from fastapi import Depends, HTTPException, Form, UploadFile, File, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel
 from auth import PayloadTokenModel, AuthorizationService
+from core.settings import config
 from core.database import UserDataBase
-from utils import Converter
+from utils import Converter, write_file, delete_file
 
 
 base_user_dependency = AuthorizationService(min_role_id=1)
@@ -16,17 +19,22 @@ owner_dependency = AuthorizationService(min_role_id=3)
 class BaseDependency:
     def __init__(
             self,
+            file_writer: Callable = write_file,
+            file_deleter: Callable = delete_file,
             user_database: Type[UserDataBase] = UserDataBase
     ):
+        """
+        :param file_writer: ссылка на функцию для записи и перезаписи файлов
+        :param file_deleter: ссылка на функцию для удаления файлов
+        :param user_database: ссылка на класс для работы с БД
+        """
+
+        self.file_writer = file_writer
+        self.file_deleter = file_deleter
         self.user_database = user_database
 
 
 class UserDataGettingService(BaseDependency):
-    """
-    Получение пользовательских данных
-    путём валидации access токена из заголовков
-    """
-
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
@@ -37,6 +45,79 @@ class UserDataGettingService(BaseDependency):
     ) -> UserModel:
         with self.user_database() as user_db:
             user = user_db.read(payload.sub)
+
+        return self.converter(user)[0]
+
+
+class UserDataUpdateService(BaseDependency):
+    def __init__(self, converter: Converter = Converter(UserModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(
+            self,
+            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+
+            clear_email: Annotated[bool, Form()] = False,
+            clear_photo: Annotated[bool, Form()] = False,
+
+            username: Annotated[str, Form(min_length=6, max_length=16)] = None,
+            email: Annotated[EmailStr, Form()] = None,
+            photo: Annotated[UploadFile, File()] = None
+    ) -> UserModel:
+        if photo:
+            if not photo.content_type.split('/')[0] == 'image':
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail='invalid file type'
+                )
+
+        if clear_email and email or clear_photo and photo:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="conflict between flags and request body"
+            )
+
+        user_db = self.user_database()
+
+        fields_for_update: Dict[str, str | None] = {}
+
+        if username:
+            if user_db.get_user_by_username(username):
+                user_db.close()
+
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="username is already taken"
+                )
+
+            fields_for_update["username"] = username
+
+        if email:
+            fields_for_update["email"] = email
+        elif clear_email:
+            fields_for_update["email"] = None
+
+        if photo:
+            photo_path = f"{config.USER_CONTENT_PATH}/{payload.sub}"
+            self.file_writer(photo_path, photo.file.read())
+            fields_for_update["photo_path"] = photo_path
+        elif clear_photo:
+            photo_path = f"{config.USER_CONTENT_PATH}/{payload.sub}"
+
+            if not exists(f"../{photo_path}"):
+                user_db.close()
+
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="photo does not exist"
+                )
+
+            self.file_deleter(photo_path)
+            fields_for_update["photo_path"] = None
+
+        user = user_db.update(user_id=payload.sub, **fields_for_update)
+        user_db.close()
 
         return self.converter(user)[0]
 
@@ -79,4 +160,5 @@ class RoleUpdateService(BaseDependency):
 
 
 user_data_getting_service = UserDataGettingService()
+user_data_update_service = UserDataUpdateService()
 role_update_service = RoleUpdateService()

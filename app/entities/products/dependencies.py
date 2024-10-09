@@ -9,9 +9,15 @@ from entities.products.models import (
     ProductCardModel,
     ProductCardListModel
 )
+from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
 from core.database import ProductDataBase, CommentDataBase, OrderDataBase
 from utils import Converter, write_file, delete_file
+
+
+base_user_dependency = AuthorizationService(min_role_id=1)
+admin_dependency = AuthorizationService(min_role_id=2)
+owner_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -53,8 +59,7 @@ class CatalogLoaderService(BaseDependency):
         """
         :param amount: количество возвращаемых товаров
         :param last_product_id: product_id последнего товара
-               из предыдущей подгрузки;
-               при первом запросе оставить None
+               из предыдущей подгрузки; первый запрос - оставить None
         """
 
         with self.product_database() as product_db:
@@ -106,23 +111,13 @@ class ProductCreationService(BaseDependency):
 
     def __call__(
             self,
-            product_name: Annotated[
-                str, Form(min_length=2, max_length=20)
-            ],
-            product_price: Annotated[
-                int, Form(gt=0, le=1000000)
-            ],
-            product_description: Annotated[
-                str, Form(min_length=2, max_length=300)
-            ],
-            is_hidden: Annotated[
-                bool, Form()
-            ],
-            product_photo: Annotated[
-                UploadFile, File()
-            ]
+            product_name: Annotated[str, Form(min_length=2, max_length=20)],
+            product_price: Annotated[int, Form(gt=0, le=1000000)],
+            product_description: Annotated[str, Form(min_length=2, max_length=300)],
+            is_hidden: Annotated[bool, Form()],
+            photo: Annotated[UploadFile, File()]
     ) -> ProductModel:
-        if not product_photo.content_type.split('/')[0] == 'image':
+        if not photo.content_type.split('/')[0] == 'image':
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                 detail='invalid file type'
@@ -137,7 +132,7 @@ class ProductCreationService(BaseDependency):
             )
 
         product = self.converter(product)[0]
-        self.file_writer(product.photo_path, product_photo.file.read())
+        self.file_writer(product.photo_path, photo.file.read())
 
         return product
 
@@ -188,12 +183,12 @@ class ProductUpdateService(BaseDependency):
             is_hidden: Annotated[
                 bool | None, Form()
             ] = None,
-            product_photo: Annotated[
+            photo: Annotated[
                 UploadFile, File()
             ] = None
     ) -> ProductModel:
-        if product_photo:
-            if not product_photo.content_type.split('/')[0] == 'image':
+        if photo:
+            if not photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
@@ -204,7 +199,7 @@ class ProductUpdateService(BaseDependency):
             if exists(f"../{photo_path}"):
                 self.file_writer(
                     photo_path,
-                    product_photo.file.read()
+                    photo.file.read()
                 )
 
         fields_for_update = {

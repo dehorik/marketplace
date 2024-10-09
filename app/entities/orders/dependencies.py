@@ -7,12 +7,14 @@ from entities.orders.models import (
     CartItemCardModel,
     CartItemCardListModel
 )
-from auth import AuthorizationService, PayloadTokenModel
+from auth import PayloadTokenModel, AuthorizationService
 from core.database import OrderDataBase
 from utils import Converter
 
 
 base_user_dependency = AuthorizationService(min_role_id=1)
+admin_dependency = AuthorizationService(min_role_id=2)
+owner_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -89,9 +91,8 @@ class CartItemLoaderService(BaseDependency):
     ) -> CartItemCardListModel:
         """
         :param amount: требуемое количество карточек
-        :param last_item_id: cart_item_id карточки товара в корзине из
-                             последней подгрузки (если это первый запрос
-                             на получение карточек - оставить None)
+        :param last_item_id: cart_item_id карточки товара в корзине
+               из последней подгрузки (если это первый запрос - None)
         """
 
         try:
