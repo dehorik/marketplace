@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
 
+    # email sender
+    SENDER_ADDRESS: str
+    SENDER_PASSWORD: str
+    SMTP_SERVER_HOST: str
+    SMTP_SERVER_PORT: int
+
     model_config = SettingsConfigDict(env_file=DOTENV_FILE_PATH)
 
 
