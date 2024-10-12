@@ -122,6 +122,11 @@ class UserDataUpdateService(BaseDependency):
         return self.converter(user)[0]
 
 
+class EmailVerificationService(BaseDependency):
+    def __call__(self) -> dict:
+        pass
+
+
 class RoleUpdateService(BaseDependency):
     """Управление ролями пользователей"""
 
@@ -161,4 +166,5 @@ class RoleUpdateService(BaseDependency):
 
 user_data_getting_service = UserDataGettingService()
 user_data_update_service = UserDataUpdateService()
+email_verification_service = EmailVerificationService()
 role_update_service = RoleUpdateService()
