@@ -9,14 +9,14 @@ from entities.comments.models import (
     CommentItemListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
+from core.database import CommentDataAccessObject
 from core.settings import config
-from core.database import CommentDAO
 from utils import Converter, exists, write_file, delete_file
 
 
-base_user_dependency = AuthorizationService(min_role_id=1)
+user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
-owner_dependency = AuthorizationService(min_role_id=3)
+superuser_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -24,17 +24,17 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            comment_database: Type[CommentDAO] = CommentDAO
+            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
-        :param comment_database: ссылка на класс для работы с БД
+        :param comment_dao: ссылка на класс для работы с БД (отзывы)
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.comment_database = comment_database
+        self.comment_dao = comment_dao
 
 
 class CommentCreationService(BaseDependency):
@@ -64,10 +64,10 @@ class CommentCreationService(BaseDependency):
                 )
 
         try:
-            with self.comment_database() as comment_db:
+            with self.comment_dao() as comment_data_access_obj:
                 has_photo = True if photo else False
 
-                comment = comment_db.create(
+                comment = comment_data_access_obj.create(
                     user_id=user_id,
                     product_id=product_id,
                     comment_rating=comment_rating,
@@ -108,8 +108,8 @@ class CommentLoaderService(BaseDependency):
                (если это первый запрос на подгрузку отзывов - оставить None)
         """
 
-        with self.comment_database() as comment_db:
-            comments = comment_db.read(
+        with self.comment_dao() as comment_data_access_obj:
+            comments = comment_data_access_obj.read(
                 product_id=product_id,
                 amount=amount,
                 last_comment_id=last_comment_id
@@ -167,7 +167,7 @@ class CommentUpdateService(BaseDependency):
 
         if clear_text and comment_text or clear_photo and photo:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="conflict between flags and request body"
             )
 
@@ -181,19 +181,15 @@ class CommentUpdateService(BaseDependency):
         elif clear_text:
             fields_for_update["comment_text"] = None
 
+        photo_path = os.path.join(
+            config.COMMENT_CONTENT_PATH,
+            str(comment_id)
+        )
+
         if photo:
-            photo_path = os.path.join(
-                config.COMMENT_CONTENT_PATH,
-                str(comment_id)
-            )
             self.file_writer(photo_path, photo.file.read())
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
-            photo_path = os.path.join(
-                config.COMMENT_CONTENT_PATH,
-                str(comment_id)
-            )
-
             if not exists(photo_path):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -203,18 +199,22 @@ class CommentUpdateService(BaseDependency):
             self.file_deleter(photo_path)
             fields_for_update["photo_path"] = None
 
-        with self.comment_database() as commend_db:
-            comment = commend_db.update(
+        with self.comment_dao() as comment_data_access_obj:
+            comment = comment_data_access_obj.update(
                 comment_id=comment_id,
                 **fields_for_update
             )
 
         if not comment:
             if fields_for_update["photo_path"]:
+                # если был отправлен запрос на обновление полей
+                # несуществующего отзыва, и изображение было записано,
+                # то такое изображение необходимо удалить
+
                 self.file_deleter(fields_for_update["photo_path"])
 
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect comment_id"
             )
 
@@ -227,12 +227,12 @@ class CommentRemovalService(BaseDependency):
         self.converter = converter
 
     def __call__(self, comment_id: int) -> CommentModel:
-        with self.comment_database() as comment_db:
-            comment = comment_db.delete(comment_id)
+        with self.comment_dao() as comment_data_access_obj:
+            comment = comment_data_access_obj.delete(comment_id)
 
         if not comment:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail='incorrect comment_id'
             )
 

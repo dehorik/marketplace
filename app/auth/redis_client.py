@@ -8,13 +8,16 @@ from utils import Singleton
 class ConnectionData:
     """Класс для извлечения из .env файла конфигурационных данных для redis"""
 
-    def __init__(self, config_database: Settings = config):
-        self.__config_database = config_database
+    def __init__(self, config_redis: Settings = config):
+        if type(config_redis) is not Settings:
+            raise ValueError("invalid config object type")
+
+        self.__config_redis = config_redis
 
     def __call__(self) -> dict:
         data = {
-            "REDIS_HOST": self.__config_database.REDIS_HOST,
-            "REDIS_PORT": self.__config_database.REDIS_PORT
+            "REDIS_HOST": self.__config_redis.REDIS_HOST,
+            "REDIS_PORT": self.__config_redis.REDIS_PORT
         }
 
         return data
@@ -28,7 +31,7 @@ class RedisClient(Singleton):
             return
 
         if type(data) is not dict and type(data) is not ConnectionData:
-            raise TypeError("invalid database data object")
+            raise TypeError("invalid data object")
 
         if type(data) is ConnectionData:
             data = data()
@@ -40,7 +43,7 @@ class RedisClient(Singleton):
                 decode_responses=True
             )
         except KeyError:
-            raise ValueError("invalid database data object")
+            raise ValueError("invalid data object")
 
     def close(self) -> None:
         # сброс всех данных
@@ -51,6 +54,7 @@ class RedisClient(Singleton):
         # максимум сохраненных refresh токенов пользователя - 5
 
         amount_tokens = self.__client.rpush(user_id, token)
+
         expire_sec = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
         self.__client.expire(str(user_id), expire_sec)
 
@@ -64,6 +68,7 @@ class RedisClient(Singleton):
             raise NonExistentUserError('user_id does not exist')
 
         operation = self.__client.lrem(str(user_id), 1, token)
+
         if not operation:
             raise NonExistentTokenError('token does not exist')
 
@@ -79,5 +84,6 @@ class RedisClient(Singleton):
         # удаление пользователя и его токенов
 
         operation = self.__client.delete(str(user_id))
+
         if not operation:
             raise NonExistentUserError('user_id does not exist')

@@ -18,8 +18,8 @@ from auth.models import (
 from auth.redis_client import RedisClient
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
+from core.database import UserDataAccessObject
 from core.settings import config
-from core.database import UserDAO
 from utils import Converter
 
 
@@ -34,7 +34,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = RedisClient(),
-            user_database: Type[UserDAO] = UserDAO
+            user_dao: Type[UserDataAccessObject] = UserDataAccessObject
     ):
         """
         :param jwt_encoder: объект для выпуска jwt
@@ -42,7 +42,7 @@ class BaseDependency:
         :param access_token_creator: объект для выпуска access jwt
         :param refresh_token_creator: объект для выпуска refresh jwt
         :param redis_client: объект для работы с Redis
-        :param user_database: ссылка на класс для работы с БД
+        :param user_dao: ссылка на класс для работы с БД (пользователи)
         """
 
         self.jwt_encoder = jwt_encoder
@@ -50,7 +50,7 @@ class BaseDependency:
         self.access_token_creator = access_token_creator
         self.refresh_token_creator = refresh_token_creator
         self.redis_client = redis_client
-        self.user_database = user_database
+        self.user_dao = user_dao
 
 
 class RegistrationService(BaseDependency):
@@ -64,14 +64,17 @@ class RegistrationService(BaseDependency):
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        with self.user_database() as user_db:
-            if user_db.get_user_by_username(username):
+        with self.user_dao() as user_data_access_obj:
+            if user_data_access_obj.get_user_by_username(username):
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_409_CONFLICT,
                     detail='username is alredy taken'
                 )
 
-            user = user_db.create(username, get_password_hash(password))
+            user = user_data_access_obj.create(
+                username,
+                get_password_hash(password)
+            )
 
         user = self.converter(user)[0]
 
@@ -100,12 +103,12 @@ class LoginService(BaseDependency):
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        with self.user_database() as user_db:
-            user = user_db.get_user_by_username(username)
+        with self.user_dao() as user_data_access_obj:
+            user = user_data_access_obj.get_user_by_username(username)
 
         if not user:
             raise HTTPException(
-                 status_code=status.HTTP_403_FORBIDDEN,
+                 status_code=status.HTTP_401_UNAUTHORIZED,
                  detail="incorrect username or password"
             )
 
@@ -114,7 +117,7 @@ class LoginService(BaseDependency):
 
         if not verify_password(password, hashed_password):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="incorrect username or password"
             )
 
@@ -162,7 +165,7 @@ class LogoutService(BaseDependency):
             self.redis_client.delete_user(payload['sub'])
 
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
         except (InvalidTokenError, NonExistentUserError):
@@ -207,7 +210,7 @@ class TokenRefreshService(BaseDependency):
             self.redis_client.delete_user(payload.sub)
 
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='invalid token'
             )
         except (InvalidTokenError, NonExistentUserError):
@@ -250,8 +253,8 @@ class AuthorizationService(BaseDependency):
             ]
     ) -> PayloadTokenModel:
         if self.__min_role_id > 1:
-            with self.user_database() as user_db:
-                user = user_db.read(payload.sub)
+            with self.user_dao() as user_data_access_obj:
+                user = user_data_access_obj.read(payload.sub)
 
             user = self.converter(user)[0]
 

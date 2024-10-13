@@ -1,11 +1,12 @@
 import os
-from core.settings import config
+
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDAO
+from core.database.interface_dao import InterfaceDataAccessObject
+from core.settings import config
 
 
-class ProductDAO(InterfaceDAO):
-    """Класс для выполнения CRUD операций с товарами"""
+class ProductDataAccessObject(InterfaceDataAccessObject):
+    """Класс для выполнения crud операций с товарами"""
 
     def __init__(self, session: Session = Session()):
         self.__session = session
@@ -29,8 +30,7 @@ class ProductDAO(InterfaceDAO):
             product_name: str,
             product_price: float,
             product_description: str,
-            is_hidden: bool,
-            product_content_path: str = config.PRODUCT_CONTENT_PATH
+            is_hidden: bool
     ) -> list:
         self._cursor.execute(
             """
@@ -53,10 +53,7 @@ class ProductDAO(InterfaceDAO):
         )
 
         product_id = self._cursor.fetchone()[0]
-        photo_path = os.path.join(
-            config.PRODUCT_CONTENT_PATH,
-            str(product_id)
-        )
+        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
 
         self._cursor.execute(
             """                 
@@ -147,7 +144,7 @@ class ProductDAO(InterfaceDAO):
 
         return self._cursor.fetchall()
 
-    def get_catalog(
+    def get_latest_products(
             self,
             amount: int = 9,
             last_product_id: int | None = None
@@ -191,19 +188,15 @@ class ProductDAO(InterfaceDAO):
             self,
             product_name: str,
             amount: int = 9,
-            last_product_id: int = None
+            last_product_id: int | None = None
     ) -> list:
+        condition = f"""
+            WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+            AND product.is_hidden != true
+        """
+
         if last_product_id:
-            condition = f"""
-                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
-                AND product.product_id < {last_product_id}
-                AND product.is_hidden != true
-            """
-        else:
-            condition = f"""
-                WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
-                AND product.is_hidden != true
-            """
+            condition += f"AND product.product_id < {last_product_id}"
 
         self._cursor.execute(
             f"""

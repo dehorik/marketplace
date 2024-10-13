@@ -1,4 +1,5 @@
 from psycopg2 import InterfaceError, connect
+from psycopg2.extensions import cursor as sql_cursor
 
 from core.settings import Settings, config
 from utils import Singleton
@@ -9,7 +10,7 @@ class ConnectionData:
 
     def __init__(self, config_database: Settings = config):
         if type(config_database) is not Settings:
-            raise ValueError("invalid config_database object type")
+            raise ValueError("invalid config object type")
 
         self.__config_database = config_database
 
@@ -33,7 +34,7 @@ class Session(Singleton):
             return
 
         if type(data) is not dict and type(data) is not ConnectionData:
-            raise TypeError("invalid database data object")
+            raise TypeError("invalid data object")
 
         if type(data) is ConnectionData:
             data = data()
@@ -47,7 +48,7 @@ class Session(Singleton):
                 port=data["DATABASE_PORT"]
             )
         except KeyError:
-            raise ValueError("invalid database data object")
+            raise ValueError("invalid data object")
 
     def __del__(self):
         try:
@@ -65,6 +66,6 @@ class Session(Singleton):
         # запись в базу данных
         self.__connection.commit()
 
-    def get_cursor(self):
+    def get_cursor(self) -> sql_cursor:
         # фабрика курсоров
         return self.__connection.cursor()

@@ -1,9 +1,9 @@
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDAO
+from core.database.interface_dao import InterfaceDataAccessObject
 
 
-class UserDAO(InterfaceDAO):
-    """Класс для выполнения CRUD операций с пользователями"""
+class UserDataAccessObject(InterfaceDataAccessObject):
+    """Класс для выполнения crud операций с пользователями"""
 
     def __init__(self, session: Session = Session()):
         self.__session = session

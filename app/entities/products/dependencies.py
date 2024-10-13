@@ -10,14 +10,18 @@ from entities.products.models import (
     ProductCardListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
+from core.database import (
+    ProductDataAccessObject,
+    CommentDataAccessObject,
+    OrderDataAccessObject
+)
 from core.settings import config
-from core.database import ProductDAO, CommentDAO, OrderDAO
 from utils import Converter, exists, write_file, delete_file
 
 
-base_user_dependency = AuthorizationService(min_role_id=1)
+user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
-owner_dependency = AuthorizationService(min_role_id=3)
+superuser_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -25,23 +29,23 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            product_database: Type[ProductDAO] = ProductDAO,
-            comment_database: Type[CommentDAO] = CommentDAO,
-            order_database: Type[OrderDAO] = OrderDAO
+            product_dao: Type[ProductDataAccessObject] = ProductDataAccessObject,
+            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject,
+            order_dao: Type[OrderDataAccessObject] = OrderDataAccessObject
     ):
         """
         :param file_writer: ссылка на объект для записи и перезаписи файлов
         :param file_deleter: ссылка на объект для удаления файлов
-        :param product_database: ссылка на класс для работы с БД (товары)
-        :param comment_database: ссылка на класс для работы с БД (отзывы)
-        :param order_database: ссылка на класс для работы с БД (заказы)
+        :param product_dao: ссылка на класс для работы с БД (товары)
+        :param comment_dao: ссылка на класс для работы с БД (отзывы)
+        :param order_dao: ссылка на класс для работы с БД (заказы)
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.product_database = product_database
-        self.comment_database = comment_database
-        self.order_database = order_database
+        self.product_dao = product_dao
+        self.comment_dao = comment_dao
+        self.order_dao = order_dao
 
 
 class CatalogLoaderService(BaseDependency):
@@ -62,8 +66,8 @@ class CatalogLoaderService(BaseDependency):
                из предыдущей подгрузки; первый запрос - оставить None
         """
 
-        with self.product_database() as product_db:
-            products = product_db.get_catalog(
+        with self.product_dao() as product_data_access_obj:
+            products = product_data_access_obj.get_latest_products(
                 amount=amount,
                 last_product_id=last_product_id
             )
@@ -92,8 +96,8 @@ class ProductSearchService(BaseDependency):
         :param last_product_id: id товара из последней подгрузки
         """
 
-        with self.product_database() as product_db:
-            products = product_db.search_product(
+        with self.product_dao() as product_data_access_obj:
+            products = product_data_access_obj.search_product(
                 product_name=product_name,
                 amount=amount,
                 last_product_id=last_product_id
@@ -111,11 +115,21 @@ class ProductCreationService(BaseDependency):
 
     def __call__(
             self,
-            product_name: Annotated[str, Form(min_length=2, max_length=20)],
-            product_price: Annotated[int, Form(gt=0, le=1000000)],
-            product_description: Annotated[str, Form(min_length=2, max_length=300)],
-            is_hidden: Annotated[bool, Form()],
-            photo: Annotated[UploadFile, File()]
+            product_name: Annotated[
+                str, Form(min_length=2, max_length=20)
+            ],
+            product_price: Annotated[
+                int, Form(gt=0, le=1000000)
+            ],
+            product_description: Annotated[
+                str, Form(min_length=2, max_length=300)
+            ],
+            is_hidden: Annotated[
+                bool, Form()
+            ],
+            photo: Annotated[
+                UploadFile, File()
+            ]
     ) -> ProductModel:
         if not photo.content_type.split('/')[0] == 'image':
             raise HTTPException(
@@ -123,8 +137,8 @@ class ProductCreationService(BaseDependency):
                 detail='invalid file type'
             )
 
-        with self.product_database() as product_db:
-            product = product_db.create(
+        with self.product_dao() as product_data_access_obj:
+            product = product_data_access_obj.create(
                 product_name,
                 product_price,
                 product_description,
@@ -143,12 +157,12 @@ class ProductGettingService(BaseDependency):
         self.converter = converter
 
     def __call__(self, product_id: int) -> ExtendedProductModel:
-        with self.product_database() as product_db:
-            product = product_db.read(product_id)
+        with self.product_dao() as product_data_access_obj:
+            product = product_data_access_obj.read(product_id)
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail='incorrect product_id'
             )
 
@@ -194,7 +208,10 @@ class ProductUpdateService(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
+            photo_path = os.path.join(
+                config.PRODUCT_CONTENT_PATH,
+                str(product_id)
+            )
 
             if exists(photo_path):
                 self.file_writer(photo_path, photo.file.read())
@@ -210,15 +227,15 @@ class ProductUpdateService(BaseDependency):
             if value is not None
         }
 
-        with self.product_database() as product_db:
-            product = product_db.update(
+        with self.product_dao() as product_data_access_obj:
+            product = product_data_access_obj.update(
                 product_id=product_id,
                 **fields_for_update
             )
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail='incorrect product_id'
             )
 
@@ -236,26 +253,26 @@ class ProductRemovalService(BaseDependency):
         self.comment_converter = comment_converter
 
     def __call__(self, product_id: int) -> ProductModel:
-        with self.order_database() as order_db:
-            if order_db.get_all_orders(product_id):
+        with self.order_dao() as order_data_access_obj:
+            if order_data_access_obj.get_all_orders(product_id):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="there are orders with this product"
                 )
 
-        with self.comment_database() as comment_db:
-            comments = comment_db.delete_all_comments(product_id)
+        with self.comment_dao() as comment_data_access_obj:
+            comments = comment_data_access_obj.delete_all_comments(product_id)
 
         for comment in self.comment_converter(comments):
             if comment.photo_path:
                 self.file_deleter(comment.photo_path)
 
-        with self.product_database() as product_db:
-            product = product_db.delete(product_id)
+        with self.product_dao() as product_data_access_obj:
+            product = product_data_access_obj.delete(product_id)
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect product_id"
             )
 

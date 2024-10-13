@@ -21,7 +21,7 @@ form.addEventListener("submit", (event) => {
             welcome_user(user.username);
         })
         .catch(function (error) {
-           if (error.response.status === 403) {
+           if (error.response.status === 401) {
                invalid_username_msg.innerHTML = "Некорректное имя пользователя или пароль";
                invalid_password_msg.innerHTML = "Некорректное имя пользователя или пароль";
            }

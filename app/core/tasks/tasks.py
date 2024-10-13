@@ -3,9 +3,9 @@ import datetime
 from jinja2 import Environment, FileSystemLoader
 
 from auth import JWTEncoder
-from utils import EmailSender, create_email_sender_obj
 from core.tasks.models import EmailTokenPayloadModel
 from core.settings import ROOT_PATH
+from utils import EmailSender, create_email_sender_obj
 
 
 class EmailSendingService:
@@ -27,11 +27,12 @@ class EmailSendingService:
             exp=exp
         )
         payload = payload.model_dump()
+        token = self.jwt_encoder(payload)
 
         loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
         env = Environment(loader=loader)
         template = env.get_template("email_verification_letter.html")
-        letter = template.render(token=self.jwt_encoder(payload))
+        letter = template.render(token=token)
 
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 

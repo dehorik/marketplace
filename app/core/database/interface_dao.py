@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class InterfaceDAO(ABC):
+class InterfaceDataAccessObject(ABC):
     """
     Интерфейс для классов, создающих объекты для доступа к данным из БД.
     От него наследовать отдельные классы, которые будут выполнять

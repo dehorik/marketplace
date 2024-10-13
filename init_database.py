@@ -1,26 +1,24 @@
-import psycopg2
+from typing import List
+from psycopg2 import connect
+from psycopg2.extensions import cursor as sql_cursor
 
 from app.core.settings import config
+from app.auth.hashing_psw import get_password_hash
 
 
-def init_database():
-    connection = psycopg2.connect(
-        dbname=config.DATABASE_NAME,
-        user=config.DATABASE_USER,
-        password=config.DATABASE_USER_PASSWORD,
-        host=config.DATABASE_HOST,
-        port=config.DATABASE_PORT
-    )
-    cursor = connection.cursor()
-
-    # создание всех таблиц
+def create_role_table(cursor: sql_cursor) -> None:
     cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS role (
                 role_id SERIAL PRIMARY KEY,
                 role_name VARCHAR(255)
             );
-            
+        """
+    )
+
+def create_users_table(cursor: sql_cursor) -> None:
+    cursor.execute(
+        """
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
                 role_id INT DEFAULT 1,
@@ -32,7 +30,12 @@ def init_database():
                 FOREIGN KEY (role_id) 
                 REFERENCES role (role_id)
             );
-            
+        """
+    )
+
+def create_product_table(cursor: sql_cursor) -> None:
+    cursor.execute(
+        """
             CREATE TABLE IF NOT EXISTS product (
                 product_id SERIAL PRIMARY KEY,
                 product_name VARCHAR(255),
@@ -41,7 +44,12 @@ def init_database():
                 is_hidden BOOLEAN DEFAULT false,
                 photo_path VARCHAR(255)
             );
-            
+        """
+    )
+
+def create_comment_table(cursor: sql_cursor) -> None:
+    cursor.execute(
+        """
             CREATE TABLE IF NOT EXISTS comment (
                 comment_id SERIAL PRIMARY KEY,
                 user_id INT,
@@ -57,7 +65,12 @@ def init_database():
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id) 
             );
-            
+        """
+    )
+
+def create_orders_table(cursor: sql_cursor) -> None:
+    cursor.execute(
+        """
             CREATE TABLE IF NOT EXISTS orders (
                 order_id SERIAL PRIMARY KEY,
                 product_id INT,
@@ -73,7 +86,12 @@ def init_database():
                 REFERENCES users (user_id)
                 ON DELETE CASCADE
             );
-            
+        """
+    )
+
+def create_cart_item_table(cursor: sql_cursor) -> None:
+    cursor.execute(
+        """
             CREATE TABLE IF NOT EXISTS cart_item (
                 cart_item_id SERIAL PRIMARY KEY,
                 product_id INT,
@@ -90,19 +108,20 @@ def init_database():
         """
     )
 
-    # доступные роли
-    cursor.execute(
+def create_roles(cursor: sql_cursor, role_names: List[List[str]]) -> None:
+    cursor.executemany(
         """
-            INSERT INTO role 
-                (role_name)
-            VALUES
-                ('пользователь'),
-                ('администратор'),
-                ('владелец');
-        """
+            INSERT INTO role (
+                role_name
+            )
+            VALUES (%s);
+        """,
+        role_names
     )
 
-    # аккаунт владельца
+def create_owner_account(cursor: sql_cursor) -> None:
+    password_hash = get_password_hash(config.SUPERUSER_PASSWORD)
+
     cursor.execute(
         """
             INSERT INTO users (
@@ -111,12 +130,39 @@ def init_database():
                 hashed_password
             )    
             VALUES (
-                3,
-                'egortsipt',
-                '$2b$12$GuAMmq4nDDI9ZQ4OHrgT.O3Edz.ykxRc3ZL4RkqYYOtKSFPa4c..6'
+                (SELECT MAX(role_id) FROM role), %s, %s
             );
-        """
+        """,
+        [config.SUPERUSER_USERNAME, password_hash]
     )
+
+
+def init_database() -> None:
+    connection = connect(
+        dbname=config.DATABASE_NAME,
+        user=config.DATABASE_USER,
+        password=config.DATABASE_USER_PASSWORD,
+        host=config.DATABASE_HOST,
+        port=config.DATABASE_PORT
+    )
+    cursor = connection.cursor()
+
+    create_role_table(cursor)
+    create_users_table(cursor)
+    create_product_table(cursor)
+    create_comment_table(cursor)
+    create_orders_table(cursor)
+    create_cart_item_table(cursor)
+
+    create_roles(
+        cursor,
+        [
+            ["пользователь"],
+            ["администратор"],
+            ["суперпользователь"]
+        ]
+    )
+    create_owner_account(cursor)
 
     connection.commit()
     cursor.close()

@@ -1,6 +1,6 @@
-import jwt
 import datetime
 from pathlib import Path
+import jwt
 
 from auth.models import PayloadTokenModel, UserModel
 from core.settings import config

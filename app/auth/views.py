@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.templating import Jinja2Templates
@@ -10,6 +11,7 @@ from auth.dependencies import (
     token_refresh_service,
 )
 from auth.models import ExtendedUserModel, AccessTokenModel
+from core.settings import ROOT_PATH
 
 
 router = APIRouter(
@@ -19,7 +21,7 @@ router = APIRouter(
 
 
 templates = Jinja2Templates(
-    directory='../frontend/templates'
+    directory=os.path.join(ROOT_PATH, r"frontend\templates")
 )
 
 
@@ -43,11 +45,7 @@ def login(
 def logout(response: Annotated[dict, Depends(logout_service)]):
     return response
 
-@router.post(
-    "/refresh",
-    response_model=AccessTokenModel,
-    status_code=status.HTTP_201_CREATED
-)
+@router.post("/refresh", response_model=AccessTokenModel)
 def refresh(
         access_token: Annotated[AccessTokenModel, Depends(token_refresh_service)]
 ):

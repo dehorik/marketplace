@@ -8,21 +8,25 @@ from entities.orders.models import (
     CartItemCardListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
-from core.database import OrderDAO
+from core.database import OrderDataAccessObject
 from utils import Converter
 
 
-base_user_dependency = AuthorizationService(min_role_id=1)
+user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
-owner_dependency = AuthorizationService(min_role_id=3)
+superuser_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
     def __init__(
             self,
-            order_database: Type[OrderDAO] = OrderDAO
+            order_dao: Type[OrderDataAccessObject] = OrderDataAccessObject
     ):
-        self.order_database = order_database
+        """
+        :param order_dao: класс для работы с БД (заказы и товары в корзине)
+        """
+
+        self.order_dao = order_dao
 
 
 class CartItemSaveService(BaseDependency):
@@ -34,17 +38,20 @@ class CartItemSaveService(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             product_id: int
     ) -> CartItemModel:
         try:
-            with self.order_database() as order_db:
-                cart_item = order_db.add_to_cart(payload.sub, product_id)
+            with self.order_dao() as order_data_access_obj:
+                cart_item = order_data_access_obj.add_to_cart(
+                    payload.sub,
+                    product_id
+                )
 
             return self.converter(cart_item)[0]
         except ForeignKeyViolation:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect product_id"
             )
 
@@ -58,15 +65,18 @@ class CartItemRemovalService(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             item_id: int
     ) -> CartItemModel:
-        with self.order_database() as order_db:
-            cart_item = order_db.delete_from_cart(payload.sub, item_id)
+        with self.order_dao() as order_data_access_obj:
+            cart_item = order_data_access_obj.delete_from_cart(
+                payload.sub,
+                item_id
+            )
 
         if not cart_item:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect item_id"
             )
 
@@ -85,7 +95,7 @@ class CartItemLoaderService(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             amount: Annotated[int, Query(ge=0)] = 10,
             last_item_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CartItemCardListModel:
@@ -96,8 +106,8 @@ class CartItemLoaderService(BaseDependency):
         """
 
         try:
-            with self.order_database() as order_db:
-                cart_items = order_db.get_cart(
+            with self.order_dao() as order_data_access_obj:
+                cart_items = order_data_access_obj.get_cart(
                     user_id=payload.sub,
                     amount=amount,
                     last_item_id=last_item_id
@@ -109,7 +119,7 @@ class CartItemLoaderService(BaseDependency):
 
         except ForeignKeyViolation:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect product_id"
             )
 

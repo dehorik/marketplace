@@ -21,7 +21,7 @@ form.addEventListener("submit", (event) => {
             welcome_user(user.username);
         })
         .catch(function (error) {
-            if (error.response.status === 400) {
+            if (error.response.status === 409) {
                 invalid_username_msg.innerHTML = "Имя пользователя уже занято!";
             }
 

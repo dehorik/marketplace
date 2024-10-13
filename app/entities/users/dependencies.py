@@ -1,20 +1,21 @@
 import os
 from pydantic import EmailStr
 from typing import Type, Annotated, Dict, Callable
-from fastapi import BackgroundTasks, Depends, HTTPException, Form, UploadFile, File, status
+from fastapi import BackgroundTasks, Depends, HTTPException
+from fastapi import Form, UploadFile, File, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel
 from auth import PayloadTokenModel, AuthorizationService
-from core.settings import config
-from core.database import UserDAO
 from core.tasks import email_sending_service
+from core.database import UserDataAccessObject
+from core.settings import config
 from utils import Converter, exists, write_file, delete_file
 
 
-base_user_dependency = AuthorizationService(min_role_id=1)
+user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
-owner_dependency = AuthorizationService(min_role_id=3)
+superuser_dependency = AuthorizationService(min_role_id=3)
 
 
 class BaseDependency:
@@ -22,17 +23,17 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            user_database: Type[UserDAO] = UserDAO
+            user_dao: Type[UserDataAccessObject] = UserDataAccessObject
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
-        :param user_database: ссылка на класс для работы с БД
+        :param user_dao: ссылка на класс для работы с БД (пользователи)
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.user_database = user_database
+        self.user_dao = user_dao
 
 
 class UserDataGettingService(BaseDependency):
@@ -42,10 +43,10 @@ class UserDataGettingService(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)]
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)]
     ) -> UserModel:
-        with self.user_database() as user_db:
-            user = user_db.read(payload.sub)
+        with self.user_dao() as user_data_access_obj:
+            user = user_data_access_obj.read(payload.sub)
 
         return self.converter(user)[0]
 
@@ -58,7 +59,7 @@ class UserDataUpdateService(BaseDependency):
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
 
             clear_email: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
@@ -76,20 +77,20 @@ class UserDataUpdateService(BaseDependency):
 
         if clear_email and email or clear_photo and photo:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="conflict between flags and request body"
             )
 
-        user_db = self.user_database()
+        user_data_access_obj = self.user_dao()
 
         fields_for_update: Dict[str, str | None] = {}
 
         if username:
-            if user_db.get_user_by_username(username):
-                user_db.close()
+            if user_data_access_obj.get_user_by_username(username):
+                user_data_access_obj.close()
 
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_409_CONFLICT,
                     detail="username is already taken"
                 )
 
@@ -104,21 +105,17 @@ class UserDataUpdateService(BaseDependency):
         elif clear_email:
             fields_for_update["email"] = None
 
+        photo_path = os.path.join(
+            config.USER_CONTENT_PATH,
+            str(payload.sub)
+        )
+
         if photo:
-            photo_path = os.path.join(
-                config.USER_CONTENT_PATH,
-                str(payload.sub)
-            )
             self.file_writer(photo_path, photo.file.read())
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
-            photo_path = os.path.join(
-                config.USER_CONTENT_PATH,
-                str(payload.sub)
-            )
-
             if not exists(photo_path):
-                user_db.close()
+                user_data_access_obj.close()
 
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -128,11 +125,11 @@ class UserDataUpdateService(BaseDependency):
             self.file_deleter(photo_path)
             fields_for_update["photo_path"] = None
 
-        user = user_db.update(
+        user = user_data_access_obj.update(
             user_id=payload.sub,
             **fields_for_update
         )
-        user_db.close()
+        user_data_access_obj.close()
 
         return self.converter(user)[0]
 
@@ -151,7 +148,7 @@ class RoleUpdateService(BaseDependency):
 
     def __call__(
             self,
-            payload: Annotated[PayloadTokenModel, Depends(owner_dependency)],
+            payload: Annotated[PayloadTokenModel, Depends(superuser_dependency)],
             user_id: Annotated[int, Form(ge=1)],
             role_id: Annotated[int, Form(ge=1)]
     ) -> UserModel:
@@ -162,8 +159,8 @@ class RoleUpdateService(BaseDependency):
             )
 
         try:
-            with self.user_database() as user_db:
-                user = user_db.set_role(user_id, role_id)
+            with self.user_dao() as user_data_access_obj:
+                user = user_data_access_obj.set_role(user_id, role_id)
 
             if not user:
                 raise HTTPException(

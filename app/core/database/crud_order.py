@@ -1,9 +1,9 @@
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDAO
+from core.database.interface_dao import InterfaceDataAccessObject
 
 
-class OrderDAO(InterfaceDAO):
-    """Класс для выполнения CRUD операций с заказами и товарами в корзине"""
+class OrderDataAccessObject(InterfaceDataAccessObject):
+    """Класс для выполнения crud операций с заказами и товарами в корзине"""
 
     def __init__(self, session: Session = Session()):
         self.__session = session
@@ -90,17 +90,13 @@ class OrderDAO(InterfaceDAO):
             amount: int = 10,
             last_item_id: int | None = None
     ) -> list:
+        condition = f"""
+            WHERE cart_item.user_id = {user_id}
+            AND product.is_hidden = false
+        """
+
         if last_item_id:
-            condition = f"""
-                WHERE cart_item.user_id = {user_id} 
-                AND product.is_hidden = false
-                AND cart_item.cart_item_id < {last_item_id}
-            """
-        else:
-            condition = f"""
-                WHERE cart_item.user_id = {user_id}
-                AND product.is_hidden = false
-            """
+            condition += f"AND cart_item.cart_item_id < {last_item_id}"
 
         self._cursor.execute(
             f"""

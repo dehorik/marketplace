@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     SMTP_SERVER_HOST: str
     SMTP_SERVER_PORT: int
 
+    # superuser credentials
+    SUPERUSER_USERNAME: str
+    SUPERUSER_PASSWORD: str
+
     model_config = SettingsConfigDict(env_file=DOTENV_FILE_PATH)
 
 

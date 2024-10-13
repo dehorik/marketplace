@@ -1,12 +1,12 @@
 import os
 
-from core.settings import config
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDAO
+from core.database.interface_dao import InterfaceDataAccessObject
+from core.settings import config
 
 
-class CommentDAO(InterfaceDAO):
-    """Класс для выполнения CRUD операций с отзывами под товарами"""
+class CommentDataAccessObject(InterfaceDataAccessObject):
+    """Класс для выполнения crud операций с отзывами под товарами"""
 
     def __init__(self, session: Session = Session()):
         self.__session = session
@@ -33,27 +33,27 @@ class CommentDAO(InterfaceDAO):
             comment_text: str | None = None,
             has_photo: bool = False
     ) -> list:
-        if has_photo:
-            self._cursor.execute(
-                """
-                    INSERT INTO comment (
-                        user_id,
-                        product_id,
-                        comment_rating,
-                        comment_date,
-                        comment_text
-                    )
-                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
-                    RETURNING comment_id;
-                """,
-                [
+        self._cursor.execute(
+            """
+                INSERT INTO comment (
                     user_id,
                     product_id,
                     comment_rating,
+                    comment_date,
                     comment_text
-                ]
-            )
+                )
+                VALUES (%s, %s, %s, CURRENT_DATE, %s)
+                RETURNING comment_id;
+            """,
+            [
+                user_id,
+                product_id,
+                comment_rating,
+                comment_text
+            ]
+        )
 
+        if has_photo:
             comment_id = self._cursor.fetchone()[0]
             photo_path = os.path.join(
                 config.COMMENT_CONTENT_PATH,
@@ -69,26 +69,6 @@ class CommentDAO(InterfaceDAO):
                 """,
                 [photo_path, comment_id]
             )
-        else:
-            self._cursor.execute(
-                """
-                    INSERT INTO comment (
-                        user_id,
-                        product_id,
-                        comment_rating,
-                        comment_date,
-                        comment_text
-                    )
-                    VALUES (%s, %s, %s, CURRENT_DATE, %s)
-                    RETURNING *;
-                """,
-                [
-                    user_id,
-                    product_id,
-                    comment_rating,
-                    comment_text
-                ]
-            )
 
         return self._cursor.fetchall()
 
@@ -96,15 +76,12 @@ class CommentDAO(InterfaceDAO):
             self,
             product_id: int,
             amount: int = 10,
-            last_comment_id: int = None
+            last_comment_id: int | None = None
     ) -> list:
+        condition = f"WHERE product.product_id = {product_id}"
+
         if last_comment_id:
-            condition = f"""
-                WHERE product.product_id = {product_id} 
-                AND comment.comment_id < {last_comment_id}
-            """
-        else:
-            condition = f"WHERE product.product_id = {product_id}"
+            condition += f"AND comment.comment_id < {last_comment_id}"
 
         self._cursor.execute(
             f"""
