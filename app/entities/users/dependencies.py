@@ -1,13 +1,14 @@
 from os.path import exists
 from pydantic import EmailStr
 from typing import Type, Annotated, Dict, Callable
-from fastapi import Depends, HTTPException, Form, UploadFile, File, status
+from fastapi import BackgroundTasks, Depends, HTTPException, Form, UploadFile, File, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel
 from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
-from core.database import UserDataBase
+from core.database import UserDAO
+from core.tasks import email_sending_service
 from utils import Converter, write_file, delete_file
 
 
@@ -21,7 +22,7 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            user_database: Type[UserDataBase] = UserDataBase
+            user_database: Type[UserDAO] = UserDAO
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
@@ -56,6 +57,7 @@ class UserDataUpdateService(BaseDependency):
 
     def __call__(
             self,
+            background_tasks: BackgroundTasks,
             payload: Annotated[PayloadTokenModel, Depends(base_user_dependency)],
 
             clear_email: Annotated[bool, Form()] = False,
@@ -94,6 +96,7 @@ class UserDataUpdateService(BaseDependency):
             fields_for_update["username"] = username
 
         if email:
+            background_tasks.add_task(email_sending_service, payload.sub, email)
             fields_for_update["email"] = email
         elif clear_email:
             fields_for_update["email"] = None

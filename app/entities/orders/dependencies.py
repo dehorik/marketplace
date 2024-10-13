@@ -8,7 +8,7 @@ from entities.orders.models import (
     CartItemCardListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
-from core.database import OrderDataBase
+from core.database import OrderDAO
 from utils import Converter
 
 
@@ -20,7 +20,7 @@ owner_dependency = AuthorizationService(min_role_id=3)
 class BaseDependency:
     def __init__(
             self,
-            order_database: Type[OrderDataBase] = OrderDataBase
+            order_database: Type[OrderDAO] = OrderDAO
     ):
         self.order_database = order_database
 

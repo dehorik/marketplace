@@ -19,7 +19,7 @@ from auth.redis_client import RedisClient
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
 from core.settings import config
-from core.database import UserDataBase
+from core.database import UserDAO
 from utils import Converter
 
 
@@ -34,7 +34,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = RedisClient(),
-            user_database: Type[UserDataBase] = UserDataBase
+            user_database: Type[UserDAO] = UserDAO
     ):
         """
         :param jwt_encoder: объект для выпуска jwt

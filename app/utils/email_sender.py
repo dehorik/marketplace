@@ -1,4 +1,6 @@
 import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from core.settings import config
 
@@ -18,11 +20,28 @@ class EmailSender:
         self.__server = server
         self.__sender_address = sender_address
 
-    def __del__(self):
-        self.__server.quit()
+    def __get_letter(
+            self,
+            receiver_address: str,
+            subject: str,
+            html: str
+    ) -> MIMEMultipart:
+        letter = MIMEMultipart("alternative")
+        letter["Subject"] = subject
+        letter["From"] = self.__sender_address
+        letter["To"] = receiver_address
+        letter.attach(MIMEText(html, "html"))
 
-    def send_mail(self, message: str, receiver: str) -> None:
-        self.__server.sendmail(self.__sender_address, receiver, message)
+        return letter
+
+    def send_letter(
+            self,
+            receiver_address: str,
+            subject: str,
+            html: str
+    ) -> None:
+        letter = self.__get_letter(receiver_address, subject, html)
+        self.__server.send_message(letter)
 
 
 def create_email_sender_obj() -> EmailSender:

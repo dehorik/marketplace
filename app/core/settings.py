@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-DOTENV_FILE_PATH = os.path.join(os.path.dirname(__file__), "../../.env")
+ROOT_PATH = str(Path(__file__).resolve().parent.parent.parent)
+DOTENV_FILE_PATH = os.path.join(ROOT_PATH, ".env")
 
 
 class Settings(BaseSettings):
@@ -39,3 +41,9 @@ class Settings(BaseSettings):
 
 
 config = Settings()
+
+config.PRIVATE_KEY_PATH = os.path.join(ROOT_PATH, config.PRIVATE_KEY_PATH)
+config.PUBLIC_KEY_PATH = os.path.join(ROOT_PATH, config.PUBLIC_KEY_PATH)
+config.USER_CONTENT_PATH = os.path.join(ROOT_PATH, config.USER_CONTENT_PATH)
+config.PRODUCT_CONTENT_PATH = os.path.join(ROOT_PATH, config.PRODUCT_CONTENT_PATH)
+config.COMMENT_CONTENT_PATH = os.path.join(ROOT_PATH, config.COMMENT_CONTENT_PATH)

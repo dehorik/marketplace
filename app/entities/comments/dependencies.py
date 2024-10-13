@@ -10,7 +10,7 @@ from entities.comments.models import (
 )
 from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
-from core.database import CommentDataBase
+from core.database import CommentDAO
 from utils import Converter, write_file, delete_file
 
 
@@ -24,7 +24,7 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            comment_database: Type[CommentDataBase] = CommentDataBase
+            comment_database: Type[CommentDAO] = CommentDAO
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов

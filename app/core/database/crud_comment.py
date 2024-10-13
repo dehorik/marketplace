@@ -1,9 +1,9 @@
 from core.settings import config
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDataBase
+from core.database.interface_database import InterfaceDAO
 
 
-class CommentDataBase(InterfaceDataBase):
+class CommentDAO(InterfaceDAO):
     """Класс для выполнения CRUD операций с отзывами под товарами"""
 
     def __init__(self, session: Session = Session()):

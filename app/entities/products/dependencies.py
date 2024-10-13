@@ -11,7 +11,7 @@ from entities.products.models import (
 )
 from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
-from core.database import ProductDataBase, CommentDataBase, OrderDataBase
+from core.database import ProductDAO, CommentDAO, OrderDAO
 from utils import Converter, write_file, delete_file
 
 
@@ -25,9 +25,9 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            product_database: Type[ProductDataBase] = ProductDataBase,
-            comment_database: Type[CommentDataBase] = CommentDataBase,
-            order_database: Type[OrderDataBase] = OrderDataBase
+            product_database: Type[ProductDAO] = ProductDAO,
+            comment_database: Type[CommentDAO] = CommentDAO,
+            order_database: Type[OrderDAO] = OrderDAO
     ):
         """
         :param file_writer: ссылка на объект для записи и перезаписи файлов

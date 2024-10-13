@@ -1,8 +1,8 @@
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDataBase
+from core.database.interface_database import InterfaceDAO
 
 
-class OrderDataBase(InterfaceDataBase):
+class OrderDAO(InterfaceDAO):
     """Класс для выполнения CRUD операций с заказами и товарами в корзине"""
 
     def __init__(self, session: Session = Session()):

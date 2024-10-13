@@ -1,9 +1,9 @@
 from core.settings import config
 from core.database.session_factory import Session
-from core.database.interface_database import InterfaceDataBase
+from core.database.interface_database import InterfaceDAO
 
 
-class ProductDataBase(InterfaceDataBase):
+class ProductDAO(InterfaceDAO):
     """Класс для выполнения CRUD операций с товарами"""
 
     def __init__(self, session: Session = Session()):

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение почты</title>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-wrapper {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        a {
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Подтверждение почты</h2>
+    </div>
+    <div class="content">
+        <p>Здравствуйте,</p>
+        <p>Вы получили это письмо, потому что ваш адрес электронной почты был указан для привязки к аккаунту.</p>
+        <p>Пожалуйста, нажмите на кнопку ниже, чтобы подтвердить вашу почту:</p>
+        <div class="btn-wrapper">
+            <a href="127.0.0.1:8000/users/email-verification?token={{ token }}" class="btn">Подтвердить почту</a>
+        </div>
+        <p>Если вы не запрашивали это действие, просто проигнорируйте это письмо.</p>
+    </div>
+    <div class="footer">
+        <p>&#169; 2024 ItemHub. Все права защищены.</p>
+    </div>
+</div>
+</body>
+</html>

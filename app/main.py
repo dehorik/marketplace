@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -12,6 +13,7 @@ from entities import (
 )
 from auth import RedisClient, auth_router
 from core.database import Session
+from core.settings import ROOT_PATH
 
 
 @asynccontextmanager
@@ -30,12 +32,12 @@ app = FastAPI(
 
 app.mount(
     '/static',
-    StaticFiles(directory='../frontend/static'),
+    StaticFiles(directory=os.path.join(ROOT_PATH, r"frontend\static")),
     name='static'
 )
 app.mount(
     '/images',
-    StaticFiles(directory='../images'),
+    StaticFiles(directory=os.path.join(ROOT_PATH, "images")),
     name='images'
 )
 
@@ -47,7 +49,7 @@ app.include_router(orders_router)
 
 
 templates = Jinja2Templates(
-    directory='../frontend/templates'
+    directory=os.path.join(ROOT_PATH, r"frontend\templates")
 )
 
 
