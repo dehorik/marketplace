@@ -28,9 +28,7 @@ def create_comment(
 
 @router.get("/latest", response_model=CommentItemListModel)
 def load_comments(
-        comments: Annotated[
-            CommentItemListModel, Depends(comment_loader_service)
-        ]
+        comments: Annotated[CommentItemListModel, Depends(comment_loader_service)]
 ):
     return comments
 

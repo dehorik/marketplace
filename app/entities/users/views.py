@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Query
 from fastapi.templating import Jinja2Templates
@@ -10,6 +11,7 @@ from entities.users.dependencies import (
     role_update_service
 )
 from entities.users.models import UserModel
+from core.settings import ROOT_PATH
 
 
 router = APIRouter(
@@ -19,7 +21,7 @@ router = APIRouter(
 
 
 templates = Jinja2Templates(
-    directory='../frontend/templates'
+    directory=os.path.join(ROOT_PATH, r"frontend\templates")
 )
 
 
@@ -41,7 +43,8 @@ def update_user_data(
 
 @router.get("/email-verification", response_class=HTMLResponse)
 def get_email_verification_page(
-        request: Request, token: Annotated[str, Query()]
+        request: Request,
+        token: Annotated[str, Query()]
 ):
     return templates.TemplateResponse(
         name='email_verification.html',

@@ -1,3 +1,5 @@
+import os
+
 from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDAO
@@ -29,8 +31,7 @@ class CommentDAO(InterfaceDAO):
             product_id: int,
             comment_rating: int,
             comment_text: str | None = None,
-            has_photo: bool = False,
-            comment_content_path: str = config.COMMENT_CONTENT_PATH
+            has_photo: bool = False
     ) -> list:
         if has_photo:
             self._cursor.execute(
@@ -54,7 +55,10 @@ class CommentDAO(InterfaceDAO):
             )
 
             comment_id = self._cursor.fetchone()[0]
-            photo_path = f"{comment_content_path}/{comment_id}"
+            photo_path = os.path.join(
+                config.COMMENT_CONTENT_PATH,
+                str(comment_id)
+            )
 
             self._cursor.execute(
                 """

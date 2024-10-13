@@ -1,4 +1,4 @@
-from os.path import exists
+import os
 from typing import Annotated, Type, Callable
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 
@@ -12,7 +12,7 @@ from entities.products.models import (
 from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
 from core.database import ProductDAO, CommentDAO, OrderDAO
-from utils import Converter, write_file, delete_file
+from utils import Converter, exists, write_file, delete_file
 
 
 base_user_dependency = AuthorizationService(min_role_id=1)
@@ -194,13 +194,10 @@ class ProductUpdateService(BaseDependency):
                     detail='invalid file type'
                 )
 
-            photo_path = f"{config.PRODUCT_CONTENT_PATH}/{product_id}"
+            photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
 
-            if exists(f"../{photo_path}"):
-                self.file_writer(
-                    photo_path,
-                    photo.file.read()
-                )
+            if exists(photo_path):
+                self.file_writer(photo_path, photo.file.read())
 
         fields_for_update = {
             key: value

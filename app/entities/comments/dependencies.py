@@ -1,4 +1,4 @@
-from os.path import exists
+import os
 from typing import Annotated, Type, Callable, Dict
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 from psycopg2.errors import ForeignKeyViolation
@@ -11,7 +11,7 @@ from entities.comments.models import (
 from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
 from core.database import CommentDAO
-from utils import Converter, write_file, delete_file
+from utils import Converter, exists, write_file, delete_file
 
 
 base_user_dependency = AuthorizationService(min_role_id=1)
@@ -182,13 +182,19 @@ class CommentUpdateService(BaseDependency):
             fields_for_update["comment_text"] = None
 
         if photo:
-            photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
+            photo_path = os.path.join(
+                config.COMMENT_CONTENT_PATH,
+                str(comment_id)
+            )
             self.file_writer(photo_path, photo.file.read())
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
-            photo_path = f"{config.COMMENT_CONTENT_PATH}/{comment_id}"
+            photo_path = os.path.join(
+                config.COMMENT_CONTENT_PATH,
+                str(comment_id)
+            )
 
-            if not exists(f"../{photo_path}"):
+            if not exists(photo_path):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="photo does not exist"

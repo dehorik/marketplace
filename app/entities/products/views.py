@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
@@ -16,6 +17,7 @@ from entities.products.models import (
     ExtendedProductModel,
     ProductCardListModel
 )
+from core.settings import ROOT_PATH
 
 
 router = APIRouter(
@@ -25,23 +27,19 @@ router = APIRouter(
 
 
 templates = Jinja2Templates(
-    directory='../frontend/templates'
+    directory=os.path.join(ROOT_PATH, r'\frontend\templates')
 )
 
 
 @router.get("/latest", response_model=ProductCardListModel)
 def load_catalog(
-        products: Annotated[
-            ProductCardListModel, Depends(catalog_loader_service)
-        ]
+        products: Annotated[ProductCardListModel, Depends(catalog_loader_service)]
 ):
     return products
 
 @router.get("/search", response_model=ProductCardListModel)
 def search_product(
-        products: Annotated[
-            ProductCardListModel, Depends(product_search_service)
-        ]
+        products: Annotated[ProductCardListModel, Depends(product_search_service)]
 ):
     return products
 
@@ -58,9 +56,7 @@ def create_product(
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[
-            ExtendedProductModel, Depends(product_getting_service)
-        ]
+        product: Annotated[ExtendedProductModel, Depends(product_getting_service)]
 ):
     return templates.TemplateResponse(
         name='merchan.html',

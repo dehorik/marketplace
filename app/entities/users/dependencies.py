@@ -1,4 +1,4 @@
-from os.path import exists
+import os
 from pydantic import EmailStr
 from typing import Type, Annotated, Dict, Callable
 from fastapi import BackgroundTasks, Depends, HTTPException, Form, UploadFile, File, status
@@ -9,7 +9,7 @@ from auth import PayloadTokenModel, AuthorizationService
 from core.settings import config
 from core.database import UserDAO
 from core.tasks import email_sending_service
-from utils import Converter, write_file, delete_file
+from utils import Converter, exists, write_file, delete_file
 
 
 base_user_dependency = AuthorizationService(min_role_id=1)
@@ -96,19 +96,28 @@ class UserDataUpdateService(BaseDependency):
             fields_for_update["username"] = username
 
         if email:
-            background_tasks.add_task(email_sending_service, payload.sub, email)
+            background_tasks.add_task(
+                email_sending_service,
+                payload.sub, email
+            )
             fields_for_update["email"] = email
         elif clear_email:
             fields_for_update["email"] = None
 
         if photo:
-            photo_path = f"{config.USER_CONTENT_PATH}/{payload.sub}"
+            photo_path = os.path.join(
+                config.USER_CONTENT_PATH,
+                str(payload.sub)
+            )
             self.file_writer(photo_path, photo.file.read())
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
-            photo_path = f"{config.USER_CONTENT_PATH}/{payload.sub}"
+            photo_path = os.path.join(
+                config.USER_CONTENT_PATH,
+                str(payload.sub)
+            )
 
-            if not exists(f"../{photo_path}"):
+            if not exists(photo_path):
                 user_db.close()
 
                 raise HTTPException(
@@ -119,7 +128,10 @@ class UserDataUpdateService(BaseDependency):
             self.file_deleter(photo_path)
             fields_for_update["photo_path"] = None
 
-        user = user_db.update(user_id=payload.sub, **fields_for_update)
+        user = user_db.update(
+            user_id=payload.sub,
+            **fields_for_update
+        )
         user_db.close()
 
         return self.converter(user)[0]
@@ -167,6 +179,7 @@ class RoleUpdateService(BaseDependency):
         return self.converter(user)[0]
 
 
+# dependencies
 user_data_getting_service = UserDataGettingService()
 user_data_update_service = UserDataUpdateService()
 email_verification_service = EmailVerificationService()

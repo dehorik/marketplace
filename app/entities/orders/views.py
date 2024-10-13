@@ -33,9 +33,6 @@ def delete_from_cart(
 
 @router.get("/cart", response_model=CartItemCardListModel)
 def get_cart(
-        cart_items: Annotated[
-            CartItemCardListModel,
-            Depends(cart_item_loader_service)
-        ]
+        cart_items: Annotated[CartItemCardListModel, Depends(cart_item_loader_service)]
 ):
     return cart_items

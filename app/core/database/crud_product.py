@@ -1,3 +1,4 @@
+import os
 from core.settings import config
 from core.database.session_factory import Session
 from core.database.interface_database import InterfaceDAO
@@ -52,7 +53,10 @@ class ProductDAO(InterfaceDAO):
         )
 
         product_id = self._cursor.fetchone()[0]
-        photo_path = f"{product_content_path}/{product_id}"
+        photo_path = os.path.join(
+            config.PRODUCT_CONTENT_PATH,
+            str(product_id)
+        )
 
         self._cursor.execute(
             """                 
