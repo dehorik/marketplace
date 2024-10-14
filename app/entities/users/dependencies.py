@@ -1,13 +1,14 @@
 import os
 from pydantic import EmailStr
+from jwt import InvalidTokenError
 from typing import Type, Annotated, Dict, Callable
 from fastapi import BackgroundTasks, Depends, HTTPException
 from fastapi import Form, UploadFile, File, status
 from psycopg2.errors import ForeignKeyViolation
 
-from entities.users.models import UserModel
-from auth import PayloadTokenModel, AuthorizationService
-from core.tasks import email_sending_service
+from entities.users.models import UserModel, EmailVerificationModel
+from auth import PayloadTokenModel, AuthorizationService, JWTDecoder
+from core.tasks import email_sending_service, EmailTokenPayloadModel
 from core.database import UserDataAccessObject
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
@@ -23,17 +24,20 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            user_dao: Type[UserDataAccessObject] = UserDataAccessObject
+            user_dao: Type[UserDataAccessObject] = UserDataAccessObject,
+            jwt_decoder: JWTDecoder = JWTDecoder()
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
         :param user_dao: ссылка на класс для работы с БД (пользователи)
+        :param jwt_decoder: объект для декодирования jwt
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
         self.user_dao = user_dao
+        self.jwt_decoder = jwt_decoder
 
 
 class UserDataGettingService(BaseDependency):
@@ -101,7 +105,6 @@ class UserDataUpdateService(BaseDependency):
                 email_sending_service,
                 payload.sub, email
             )
-            fields_for_update["email"] = email
         elif clear_email:
             fields_for_update["email"] = None
 
@@ -135,8 +138,28 @@ class UserDataUpdateService(BaseDependency):
 
 
 class EmailVerificationService(BaseDependency):
-    def __call__(self) -> dict:
-        pass
+    def __init__(self, converter: Converter = Converter(UserModel)):
+        super().__init__()
+        self.converter = converter
+
+    def __call__(self, body: EmailVerificationModel) -> UserModel:
+        try:
+            payload = self.jwt_decoder(body.token)
+            payload = EmailTokenPayloadModel(**payload)
+
+            with self.user_dao() as user_data_access_obj:
+                user = user_data_access_obj.update(
+                    user_id=payload.sub,
+                    email=payload.email
+                )
+
+            return self.converter(user)[0]
+
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="invalid token"
+            )
 
 
 class RoleUpdateService(BaseDependency):

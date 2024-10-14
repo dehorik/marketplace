@@ -1,29 +1,23 @@
-<!doctype html>
-<html lang="ru">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/email_verification.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ItemHub</title>
+    <link href="/static/css/email_verification.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
 
-<div id="confirmation-menu">
-    <div class="title-form">Подтвердите привязывание почты к ItemHub</div>
+<header>
+    <a href="/"><img src="/static/img/favicon.svg"></a>
+</header>
 
-    <form>
-        <div id="confirm-email-button" class="menu-buttons">
-            <input type="submit" value="Подтвердить почту">
-        </div>
-        <div id="cancel-email-button" class="menu-buttons">
-            <input type="button" value="Это не моя почта">
-        </div>
-    </form>
+<div class="container">
+    <div class="title">Проверка почты для ItemHub</div>
+    <div class="message"></div>
 </div>
 
-<script src="../static/js/email_verification.js"></script>
+<script src="/static/js/email_verification.js"></script>
 </body>
 </html>

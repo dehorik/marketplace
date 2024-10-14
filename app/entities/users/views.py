@@ -43,19 +43,18 @@ def update_user_data(
 
 @router.get("/email-verification", response_class=HTMLResponse)
 def get_email_verification_page(
-        request: Request,
-        token: Annotated[str, Query()]
+        request: Request, token: Annotated[str, Query()]
 ):
     return templates.TemplateResponse(
         name='email_verification.html',
         request=request
     )
 
-@router.patch("/email-verification")
+@router.patch("/email-verification", response_model=UserModel)
 def verify_email(
-        response: Annotated[dict, Depends(email_verification_service)]
+        user: Annotated[UserModel, Depends(email_verification_service)]
 ):
-    return response
+    return user
 
 @router.patch("/role", response_model=UserModel)
 def update_role(user: Annotated[UserModel, Depends(role_update_service)]):

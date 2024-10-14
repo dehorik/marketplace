@@ -9,3 +9,8 @@ class UserModel(BaseModel):
     username: str = Field(min_length=6, max_length=16)
     email: EmailStr | None = None
     photo_path: str | None = None
+
+
+class EmailVerificationModel(BaseModel):
+    """Схема тела запроса для верификации почты"""
+    token: str

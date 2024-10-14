@@ -1,37 +1,15 @@
-const form = document.querySelector("#confirmation-menu form");
-const cancel_button = document.getElementById("cancel-email-button");
-const title = document.querySelector(".title-form");
+window.onload = function () {
+    const message = document.querySelector('.message');
+    const token = new URLSearchParams(window.location.search).get('token');
 
-
-function confirm_email(event) {
-    event.preventDefault();
-
-    form.removeEventListener("submit", confirm_email);
-    cancel_button.removeEventListener("click", exit);
-
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-
-    axios.patch("/users/email-verification", {token: token})
-        .then(function (response) {
-            title.style.fontWeight = "600";
-            title.innerHTML = "Почта подтверждена!"
-            setTimeout(exit, 3000);
+    axios.patch('/users/email-verification', {
+            token: token
+        }
+    )
+        .then((response) => {
+            message.innerHTML = "Почта была успешно подтверждена! <br>Вы можете покинуть эту страницу";
         })
-        .catch(function (error) {
-            if (error.response.status === 400) {
-                title.style.fontWeight = "600";
-                title.innerHTML = "Время истекло!";
-            }
-
-            setTimeout(exit, 3000);
+        .catch((error) => {
+            message.innerHTML = "Почта не подтверждена! <br>Повторите попытку привязки";
         });
-}
-
-function exit() {
-    window.location.href = "/";
-}
-
-
-form.addEventListener("submit", confirm_email);
-cancel_button.addEventListener("click", exit);
+};

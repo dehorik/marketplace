@@ -46,10 +46,6 @@
             background-color: #45a049;
         }
 
-        a {
-            color: white;
-        }
-
         .footer {
             text-align: center;
             font-size: 12px;
@@ -68,7 +64,7 @@
         <p>Вы получили это письмо, потому что ваш адрес электронной почты был указан для привязки к аккаунту.</p>
         <p>Пожалуйста, нажмите на кнопку ниже, чтобы подтвердить вашу почту:</p>
         <div class="btn-wrapper">
-            <a href="127.0.0.1:8000/users/email-verification?token={{ token }}" class="btn">Подтвердить почту</a>
+            <a style="color: white" href="http://127.0.0.1:8000/users/email-verification?token={{ token }}" class="btn">Подтвердить почту</a>
         </div>
         <p>Если вы не запрашивали это действие, просто проигнорируйте это письмо.</p>
     </div>
