@@ -142,7 +142,7 @@ class LogoutService(BaseDependency):
             self,
             response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
-    ) -> dict:
+    ) -> Response:
         if refresh_token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -154,9 +154,9 @@ class LogoutService(BaseDependency):
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
 
-            return {
-                "message": "successful logout"
-            }
+            return Response(
+                status_code=status.HTTP_204_NO_CONTENT
+            )
         except NonExistentTokenError:
             # если refresh токена в redis нет - им кто-то уже воспользовался
             # для безопасности пользователя

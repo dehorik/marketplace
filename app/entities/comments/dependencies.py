@@ -46,6 +46,7 @@ class CommentCreationService(BaseDependency):
             self,
             user_id: int,
             product_id: int,
+
             comment_rating: Annotated[
                 int, Form(ge=1, le=5)
             ],
@@ -83,8 +84,8 @@ class CommentCreationService(BaseDependency):
             return comment
         except ForeignKeyViolation:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect user_id or product_id"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="product not found"
             )
 
 
@@ -214,8 +215,8 @@ class CommentUpdateService(BaseDependency):
                 self.file_deleter(fields_for_update["photo_path"])
 
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect comment_id"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="comment not found"
             )
 
         return self.converter(comment)[0]
@@ -232,8 +233,8 @@ class CommentRemovalService(BaseDependency):
 
         if not comment:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='incorrect comment_id'
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='comment not found'
             )
 
         comment = self.converter(comment)[0]

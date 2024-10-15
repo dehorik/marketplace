@@ -29,7 +29,7 @@ class BaseDependency:
         self.order_dao = order_dao
 
 
-class CartItemSaveService(BaseDependency):
+class CartItemCreationService(BaseDependency):
     """Добавление товара в корзину"""
 
     def __init__(self, converter: Converter = Converter(CartItemModel)):
@@ -51,8 +51,8 @@ class CartItemSaveService(BaseDependency):
             return self.converter(cart_item)[0]
         except ForeignKeyViolation:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect product_id"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="product not found"
             )
 
 
@@ -76,8 +76,8 @@ class CartItemRemovalService(BaseDependency):
 
         if not cart_item:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect item_id"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="cart item not found"
             )
 
         return self.converter(cart_item)[0]
@@ -105,26 +105,19 @@ class CartItemLoaderService(BaseDependency):
                из последней подгрузки (если это первый запрос - None)
         """
 
-        try:
-            with self.order_dao() as order_data_access_obj:
-                cart_items = order_data_access_obj.get_cart(
-                    user_id=payload.sub,
-                    amount=amount,
-                    last_item_id=last_item_id
-                )
-
-            return CartItemCardListModel(
-                cart_items=self.converter(cart_items)
+        with self.order_dao() as order_data_access_obj:
+            cart_items = order_data_access_obj.get_cart(
+                user_id=payload.sub,
+                amount=amount,
+                last_item_id=last_item_id
             )
 
-        except ForeignKeyViolation:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect product_id"
-            )
+        return CartItemCardListModel(
+            cart_items=self.converter(cart_items)
+        )
 
 
 # dependencies
-cart_item_save_service = CartItemSaveService()
+cart_item_creation_service = CartItemCreationService()
 cart_item_removal_service = CartItemRemovalService()
 cart_item_loader_service = CartItemLoaderService()

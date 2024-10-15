@@ -40,7 +40,7 @@ class BaseDependency:
         self.jwt_decoder = jwt_decoder
 
 
-class UserDataGettingService(BaseDependency):
+class UserFetchService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
@@ -55,7 +55,7 @@ class UserDataGettingService(BaseDependency):
         return self.converter(user)[0]
 
 
-class UserDataUpdateService(BaseDependency):
+class UserUpdateService(BaseDependency):
     def __init__(self, converter: Converter = Converter(UserModel)):
         super().__init__()
         self.converter = converter
@@ -162,7 +162,7 @@ class EmailVerificationService(BaseDependency):
             )
 
 
-class RoleUpdateService(BaseDependency):
+class RoleManagementService(BaseDependency):
     """Управление ролями пользователей"""
 
     def __init__(self, converter: Converter = Converter(UserModel)):
@@ -187,8 +187,8 @@ class RoleUpdateService(BaseDependency):
 
             if not user:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="incorrect user_id"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="user not found"
                 )
         except ForeignKeyViolation:
             raise HTTPException(
@@ -200,7 +200,7 @@ class RoleUpdateService(BaseDependency):
 
 
 # dependencies
-user_data_getting_service = UserDataGettingService()
-user_data_update_service = UserDataUpdateService()
+user_fetch_service = UserFetchService()
+user_update_service = UserUpdateService()
 email_verification_service = EmailVerificationService()
-role_update_service = RoleUpdateService()
+role_management_service = RoleManagementService()

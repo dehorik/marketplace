@@ -1,6 +1,6 @@
 import os
 from typing import Annotated
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
@@ -41,8 +41,8 @@ def login(
 ):
     return user
 
-@router.post("/logout")
-def logout(response: Annotated[dict, Depends(logout_service)]):
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Annotated[Response, Depends(logout_service)]):
     return response
 
 @router.post("/refresh", response_model=AccessTokenModel)

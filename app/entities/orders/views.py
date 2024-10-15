@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from entities.orders.dependencies import (
-    cart_item_save_service,
+    cart_item_creation_service,
     cart_item_removal_service,
     cart_item_loader_service
 )
@@ -21,7 +21,7 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED
 )
 def add_to_cart(
-        cart_item: Annotated[CartItemModel, Depends(cart_item_save_service)]
+        cart_item: Annotated[CartItemModel, Depends(cart_item_creation_service)]
 ):
     return cart_item
 

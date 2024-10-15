@@ -8,7 +8,7 @@ from entities.products.dependencies import (
     catalog_loader_service,
     product_search_service,
     product_creation_service,
-    product_getting_service,
+    product_fetch_service,
     product_update_service,
     product_removal_service
 )
@@ -56,7 +56,7 @@ def create_product(
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ExtendedProductModel, Depends(product_getting_service)]
+        product: Annotated[ExtendedProductModel, Depends(product_fetch_service)]
 ):
     return templates.TemplateResponse(
         name='merchan.html',

@@ -151,7 +151,7 @@ class ProductCreationService(BaseDependency):
         return product
 
 
-class ProductGettingService(BaseDependency):
+class ProductFetchService(BaseDependency):
     def __init__(self, converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.converter = converter
@@ -162,8 +162,8 @@ class ProductGettingService(BaseDependency):
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='incorrect product_id'
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='product not found'
             )
 
         product[0] = list(product[0])
@@ -235,8 +235,8 @@ class ProductUpdateService(BaseDependency):
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='incorrect product_id'
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='product not found'
             )
 
         return self.converter(product)[0]
@@ -256,7 +256,7 @@ class ProductRemovalService(BaseDependency):
         with self.order_dao() as order_data_access_obj:
             if order_data_access_obj.get_all_orders(product_id):
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_409_CONFLICT,
                     detail="there are orders with this product"
                 )
 
@@ -272,8 +272,8 @@ class ProductRemovalService(BaseDependency):
 
         if not product:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incorrect product_id"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='product not found'
             )
 
         product = self.product_converter(product)[0]
@@ -286,6 +286,6 @@ class ProductRemovalService(BaseDependency):
 catalog_loader_service = CatalogLoaderService()
 product_search_service = ProductSearchService()
 product_creation_service = ProductCreationService()
-product_getting_service = ProductGettingService()
+product_fetch_service = ProductFetchService()
 product_update_service = ProductUpdateService()
 product_removal_service = ProductRemovalService()

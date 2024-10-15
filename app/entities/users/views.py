@@ -5,10 +5,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 from entities.users.dependencies import (
-    user_data_getting_service,
-    user_data_update_service,
+    user_fetch_service,
+    user_update_service,
     email_verification_service,
-    role_update_service
+    role_management_service
 )
 from entities.users.models import UserModel
 from core.settings import ROOT_PATH
@@ -30,15 +30,11 @@ def get_user_page():
     pass
 
 @router.get("/me/data", response_model=UserModel)
-def get_user_data(
-        user: Annotated[UserModel, Depends(user_data_getting_service)]
-):
+def get_user(user: Annotated[UserModel, Depends(user_fetch_service)]):
     return user
 
 @router.patch("/me/data", response_model=UserModel)
-def update_user_data(
-        user: Annotated[UserModel, Depends(user_data_update_service)]
-):
+def update_user(user: Annotated[UserModel, Depends(user_update_service)]):
     return user
 
 @router.get("/email-verification", response_class=HTMLResponse)
@@ -57,5 +53,5 @@ def verify_email(
     return user
 
 @router.patch("/role", response_model=UserModel)
-def update_role(user: Annotated[UserModel, Depends(role_update_service)]):
+def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
     return user
