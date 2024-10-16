@@ -2,8 +2,8 @@ from typing import List
 from psycopg2 import connect
 from psycopg2.extensions import cursor as sql_cursor
 
-from app.core.settings import config
-from app.auth.hashing_psw import get_password_hash
+from core.settings import config
+from auth.hashing_psw import get_password_hash
 
 
 def create_role_table(cursor: sql_cursor) -> None:
@@ -64,6 +64,7 @@ def create_comment_table(cursor: sql_cursor) -> None:
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id) 
+                ON DELETE SET NULL
             );
         """
     )

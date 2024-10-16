@@ -260,13 +260,6 @@ class ProductRemovalService(BaseDependency):
                     detail="there are orders with this product"
                 )
 
-        with self.comment_dao() as comment_data_access_obj:
-            comments = comment_data_access_obj.delete_all_comments(product_id)
-
-        for comment in self.comment_converter(comments):
-            if comment.photo_path:
-                self.file_deleter(comment.photo_path)
-
         with self.product_dao() as product_data_access_obj:
             product = product_data_access_obj.delete(product_id)
 

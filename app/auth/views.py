@@ -41,9 +41,13 @@ def login(
 ):
     return user
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Annotated[Response, Depends(logout_service)]):
-    return response
+@router.post(
+    "/logout",
+    dependencies=[Depends(logout_service)],
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def logout():
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.post("/refresh", response_model=AccessTokenModel)
 def refresh(
