@@ -1,49 +1,22 @@
 from redis import Redis
 
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
-from core.settings import Settings, config
+from core.settings import config
 from utils import Singleton
-
-
-class ConnectionData:
-    """Класс для извлечения из .env файла конфигурационных данных для redis"""
-
-    def __init__(self, config_redis: Settings = config):
-        if type(config_redis) is not Settings:
-            raise ValueError("invalid config object type")
-
-        self.__config_redis = config_redis
-
-    def __call__(self) -> dict:
-        data = {
-            "REDIS_HOST": self.__config_redis.REDIS_HOST,
-            "REDIS_PORT": self.__config_redis.REDIS_PORT
-        }
-
-        return data
 
 
 class RedisClient(Singleton):
     """Класс для работы с redis"""
 
-    def __init__(self, data: ConnectionData | dict = ConnectionData()):
+    def __init__(self, host: str, port: int):
         if self.__dict__:
             return
 
-        if type(data) is not dict and type(data) is not ConnectionData:
-            raise TypeError("invalid data object")
-
-        if type(data) is ConnectionData:
-            data = data()
-
-        try:
-            self.__client = Redis(
-                host=data["REDIS_HOST"],
-                port=data["REDIS_PORT"],
-                decode_responses=True
-            )
-        except KeyError:
-            raise ValueError("invalid data object")
+        self.__client = Redis(
+            host=host,
+            port=port,
+            decode_responses=True
+        )
 
     def close(self) -> None:
         # сброс всех данных
@@ -87,3 +60,7 @@ class RedisClient(Singleton):
 
         if not operation:
             raise NonExistentUserError('user_id does not exist')
+
+
+def get_redis_client() -> RedisClient:
+    return RedisClient(config.REDIS_HOST, config.REDIS_PORT)

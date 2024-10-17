@@ -10,10 +10,10 @@ DOTENV_FILE_PATH = os.path.join(ROOT_PATH, ".env")
 class Settings(BaseSettings):
     # postgresql config
     DATABASE_NAME: str
-    DATABASE_HOST: str
-    DATABASE_PORT: int
     DATABASE_USER: str
     DATABASE_USER_PASSWORD: str
+    DATABASE_HOST: str
+    DATABASE_PORT: int
 
     # redis config
     REDIS_HOST: str

@@ -2,8 +2,8 @@ from typing import List
 from psycopg2 import connect
 from psycopg2.extensions import cursor as sql_cursor
 
-from core.settings import config
 from auth.hashing_psw import get_password_hash
+from core.settings import config
 
 
 def create_role_table(cursor: sql_cursor) -> None:

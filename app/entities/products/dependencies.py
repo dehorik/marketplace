@@ -1,18 +1,17 @@
 import os
 from typing import Annotated, Type, Callable
 from fastapi import (
-    BackgroundTasks, HTTPException, Query, status,
-    UploadFile, File, Form
+    BackgroundTasks, HTTPException, Query,
+    UploadFile, File, Form, status
 )
 
-from entities.comments.models import CommentModel
 from entities.products.models import (
     ProductModel,
     ExtendedProductModel,
     ProductCardModel,
     ProductCardListModel
 )
-from auth import PayloadTokenModel, AuthorizationService
+from auth import AuthorizationService
 from core.tasks import product_removal_task
 from core.database import (
     ProductDataAccessObject,
@@ -247,14 +246,9 @@ class ProductUpdateService(BaseDependency):
 
 
 class ProductRemovalService(BaseDependency):
-    def __init__(
-            self,
-            product_converter: Converter = Converter(ProductModel),
-            comment_converter: Converter = Converter(CommentModel)
-    ):
+    def __init__(self, product_converter: Converter = Converter(ProductModel)):
         super().__init__()
         self.product_converter = product_converter
-        self.comment_converter = comment_converter
 
     def __call__(
             self,

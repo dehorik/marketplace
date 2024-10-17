@@ -1,6 +1,6 @@
 import os
 
-from core.database.session_factory import Session
+from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 from core.settings import config
 
@@ -8,7 +8,7 @@ from core.settings import config
 class ProductDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с товарами"""
 
-    def __init__(self, session: Session = Session()):
+    def __init__(self, session: Session = get_session):
         self.__session = session
         self._cursor = session.get_cursor()
 

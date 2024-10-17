@@ -4,17 +4,17 @@ from typing import Type, Callable
 from jinja2 import Environment, FileSystemLoader
 
 from core.tasks.models import EmailTokenPayloadModel
-from auth import JWTEncoder
+from auth import JWTEncoder, get_jwt_encoder
 from core.database import CommentDataAccessObject
 from core.settings import ROOT_PATH
-from utils import EmailSender, create_email_sender_obj, delete_file
+from utils import EmailSender, get_email_sender, delete_file
 
 
 class EmailSendingTask:
     def __init__(
             self,
-            jwt_encoder: JWTEncoder = JWTEncoder(),
-            email_sender: EmailSender = create_email_sender_obj()
+            jwt_encoder: JWTEncoder = get_jwt_encoder(),
+            email_sender: EmailSender = get_email_sender()
     ):
         self.jwt_encoder = jwt_encoder
         self.email_sender = email_sender

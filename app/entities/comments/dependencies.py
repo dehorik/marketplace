@@ -8,7 +8,7 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
-from auth import PayloadTokenModel, AuthorizationService
+from auth import AuthorizationService
 from core.database import CommentDataAccessObject
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file

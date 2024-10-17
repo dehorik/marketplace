@@ -7,7 +7,9 @@ from auth.tokens import (
     JWTEncoder,
     JWTDecoder,
     AccessTokenCreator,
-    RefreshTokenCreator
+    RefreshTokenCreator,
+    get_jwt_encoder,
+    get_jwt_decoder
 )
 from auth.models import (
     UserModel,
@@ -15,7 +17,7 @@ from auth.models import (
     AccessTokenModel,
     PayloadTokenModel
 )
-from auth.redis_client import RedisClient
+from auth.redis_client import RedisClient, get_redis_client
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
 from core.database import UserDataAccessObject
@@ -29,11 +31,11 @@ http_bearer = HTTPBearer()
 class BaseDependency:
     def __init__(
             self,
-            jwt_encoder: JWTEncoder = JWTEncoder(),
-            jwt_decoder: JWTDecoder = JWTDecoder(),
+            jwt_encoder: JWTEncoder = get_jwt_encoder(),
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
-            redis_client: RedisClient = RedisClient(),
+            redis_client: RedisClient = get_redis_client(),
             user_dao: Type[UserDataAccessObject] = UserDataAccessObject
     ):
         """
@@ -232,6 +234,9 @@ class AccessTokenValidationService(BaseDependency):
             )
 
 
+access_token_validation_service = AccessTokenValidationService()
+
+
 class AuthorizationService(BaseDependency):
     def __init__(
             self,
@@ -245,7 +250,7 @@ class AuthorizationService(BaseDependency):
     def __call__(
             self,
             payload: Annotated[
-                PayloadTokenModel, Depends(AccessTokenValidationService())
+                PayloadTokenModel, Depends(access_token_validation_service)
             ]
     ) -> PayloadTokenModel:
         if self.__min_role_id > 1:

@@ -9,11 +9,7 @@ from core.settings import config
 class JWTEncoder:
     """Универсальный класс для выпуска токенов"""
 
-    def __init__(
-            self,
-            private_key: str = Path(config.PRIVATE_KEY_PATH).read_text(),
-            algorithm: str = config.ALGORITHM
-    ):
+    def __init__(self, private_key: str, algorithm: str):
         self.__private_key = private_key
         self.__algorithm = algorithm
 
@@ -30,11 +26,7 @@ class JWTEncoder:
 class JWTDecoder:
     """Универсальный класс для декодирования токенов"""
 
-    def __init__(
-            self,
-            public_key: str = Path(config.PUBLIC_KEY_PATH).read_text(),
-            algorithm: str = config.ALGORITHM
-    ):
+    def __init__(self, public_key: str, algorithm: str):
         self.__public_key = public_key
         self.__algorithm = algorithm
 
@@ -48,12 +40,25 @@ class JWTDecoder:
         return dt
 
 
+def get_jwt_encoder() -> JWTEncoder:
+    return JWTEncoder(
+        Path(config.PRIVATE_KEY_PATH).read_text(),
+        config.ALGORITHM
+    )
+
+def get_jwt_decoder() -> JWTDecoder:
+    return JWTDecoder(
+        Path(config.PUBLIC_KEY_PATH).read_text(),
+        config.ALGORITHM
+    )
+
+
 class AccessTokenCreator:
     """Для выпуска access токенов"""
 
     def __init__(
             self,
-            jwt_encoder: JWTEncoder = JWTEncoder(),
+            jwt_encoder: JWTEncoder = get_jwt_encoder(),
             exp_minutes: int = config.ACCESS_TOKEN_EXPIRE_MINUTES
     ):
         self.__jwt_encoder = jwt_encoder
@@ -80,7 +85,7 @@ class RefreshTokenCreator:
 
     def __init__(
             self,
-            jwt_encoder: JWTEncoder = JWTEncoder(),
+            jwt_encoder: JWTEncoder = get_jwt_encoder(),
             exp_days: int = config.REFRESH_TOKEN_EXPIRE_DAYS
     ):
         self.__jwt_encoder = jwt_encoder

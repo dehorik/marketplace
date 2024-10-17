@@ -1,11 +1,11 @@
-from core.database.session_factory import Session
+from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 
 
 class OrderDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с заказами и товарами в корзине"""
 
-    def __init__(self, session: Session = Session()):
+    def __init__(self, session: Session = get_session()):
         self.__session = session
         self._cursor = session.get_cursor()
 

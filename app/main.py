@@ -11,15 +11,15 @@ from entities import (
     users_router,
     orders_router
 )
-from auth import RedisClient, auth_router
-from core.database import Session
+from auth import get_redis_client, auth_router
+from core.database import get_session
 from core.settings import ROOT_PATH
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    session = Session()
-    redis = RedisClient()
+    session = get_session()
+    redis = get_redis_client()
     yield
     session.close()
     redis.close()

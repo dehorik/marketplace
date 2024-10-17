@@ -3,13 +3,18 @@ from pydantic import EmailStr
 from jwt import InvalidTokenError
 from typing import Type, Annotated, Dict, Callable
 from fastapi import (
-    BackgroundTasks, HTTPException, Depends, status,
-    UploadFile, File, Form
+    BackgroundTasks, HTTPException, Depends,
+    UploadFile, File, Form, status
 )
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel, EmailVerificationModel
-from auth import PayloadTokenModel, AuthorizationService, JWTDecoder
+from auth import (
+    AuthorizationService,
+    JWTDecoder,
+    PayloadTokenModel,
+    get_jwt_decoder
+)
 from core.tasks import email_sending_task, EmailTokenPayloadModel
 from core.database import UserDataAccessObject
 from core.settings import config
@@ -27,7 +32,7 @@ class BaseDependency:
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
             user_dao: Type[UserDataAccessObject] = UserDataAccessObject,
-            jwt_decoder: JWTDecoder = JWTDecoder()
+            jwt_decoder: JWTDecoder = get_jwt_decoder()
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов

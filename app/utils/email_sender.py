@@ -44,7 +44,7 @@ class EmailSender:
         self.__server.send_message(letter)
 
 
-def create_email_sender_obj() -> EmailSender:
+def get_email_sender() -> EmailSender:
     return EmailSender(
         config.SENDER_ADDRESS,
         config.SENDER_PASSWORD,

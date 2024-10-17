@@ -1,54 +1,31 @@
 from psycopg2 import InterfaceError, connect
 from psycopg2.extensions import cursor as sql_cursor
 
-from core.settings import Settings, config
+from core.settings import config
 from utils import Singleton
-
-
-class ConnectionData:
-    """Класс для извлечения из .env файла конфигурационных данных для БД"""
-
-    def __init__(self, config_database: Settings = config):
-        if type(config_database) is not Settings:
-            raise ValueError("invalid config object type")
-
-        self.__config_database = config_database
-
-    def __call__(self) -> dict:
-        data = {
-            "DATABASE_NAME": self.__config_database.DATABASE_NAME,
-            "DATABASE_USER": self.__config_database.DATABASE_USER,
-            "DATABASE_USER_PASSWORD": self.__config_database.DATABASE_USER_PASSWORD,
-            "DATABASE_HOST": self.__config_database.DATABASE_HOST,
-            "DATABASE_PORT": self.__config_database.DATABASE_PORT
-        }
-
-        return data
 
 
 class Session(Singleton):
     """Класс для создания сессий базы данных"""
 
-    def __init__(self, data: ConnectionData | dict = ConnectionData()):
+    def __init__(
+            self,
+            db_name: str,
+            user: str,
+            password: str,
+            host: str,
+            port: int
+    ):
         if self.__dict__:
             return
 
-        if type(data) is not dict and type(data) is not ConnectionData:
-            raise TypeError("invalid data object")
-
-        if type(data) is ConnectionData:
-            data = data()
-
-        try:
-            self.__connection = connect(
-                dbname=data["DATABASE_NAME"],
-                user=data["DATABASE_USER"],
-                password=data["DATABASE_USER_PASSWORD"],
-                host=data["DATABASE_HOST"],
-                port=data["DATABASE_PORT"]
-            )
-        except KeyError:
-            raise ValueError("invalid data object")
+        self.__connection = connect(
+            dbname=db_name,
+            user=user,
+            password=password,
+            host=host,
+            port=port
+        )
 
     def __del__(self):
         try:
@@ -58,7 +35,6 @@ class Session(Singleton):
 
     def close(self) -> None:
         # закрытие подключения к базе данных (сессии)
-
         self.__connection.commit()
         self.__connection.close()
 
@@ -69,3 +45,13 @@ class Session(Singleton):
     def get_cursor(self) -> sql_cursor:
         # фабрика курсоров
         return self.__connection.cursor()
+
+
+def get_session() -> Session:
+    return Session(
+        config.DATABASE_NAME,
+        config.DATABASE_USER,
+        config.DATABASE_USER_PASSWORD,
+        config.DATABASE_HOST,
+        config.DATABASE_PORT
+    )
