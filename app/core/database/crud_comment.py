@@ -154,17 +154,19 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
 
         return self._cursor.fetchall()
 
-    def delete_all_comments(self, product_id: int) -> list:
-        """Удаление всех отзывов под товаром"""
+    def delete_undefined_comments(self) -> list:
+        """
+        Удаление всех отзывов, у которых отсутствует product_id,
+        т.е удаление отзывов под удаленными товарами
+        """
 
         self._cursor.execute(
             """
                 DELETE
                 FROM comment
-                WHERE product_id = %s
+                WHERE product_id IS NULL
                 RETURNING *;
             """,
-            [product_id]
         )
 
         return self._cursor.fetchall()

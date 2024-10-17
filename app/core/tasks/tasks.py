@@ -1,14 +1,16 @@
 import os
 import datetime
+from typing import Type, Callable
 from jinja2 import Environment, FileSystemLoader
 
-from auth import JWTEncoder
 from core.tasks.models import EmailTokenPayloadModel
+from auth import JWTEncoder
+from core.database import CommentDataAccessObject
 from core.settings import ROOT_PATH
-from utils import EmailSender, create_email_sender_obj
+from utils import EmailSender, create_email_sender_obj, delete_file
 
 
-class EmailSendingService:
+class EmailSendingTask:
     def __init__(
             self,
             jwt_encoder: JWTEncoder = JWTEncoder(),
@@ -37,4 +39,25 @@ class EmailSendingService:
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 
 
-email_sending_service = EmailSendingService()
+class ProductRemovalTask:
+    def __init__(
+            self,
+            file_deleter: Callable = delete_file,
+            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject
+    ):
+        self.file_deleter = file_deleter
+        self.comment_dao = comment_dao
+
+    def __call__(self) -> None:
+        with self.comment_dao() as comment_data_access_obj:
+            comments = comment_data_access_obj.delete_undefined_comments()
+
+        for comment in comments:
+            photo_path = comment[-1]
+
+            if photo_path:
+                self.file_deleter(photo_path)
+
+
+email_sending_task = EmailSendingTask()
+product_removal_task = ProductRemovalTask()

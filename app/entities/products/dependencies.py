@@ -1,6 +1,9 @@
 import os
 from typing import Annotated, Type, Callable
-from fastapi import Form, UploadFile, HTTPException, File, Query, status
+from fastapi import (
+    BackgroundTasks, HTTPException, Query, status,
+    UploadFile, File, Form
+)
 
 from entities.comments.models import CommentModel
 from entities.products.models import (
@@ -10,6 +13,7 @@ from entities.products.models import (
     ProductCardListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
+from core.tasks import product_removal_task
 from core.database import (
     ProductDataAccessObject,
     CommentDataAccessObject,
@@ -252,7 +256,11 @@ class ProductRemovalService(BaseDependency):
         self.product_converter = product_converter
         self.comment_converter = comment_converter
 
-    def __call__(self, product_id: int) -> ProductModel:
+    def __call__(
+            self,
+            background_tasks: BackgroundTasks,
+            product_id: int
+    ) -> ProductModel:
         with self.order_dao() as order_data_access_obj:
             if order_data_access_obj.get_all_orders(product_id):
                 raise HTTPException(
@@ -269,6 +277,7 @@ class ProductRemovalService(BaseDependency):
                 detail='product not found'
             )
 
+        background_tasks.add_task(product_removal_task)
         product = self.product_converter(product)[0]
         self.file_deleter(product.photo_path)
 

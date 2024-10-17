@@ -48,6 +48,3 @@ config = Settings()
 
 config.PRIVATE_KEY_PATH = os.path.join(ROOT_PATH, config.PRIVATE_KEY_PATH)
 config.PUBLIC_KEY_PATH = os.path.join(ROOT_PATH, config.PUBLIC_KEY_PATH)
-config.USER_CONTENT_PATH = os.path.join(ROOT_PATH, config.USER_CONTENT_PATH)
-config.PRODUCT_CONTENT_PATH = os.path.join(ROOT_PATH, config.PRODUCT_CONTENT_PATH)
-config.COMMENT_CONTENT_PATH = os.path.join(ROOT_PATH, config.COMMENT_CONTENT_PATH)

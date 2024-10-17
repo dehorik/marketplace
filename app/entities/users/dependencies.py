@@ -2,13 +2,15 @@ import os
 from pydantic import EmailStr
 from jwt import InvalidTokenError
 from typing import Type, Annotated, Dict, Callable
-from fastapi import BackgroundTasks, Depends, HTTPException
-from fastapi import Form, UploadFile, File, status
+from fastapi import (
+    BackgroundTasks, HTTPException, Depends, status,
+    UploadFile, File, Form
+)
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel, EmailVerificationModel
 from auth import PayloadTokenModel, AuthorizationService, JWTDecoder
-from core.tasks import email_sending_service, EmailTokenPayloadModel
+from core.tasks import email_sending_task, EmailTokenPayloadModel
 from core.database import UserDataAccessObject
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
@@ -102,7 +104,7 @@ class UserUpdateService(BaseDependency):
 
         if email:
             background_tasks.add_task(
-                email_sending_service,
+                email_sending_task,
                 payload.sub, email
             )
         elif clear_email:
