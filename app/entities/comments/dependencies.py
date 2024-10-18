@@ -1,5 +1,5 @@
 import os
-from typing import Annotated, Type, Callable, Dict
+from typing import Annotated, Callable, Dict
 from fastapi import Form, UploadFile, HTTPException, File, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
@@ -9,7 +9,7 @@ from entities.comments.models import (
     CommentItemListModel
 )
 from auth import AuthorizationService
-from core.database import CommentDataAccessObject
+from core.database import CommentDataAccessObject, get_comment_dao
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
 
@@ -24,17 +24,17 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject
+            comment_dao: CommentDataAccessObject = get_comment_dao()
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
-        :param comment_dao: ссылка на класс для работы с БД (отзывы)
+        :param comment_dao: объект для работы с базой данных (отзывы)
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.comment_dao = comment_dao
+        self.comment_data_access_obj = comment_dao
 
 
 class CommentCreationService(BaseDependency):
@@ -65,16 +65,15 @@ class CommentCreationService(BaseDependency):
                 )
 
         try:
-            with self.comment_dao() as comment_data_access_obj:
-                has_photo = True if photo else False
+            has_photo = True if photo else False
 
-                comment = comment_data_access_obj.create(
-                    user_id=user_id,
-                    product_id=product_id,
-                    comment_rating=comment_rating,
-                    comment_text=comment_text,
-                    has_photo=has_photo
-                )
+            comment = self.comment_data_access_obj.create(
+                user_id=user_id,
+                product_id=product_id,
+                comment_rating=comment_rating,
+                comment_text=comment_text,
+                has_photo=has_photo
+            )
 
             comment = self.converter(comment)[0]
 
@@ -109,12 +108,11 @@ class CommentLoaderService(BaseDependency):
                (если это первый запрос на подгрузку отзывов - оставить None)
         """
 
-        with self.comment_dao() as comment_data_access_obj:
-            comments = comment_data_access_obj.read(
-                product_id=product_id,
-                amount=amount,
-                last_comment_id=last_comment_id
-            )
+        comments = self.comment_data_access_obj.read(
+            product_id=product_id,
+            amount=amount,
+            last_comment_id=last_comment_id
+        )
 
         return CommentItemListModel(
             comments=self.converter(comments)
@@ -200,11 +198,10 @@ class CommentUpdateService(BaseDependency):
             self.file_deleter(photo_path)
             fields_for_update["photo_path"] = None
 
-        with self.comment_dao() as comment_data_access_obj:
-            comment = comment_data_access_obj.update(
-                comment_id=comment_id,
-                **fields_for_update
-            )
+        comment = self.comment_data_access_obj.update(
+            comment_id=comment_id,
+            **fields_for_update
+        )
 
         if not comment:
             if fields_for_update["photo_path"]:
@@ -228,8 +225,7 @@ class CommentRemovalService(BaseDependency):
         self.converter = converter
 
     def __call__(self, comment_id: int) -> CommentModel:
-        with self.comment_dao() as comment_data_access_obj:
-            comment = comment_data_access_obj.delete(comment_id)
+        comment = self.comment_data_access_obj.delete(comment_id)
 
         if not comment:
             raise HTTPException(

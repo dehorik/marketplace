@@ -1,13 +1,13 @@
 from typing import List
 from psycopg2 import connect
-from psycopg2.extensions import cursor as sql_cursor
+from psycopg2.extensions import cursor as cursor
 
 from auth.hashing_psw import get_password_hash
 from core.settings import config
 
 
-def create_role_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_role_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS role (
                 role_id SERIAL PRIMARY KEY,
@@ -16,8 +16,8 @@ def create_role_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_users_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_users_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
@@ -33,8 +33,8 @@ def create_users_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_product_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_product_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS product (
                 product_id SERIAL PRIMARY KEY,
@@ -47,8 +47,8 @@ def create_product_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_comment_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_comment_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS comment (
                 comment_id SERIAL PRIMARY KEY,
@@ -69,8 +69,8 @@ def create_comment_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_orders_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_orders_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS orders (
                 order_id SERIAL PRIMARY KEY,
@@ -90,8 +90,8 @@ def create_orders_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_cart_item_table(cursor: sql_cursor) -> None:
-    cursor.execute(
+def create_cart_item_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
         """
             CREATE TABLE IF NOT EXISTS cart_item (
                 cart_item_id SERIAL PRIMARY KEY,
@@ -109,8 +109,8 @@ def create_cart_item_table(cursor: sql_cursor) -> None:
         """
     )
 
-def create_roles(cursor: sql_cursor, role_names: List[List[str]]) -> None:
-    cursor.executemany(
+def create_roles(sql_cursor: cursor, role_names: List[List[str]]) -> None:
+    sql_cursor.executemany(
         """
             INSERT INTO role (
                 role_name
@@ -120,10 +120,10 @@ def create_roles(cursor: sql_cursor, role_names: List[List[str]]) -> None:
         role_names
     )
 
-def create_owner_account(cursor: sql_cursor) -> None:
+def create_owner_account(sql_cursor: cursor) -> None:
     password_hash = get_password_hash(config.SUPERUSER_PASSWORD)
 
-    cursor.execute(
+    sql_cursor.execute(
         """
             INSERT INTO users (
                 role_id,
@@ -146,27 +146,27 @@ def init_database() -> None:
         host=config.DATABASE_HOST,
         port=config.DATABASE_PORT
     )
-    cursor = connection.cursor()
+    sql_cursor = connection.cursor()
 
-    create_role_table(cursor)
-    create_users_table(cursor)
-    create_product_table(cursor)
-    create_comment_table(cursor)
-    create_orders_table(cursor)
-    create_cart_item_table(cursor)
+    create_role_table(sql_cursor)
+    create_users_table(sql_cursor)
+    create_product_table(sql_cursor)
+    create_comment_table(sql_cursor)
+    create_orders_table(sql_cursor)
+    create_cart_item_table(sql_cursor)
 
     create_roles(
-        cursor,
+        sql_cursor,
         [
             ["пользователь"],
             ["администратор"],
             ["суперпользователь"]
         ]
     )
-    create_owner_account(cursor)
+    create_owner_account(sql_cursor)
 
     connection.commit()
-    cursor.close()
+    sql_cursor.close()
     connection.close()
 
 

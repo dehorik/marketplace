@@ -1,5 +1,5 @@
 from core.database.session_factory import Session, get_session
-from core.database.crud_product import ProductDataAccessObject
-from core.database.crud_user import UserDataAccessObject
-from core.database.crud_comment import CommentDataAccessObject
-from core.database.crud_order import OrderDataAccessObject
+from core.database.product_dao import ProductDataAccessObject, get_product_dao
+from core.database.user_dao import UserDataAccessObject, get_user_dao
+from core.database.comment_dao import CommentDataAccessObject, get_comment_dao
+from core.database.order_dao import OrderDataAccessObject, get_order_dao

@@ -1,7 +1,7 @@
-from typing import Annotated, Type
+from typing import Annotated
+from jwt.exceptions import InvalidTokenError
 from fastapi import HTTPException, Depends, Response, Cookie, Form, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt.exceptions import InvalidTokenError
 
 from auth.tokens import (
     JWTEncoder,
@@ -20,7 +20,7 @@ from auth.models import (
 from auth.redis_client import RedisClient, get_redis_client
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
-from core.database import UserDataAccessObject
+from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
 from utils import Converter
 
@@ -36,7 +36,7 @@ class BaseDependency:
             access_token_creator: AccessTokenCreator = AccessTokenCreator(),
             refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
             redis_client: RedisClient = get_redis_client(),
-            user_dao: Type[UserDataAccessObject] = UserDataAccessObject
+            user_dao: UserDataAccessObject = get_user_dao()
     ):
         """
         :param jwt_encoder: объект для выпуска jwt
@@ -44,7 +44,7 @@ class BaseDependency:
         :param access_token_creator: объект для выпуска access jwt
         :param refresh_token_creator: объект для выпуска refresh jwt
         :param redis_client: объект для работы с Redis
-        :param user_dao: ссылка на класс для работы с БД (пользователи)
+        :param user_dao: объект для работы с БД (пользователи)
         """
 
         self.jwt_encoder = jwt_encoder
@@ -52,7 +52,7 @@ class BaseDependency:
         self.access_token_creator = access_token_creator
         self.refresh_token_creator = refresh_token_creator
         self.redis_client = redis_client
-        self.user_dao = user_dao
+        self.user_data_access_obj = user_dao
 
 
 class RegistrationService(BaseDependency):
@@ -66,23 +66,20 @@ class RegistrationService(BaseDependency):
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        with self.user_dao() as user_data_access_obj:
-            if user_data_access_obj.get_user_by_username(username):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail='username is alredy taken'
-                )
-
-            user = user_data_access_obj.create(
-                username,
-                get_password_hash(password)
+        if self.user_data_access_obj.get_user_by_username(username):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail='username is alredy taken'
             )
 
+        user = self.user_data_access_obj.create(
+            username,
+            get_password_hash(password)
+        )
         user = self.converter(user)[0]
 
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
-
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
@@ -105,8 +102,7 @@ class LoginService(BaseDependency):
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        with self.user_dao() as user_data_access_obj:
-            user = user_data_access_obj.get_user_by_username(username)
+        user = self.user_data_access_obj.get_user_by_username(username)
 
         if not user:
             raise HTTPException(
@@ -127,7 +123,6 @@ class LoginService(BaseDependency):
 
         access_token = self.access_token_creator(user)
         refresh_token = self.refresh_token_creator(user)
-
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
@@ -254,9 +249,7 @@ class AuthorizationService(BaseDependency):
             ]
     ) -> PayloadTokenModel:
         if self.__min_role_id > 1:
-            with self.user_dao() as user_data_access_obj:
-                user = user_data_access_obj.read(payload.sub)
-
+            user = self.user_data_access_obj.read(payload.sub)
             user = self.converter(user)[0]
 
             if not self.__min_role_id <= user.role_id:

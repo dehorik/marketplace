@@ -1,12 +1,12 @@
 from psycopg2 import InterfaceError, connect
-from psycopg2.extensions import cursor as sql_cursor
+from psycopg2.extensions import cursor
 
 from core.settings import config
 from utils import Singleton
 
 
 class Session(Singleton):
-    """Класс для создания сессий базы данных"""
+    """Класс для создания сессии базы данных"""
 
     def __init__(
             self,
@@ -14,7 +14,8 @@ class Session(Singleton):
             user: str,
             password: str,
             host: str,
-            port: int
+            port: int,
+            autocommit: bool = True
     ):
         if self.__dict__:
             return
@@ -26,6 +27,15 @@ class Session(Singleton):
             host=host,
             port=port
         )
+        self.__connection.autocommit = autocommit
+
+    @property
+    def autocommit(self) -> bool:
+        return self.__connection.autocommit
+
+    @autocommit.setter
+    def autocommit(self, value: bool) -> None:
+        self.__connection.autocommit = value
 
     def __del__(self):
         try:
@@ -35,14 +45,14 @@ class Session(Singleton):
 
     def close(self) -> None:
         # закрытие подключения к базе данных (сессии)
-        self.__connection.commit()
         self.__connection.close()
 
     def commit(self) -> None:
         # запись в базу данных
-        self.__connection.commit()
+        if not self.autocommit:
+            self.__connection.commit()
 
-    def get_cursor(self) -> sql_cursor:
+    def get_cursor(self) -> cursor:
         # фабрика курсоров
         return self.__connection.cursor()
 

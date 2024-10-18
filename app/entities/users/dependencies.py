@@ -1,10 +1,9 @@
 import os
 from pydantic import EmailStr
 from jwt import InvalidTokenError
-from typing import Type, Annotated, Dict, Callable
+from typing import Annotated, Dict, Callable
 from fastapi import (
-    BackgroundTasks, HTTPException, Depends,
-    UploadFile, File, Form, status
+    BackgroundTasks, HTTPException, Depends, UploadFile, File, Form, status
 )
 from psycopg2.errors import ForeignKeyViolation
 
@@ -16,7 +15,7 @@ from auth import (
     get_jwt_decoder
 )
 from core.tasks import email_sending_task, EmailTokenPayloadModel
-from core.database import UserDataAccessObject
+from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
 
@@ -31,19 +30,19 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            user_dao: Type[UserDataAccessObject] = UserDataAccessObject,
+            user_dao: UserDataAccessObject = get_user_dao(),
             jwt_decoder: JWTDecoder = get_jwt_decoder()
     ):
         """
         :param file_writer: ссылка на функцию для записи и перезаписи файлов
         :param file_deleter: ссылка на функцию для удаления файлов
-        :param user_dao: ссылка на класс для работы с БД (пользователи)
+        :param user_dao: объект для работы с БД (пользователи)
         :param jwt_decoder: объект для декодирования jwt
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.user_dao = user_dao
+        self.user_data_access_obj = user_dao
         self.jwt_decoder = jwt_decoder
 
 
@@ -56,9 +55,7 @@ class UserFetchService(BaseDependency):
             self,
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)]
     ) -> UserModel:
-        with self.user_dao() as user_data_access_obj:
-            user = user_data_access_obj.read(payload.sub)
-
+        user = self.user_data_access_obj.read(payload.sub)
         return self.converter(user)[0]
 
 
@@ -92,14 +89,10 @@ class UserUpdateService(BaseDependency):
                 detail="conflict between flags and request body"
             )
 
-        user_data_access_obj = self.user_dao()
-
         fields_for_update: Dict[str, str | None] = {}
 
         if username:
-            if user_data_access_obj.get_user_by_username(username):
-                user_data_access_obj.close()
-
+            if self.user_data_access_obj.get_user_by_username(username):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="username is already taken"
@@ -125,8 +118,6 @@ class UserUpdateService(BaseDependency):
             fields_for_update["photo_path"] = photo_path
         elif clear_photo:
             if not exists(photo_path):
-                user_data_access_obj.close()
-
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="photo does not exist"
@@ -135,11 +126,10 @@ class UserUpdateService(BaseDependency):
             self.file_deleter(photo_path)
             fields_for_update["photo_path"] = None
 
-        user = user_data_access_obj.update(
+        user = self.user_data_access_obj.update(
             user_id=payload.sub,
             **fields_for_update
         )
-        user_data_access_obj.close()
 
         return self.converter(user)[0]
 
@@ -154,14 +144,12 @@ class EmailVerificationService(BaseDependency):
             payload = self.jwt_decoder(body.token)
             payload = EmailTokenPayloadModel(**payload)
 
-            with self.user_dao() as user_data_access_obj:
-                user = user_data_access_obj.update(
-                    user_id=payload.sub,
-                    email=payload.email
-                )
+            user = self.user_data_access_obj.update(
+                user_id=payload.sub,
+                email=payload.email
+            )
 
             return self.converter(user)[0]
-
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -189,8 +177,7 @@ class RoleManagementService(BaseDependency):
             )
 
         try:
-            with self.user_dao() as user_data_access_obj:
-                user = user_data_access_obj.set_role(user_id, role_id)
+            user = self.user_data_access_obj.set_role(user_id, role_id)
 
             if not user:
                 raise HTTPException(

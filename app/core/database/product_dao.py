@@ -8,19 +8,15 @@ from core.settings import config
 class ProductDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с товарами"""
 
-    def __init__(self, session: Session = get_session):
+    def __init__(self, session: Session):
         self.__session = session
-        self._cursor = session.get_cursor()
+        self.__cursor = session.get_cursor()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __del__(self):
         self.close()
 
     def close(self) -> None:
-        self.__session.commit()
-        self._cursor.close()
+        self.__cursor.close()
 
     def commit(self) -> None:
         self.__session.commit()
@@ -32,7 +28,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             product_description: str,
             is_hidden: bool
     ) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 INSERT INTO product (
                     product_name, 
@@ -52,10 +48,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             ]
         )
 
-        product_id = self._cursor.fetchone()[0]
+        product_id = self.__cursor.fetchone()[0]
         photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
 
-        self._cursor.execute(
+        self.__cursor.execute(
             """                 
                 UPDATE product
                     SET photo_path = %s
@@ -65,10 +61,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [photo_path, product_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def read(self, product_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 SELECT 
                     product_id,
@@ -96,11 +92,11 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [product_id] * 3
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def update(self, product_id: int, **kwargs) -> list:
         if not kwargs:
-            self._cursor.execute(
+            self.__cursor.execute(
                 """
                     SELECT *
                     FROM product 
@@ -109,7 +105,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 [product_id]
             )
 
-            return self._cursor.fetchall()
+            return self.__cursor.fetchall()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -120,7 +116,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         else:
             set_values = set_values[:-2]
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 UPDATE product 
                     SET {set_values}                
@@ -129,10 +125,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def delete(self, product_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 DELETE 
                 FROM product
@@ -142,7 +138,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [product_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def get_latest_products(
             self,
@@ -157,7 +153,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         else:
             condition = "WHERE product.is_hidden != true"
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 SELECT 
                     product.product_id, 
@@ -182,7 +178,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def search_product(
             self,
@@ -198,7 +194,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         if last_product_id:
             condition += f"AND product.product_id < {last_product_id}"
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 SELECT 
                     product.product_id,
@@ -223,4 +219,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
+
+
+def get_product_dao() -> ProductDataAccessObject:
+    session = get_session()
+    return ProductDataAccessObject(session)

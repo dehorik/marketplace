@@ -9,23 +9,17 @@ class InterfaceDataAccessObject(ABC):
     """
 
     @abstractmethod
-    def __enter__(self):
-        # отдавать созданный объект
-        pass
-
-    @abstractmethod
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # вызывать у объекта метод close()
+    def __del__(self):
         pass
 
     @abstractmethod
     def close(self):
-        # вызывать этот метод при завершении работы с объектом
+        # вызывать этот метод по завершении работы с объектом
         pass
 
     @abstractmethod
     def commit(self):
-        # вызывать этот метод для внесения изменений в БД
+        # вызывать этот метод для внесения изменений в базу данных
         pass
 
     @abstractmethod

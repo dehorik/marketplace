@@ -5,25 +5,21 @@ from core.database.interface_dao import InterfaceDataAccessObject
 class UserDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с пользователями"""
 
-    def __init__(self, session: Session = get_session()):
+    def __init__(self, session: Session):
         self.__session = session
-        self._cursor = session.get_cursor()
+        self.__cursor = session.get_cursor()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __del__(self):
         self.close()
 
     def close(self) -> None:
-        self.__session.commit()
-        self._cursor.close()
+        self.__cursor.close()
 
     def commit(self) -> None:
         self.__session.commit()
 
     def create(self, username: str, hashed_password: str) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 INSERT INTO users (
                     role_id, 
@@ -42,10 +38,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [username, hashed_password]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def read(self, user_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 SELECT 
                     user_id, 
@@ -59,11 +55,11 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [user_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def update(self, user_id: int, **kwargs) -> list:
         if not kwargs:
-            self._cursor.execute(
+            self.__cursor.execute(
                 f"""
                     SELECT 
                         user_id,
@@ -76,7 +72,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 """
             )
 
-            return self._cursor.fetchall()
+            return self.__cursor.fetchall()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -89,7 +85,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         else:
             set_values = set_values[:-2]
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 UPDATE users
                     SET {set_values}
@@ -103,7 +99,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def delete(self):
         pass
@@ -111,7 +107,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     def get_user_by_username(self, username: str) -> list:
         # извлекается хеш пароля!
 
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 SELECT 
                     user_id,
@@ -126,10 +122,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [username]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def set_role(self, user_id: int, role_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 UPDATE users
                     SET role_id = %s
@@ -144,4 +140,9 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [role_id, user_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
+
+
+def get_user_dao() -> UserDataAccessObject:
+    session = get_session()
+    return UserDataAccessObject(session)

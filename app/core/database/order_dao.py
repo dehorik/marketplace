@@ -5,19 +5,15 @@ from core.database.interface_dao import InterfaceDataAccessObject
 class OrderDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с заказами и товарами в корзине"""
 
-    def __init__(self, session: Session = get_session()):
+    def __init__(self, session: Session):
         self.__session = session
-        self._cursor = session.get_cursor()
+        self.__cursor = session.get_cursor()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __del__(self):
         self.close()
 
     def close(self) -> None:
-        self.__session.commit()
-        self._cursor.close()
+        self.__cursor.close()
 
     def commit(self) -> None:
         self.__session.commit()
@@ -37,7 +33,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
     def get_all_orders(self, product_id: int) -> list:
         """Получить все заказы определенного товара"""
 
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 SELECT 
                     orders.order_id,
@@ -54,10 +50,10 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [product_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def add_to_cart(self, user_id: int, product_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 INSERT INTO cart_item (
                     product_id,
@@ -69,10 +65,10 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [product_id, user_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def delete_from_cart(self, user_id: int, cart_item_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 DELETE 
                 FROM cart_item
@@ -82,7 +78,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [cart_item_id, user_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def get_cart(
             self,
@@ -98,7 +94,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
         if last_item_id:
             condition += f"AND cart_item.cart_item_id < {last_item_id}"
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 SELECT
                     cart_item.cart_item_id,
@@ -115,4 +111,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
+
+
+def get_order_dao() -> OrderDataAccessObject:
+    session = get_session()
+    return OrderDataAccessObject(session)

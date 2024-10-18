@@ -1,11 +1,11 @@
 import os
 import datetime
-from typing import Type, Callable
+from typing import Callable
 from jinja2 import Environment, FileSystemLoader
 
 from core.tasks.models import EmailTokenPayloadModel
 from auth import JWTEncoder, get_jwt_encoder
-from core.database import CommentDataAccessObject
+from core.database import CommentDataAccessObject, get_comment_dao
 from core.settings import ROOT_PATH
 from utils import EmailSender, get_email_sender, delete_file
 
@@ -43,14 +43,13 @@ class ProductRemovalTask:
     def __init__(
             self,
             file_deleter: Callable = delete_file,
-            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject
+            comment_dao: CommentDataAccessObject = get_comment_dao()
     ):
         self.file_deleter = file_deleter
-        self.comment_dao = comment_dao
+        self.comment_data_access_obj = comment_dao
 
     def __call__(self) -> None:
-        with self.comment_dao() as comment_data_access_obj:
-            comments = comment_data_access_obj.delete_undefined_comments()
+        comments = self.comment_data_access_obj.delete_undefined_comments()
 
         for comment in comments:
             photo_path = comment[-1]

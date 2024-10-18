@@ -1,8 +1,7 @@
 import os
-from typing import Annotated, Type, Callable
+from typing import Annotated, Callable
 from fastapi import (
-    BackgroundTasks, HTTPException, Query,
-    UploadFile, File, Form, status
+    BackgroundTasks, HTTPException, Query, UploadFile, File, Form, status
 )
 
 from entities.products.models import (
@@ -16,7 +15,10 @@ from core.tasks import product_removal_task
 from core.database import (
     ProductDataAccessObject,
     CommentDataAccessObject,
-    OrderDataAccessObject
+    OrderDataAccessObject,
+    get_product_dao,
+    get_comment_dao,
+    get_order_dao
 )
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
@@ -32,23 +34,23 @@ class BaseDependency:
             self,
             file_writer: Callable = write_file,
             file_deleter: Callable = delete_file,
-            product_dao: Type[ProductDataAccessObject] = ProductDataAccessObject,
-            comment_dao: Type[CommentDataAccessObject] = CommentDataAccessObject,
-            order_dao: Type[OrderDataAccessObject] = OrderDataAccessObject
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            order_dao: OrderDataAccessObject = get_order_dao()
     ):
         """
-        :param file_writer: ссылка на объект для записи и перезаписи файлов
-        :param file_deleter: ссылка на объект для удаления файлов
-        :param product_dao: ссылка на класс для работы с БД (товары)
-        :param comment_dao: ссылка на класс для работы с БД (отзывы)
-        :param order_dao: ссылка на класс для работы с БД (заказы)
+        :param file_writer: ссылка на функцию для записи и перезаписи файлов
+        :param file_deleter: ссылка на функцию для удаления файлов
+        :param product_dao: объект для работы с базой данных (товары)
+        :param comment_dao: объект для работы с базой данных (отзывы)
+        :param order_dao: объект для работы с базой данных (заказы)
         """
 
         self.file_writer = file_writer
         self.file_deleter = file_deleter
-        self.product_dao = product_dao
-        self.comment_dao = comment_dao
-        self.order_dao = order_dao
+        self.product_data_access_obj = product_dao
+        self.comment_data_access_obj = comment_dao
+        self.order_data_access_obj = order_dao
 
 
 class CatalogLoaderService(BaseDependency):
@@ -69,11 +71,10 @@ class CatalogLoaderService(BaseDependency):
                из предыдущей подгрузки; первый запрос - оставить None
         """
 
-        with self.product_dao() as product_data_access_obj:
-            products = product_data_access_obj.get_latest_products(
-                amount=amount,
-                last_product_id=last_product_id
-            )
+        products = self.product_data_access_obj.get_latest_products(
+            amount=amount,
+            last_product_id=last_product_id
+        )
 
         return ProductCardListModel(
             products=self.converter(products)
@@ -99,12 +100,11 @@ class ProductSearchService(BaseDependency):
         :param last_product_id: id товара из последней подгрузки
         """
 
-        with self.product_dao() as product_data_access_obj:
-            products = product_data_access_obj.search_product(
-                product_name=product_name,
-                amount=amount,
-                last_product_id=last_product_id
-            )
+        products = self.product_data_access_obj.search_product(
+            product_name=product_name,
+            amount=amount,
+            last_product_id=last_product_id
+        )
 
         return ProductCardListModel(
             products=self.converter(products)
@@ -140,14 +140,12 @@ class ProductCreationService(BaseDependency):
                 detail='invalid file type'
             )
 
-        with self.product_dao() as product_data_access_obj:
-            product = product_data_access_obj.create(
-                product_name,
-                product_price,
-                product_description,
-                is_hidden
-            )
-
+        product = self.product_data_access_obj.create(
+            product_name,
+            product_price,
+            product_description,
+            is_hidden
+        )
         product = self.converter(product)[0]
         self.file_writer(product.photo_path, photo.file.read())
 
@@ -160,8 +158,7 @@ class ProductFetchService(BaseDependency):
         self.converter = converter
 
     def __call__(self, product_id: int) -> ExtendedProductModel:
-        with self.product_dao() as product_data_access_obj:
-            product = product_data_access_obj.read(product_id)
+        product = self.product_data_access_obj.read(product_id)
 
         if not product:
             raise HTTPException(
@@ -230,11 +227,10 @@ class ProductUpdateService(BaseDependency):
             if value is not None
         }
 
-        with self.product_dao() as product_data_access_obj:
-            product = product_data_access_obj.update(
-                product_id=product_id,
-                **fields_for_update
-            )
+        product = self.product_data_access_obj.update(
+            product_id=product_id,
+            **fields_for_update
+        )
 
         if not product:
             raise HTTPException(
@@ -255,15 +251,13 @@ class ProductRemovalService(BaseDependency):
             background_tasks: BackgroundTasks,
             product_id: int
     ) -> ProductModel:
-        with self.order_dao() as order_data_access_obj:
-            if order_data_access_obj.get_all_orders(product_id):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="there are orders with this product"
-                )
+        if self.order_data_access_obj.get_all_orders(product_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="there are orders with this product"
+            )
 
-        with self.product_dao() as product_data_access_obj:
-            product = product_data_access_obj.delete(product_id)
+        product = self.product_data_access_obj.delete(product_id)
 
         if not product:
             raise HTTPException(

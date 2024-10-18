@@ -8,19 +8,15 @@ from core.settings import config
 class CommentDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с отзывами под товарами"""
 
-    def __init__(self, session: Session = get_session()):
+    def __init__(self, session: Session):
         self.__session = session
-        self._cursor = session.get_cursor()
+        self.__cursor = session.get_cursor()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __del__(self):
         self.close()
 
     def close(self) -> None:
-        self.__session.commit()
-        self._cursor.close()
+        self.__cursor.close()
 
     def commit(self) -> None:
         self.__session.commit()
@@ -33,7 +29,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             comment_text: str | None = None,
             has_photo: bool = False
     ) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 INSERT INTO comment (
                     user_id,
@@ -54,13 +50,13 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         )
 
         if has_photo:
-            comment_id = self._cursor.fetchone()[0]
+            comment_id = self.__cursor.fetchone()[0]
             photo_path = os.path.join(
                 config.COMMENT_CONTENT_PATH,
                 str(comment_id)
             )
 
-            self._cursor.execute(
+            self.__cursor.execute(
                 """
                     UPDATE comment 
                         SET photo_path = %s
@@ -70,7 +66,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 [photo_path, comment_id]
             )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def read(
             self,
@@ -83,7 +79,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         if last_comment_id:
             condition += f"AND comment.comment_id < {last_comment_id}"
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 SELECT 
                     comment.comment_id, 
@@ -104,11 +100,11 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def update(self, comment_id: int, **kwargs) -> list:
         if not kwargs:
-            self._cursor.execute(
+            self.__cursor.execute(
                 """
                     SELECT *
                     FROM comment
@@ -117,7 +113,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 [comment_id]
             )
 
-            return self._cursor.fetchall()
+            return self.__cursor.fetchall()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -130,7 +126,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         else:
             set_values += "comment_date = CURRENT_DATE"
 
-        self._cursor.execute(
+        self.__cursor.execute(
             f"""
                 UPDATE comment 
                     SET {set_values}            
@@ -139,10 +135,10 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def delete(self, comment_id: int) -> list:
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 DELETE 
                 FROM comment
@@ -152,7 +148,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             [comment_id]
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
 
     def delete_undefined_comments(self) -> list:
         """
@@ -160,7 +156,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         т.е удаление отзывов под удаленными товарами
         """
 
-        self._cursor.execute(
+        self.__cursor.execute(
             """
                 DELETE
                 FROM comment
@@ -169,4 +165,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """,
         )
 
-        return self._cursor.fetchall()
+        return self.__cursor.fetchall()
+
+
+def get_comment_dao() -> CommentDataAccessObject:
+    session = get_session()
+    return CommentDataAccessObject(session)

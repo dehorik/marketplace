@@ -1,4 +1,4 @@
-from typing import Type, Annotated
+from typing import Annotated
 from fastapi import HTTPException, Depends, Query, status
 from psycopg2.errors import ForeignKeyViolation
 
@@ -8,7 +8,7 @@ from entities.orders.models import (
     CartItemCardListModel
 )
 from auth import PayloadTokenModel, AuthorizationService
-from core.database import OrderDataAccessObject
+from core.database import OrderDataAccessObject, get_order_dao
 from utils import Converter
 
 
@@ -20,13 +20,13 @@ superuser_dependency = AuthorizationService(min_role_id=3)
 class BaseDependency:
     def __init__(
             self,
-            order_dao: Type[OrderDataAccessObject] = OrderDataAccessObject
+            order_dao: OrderDataAccessObject = get_order_dao()
     ):
         """
-        :param order_dao: класс для работы с БД (заказы и товары в корзине)
+        :param order_dao: объект для работы с БД (заказы и товары в корзине)
         """
 
-        self.order_dao = order_dao
+        self.order_data_access_obj = order_dao
 
 
 class CartItemCreationService(BaseDependency):
@@ -42,11 +42,10 @@ class CartItemCreationService(BaseDependency):
             product_id: int
     ) -> CartItemModel:
         try:
-            with self.order_dao() as order_data_access_obj:
-                cart_item = order_data_access_obj.add_to_cart(
-                    payload.sub,
-                    product_id
-                )
+            cart_item = self.order_data_access_obj.add_to_cart(
+                payload.sub,
+                product_id
+            )
 
             return self.converter(cart_item)[0]
         except ForeignKeyViolation:
@@ -68,11 +67,10 @@ class CartItemRemovalService(BaseDependency):
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             item_id: int
     ) -> CartItemModel:
-        with self.order_dao() as order_data_access_obj:
-            cart_item = order_data_access_obj.delete_from_cart(
-                payload.sub,
-                item_id
-            )
+        cart_item = self.order_data_access_obj.delete_from_cart(
+            payload.sub,
+            item_id
+        )
 
         if not cart_item:
             raise HTTPException(
@@ -105,12 +103,11 @@ class CartItemLoaderService(BaseDependency):
                из последней подгрузки (если это первый запрос - None)
         """
 
-        with self.order_dao() as order_data_access_obj:
-            cart_items = order_data_access_obj.get_cart(
-                user_id=payload.sub,
-                amount=amount,
-                last_item_id=last_item_id
-            )
+        cart_items = self.order_data_access_obj.get_cart(
+            user_id=payload.sub,
+            amount=amount,
+            last_item_id=last_item_id
+        )
 
         return CartItemCardListModel(
             cart_items=self.converter(cart_items)
