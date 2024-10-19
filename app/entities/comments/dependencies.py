@@ -34,7 +34,6 @@ class CommentCreationService:
             self,
             user_id: int,
             product_id: int,
-
             comment_rating: Annotated[
                 int, Form(ge=1, le=5)
             ],
@@ -127,10 +126,8 @@ class CommentUpdateService:
     def __call__(
             self,
             comment_id: int,
-
             clear_text: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
-
             comment_rating: Annotated[
                 int | None, Form(ge=1, le=5)
             ] = None,
@@ -157,6 +154,15 @@ class CommentUpdateService:
         отправка данных для соответствующего поля приведет к ошибке.
         """
 
+        if clear_text and comment_text or clear_photo and photo:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="conflict between flags and request body"
+            )
+
+        fields: Dict[str, str | int | None] = {}
+
+        photo_path = os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
         if photo:
             if not photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
@@ -164,30 +170,8 @@ class CommentUpdateService:
                     detail='invalid file type'
                 )
 
-        if clear_text and comment_text or clear_photo and photo:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="conflict between flags and request body"
-            )
-
-        fields_for_update: Dict[str, str | int | None] = {}
-
-        if comment_rating:
-            fields_for_update["comment_rating"] = comment_rating
-
-        if comment_text:
-            fields_for_update["comment_text"] = comment_text
-        elif clear_text:
-            fields_for_update["comment_text"] = None
-
-        photo_path = os.path.join(
-            config.COMMENT_CONTENT_PATH,
-            str(comment_id)
-        )
-
-        if photo:
             self.file_writer(photo_path, photo.file.read())
-            fields_for_update["photo_path"] = photo_path
+            fields["photo_path"] = photo_path
         elif clear_photo:
             if not exists(photo_path):
                 raise HTTPException(
@@ -196,20 +180,24 @@ class CommentUpdateService:
                 )
 
             self.file_deleter(photo_path)
-            fields_for_update["photo_path"] = None
+            fields["photo_path"] = None
 
-        comment = self.comment_data_access_obj.update(
-            comment_id=comment_id,
-            **fields_for_update
-        )
+        if comment_text:
+            fields["comment_text"] = comment_text
+        elif clear_text:
+            fields["comment_text"] = None
+
+        if comment_rating:
+            fields["comment_rating"] = comment_rating
+
+        comment = self.comment_data_access_obj.update(comment_id, **fields)
 
         if not comment:
-            if fields_for_update["photo_path"]:
+            if fields["photo_path"]:
                 # если был отправлен запрос на обновление полей
                 # несуществующего отзыва, и изображение было записано,
                 # то такое изображение необходимо удалить
-
-                self.file_deleter(fields_for_update["photo_path"])
+                self.file_deleter(fields["photo_path"])
 
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

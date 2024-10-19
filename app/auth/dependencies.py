@@ -153,7 +153,6 @@ class LogoutService:
             # если refresh токена в redis нет - им кто-то уже воспользовался
             # для безопасности пользователя
             # следует удалить все его refresh токены
-
             self.redis_client.delete_user(payload['sub'])
 
             raise HTTPException(
@@ -210,7 +209,6 @@ class TokenRefreshService:
             # воспользовался вместо пользователя
             # (удалим все рефреш токены пользователя у себя,
             # тем самым удалив и токен злоумышленника)
-
             self.redis_client.delete_user(payload.sub)
 
             raise HTTPException(
@@ -279,7 +277,7 @@ class AuthorizationService:
 
 
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    # устанавливаем refresh токен в cookie
+    """устанавливаем refresh токен в cookie"""
 
     max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     response.set_cookie(

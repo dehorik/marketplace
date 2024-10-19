@@ -2,9 +2,8 @@ import os
 from pydantic import EmailStr
 from jwt import InvalidTokenError
 from typing import Annotated, Dict, Callable
-from fastapi import (
-    BackgroundTasks, HTTPException, Depends, UploadFile, File, Form, status
-)
+from fastapi import BackgroundTasks, HTTPException, Depends, status
+from fastapi import UploadFile, File, Form
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel, EmailVerificationModel
@@ -59,14 +58,21 @@ class UserUpdateService:
             self,
             background_tasks: BackgroundTasks,
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
-
             clear_email: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
-
             username: Annotated[str, Form(min_length=6, max_length=16)] = None,
             email: Annotated[EmailStr, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> UserModel:
+        if clear_email and email or clear_photo and photo:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="conflict between flags and request body"
+            )
+
+        fields: Dict[str, str | None] = {}
+
+        photo_path = os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
         if photo:
             if not photo.content_type.split('/')[0] == 'image':
                 raise HTTPException(
@@ -74,39 +80,8 @@ class UserUpdateService:
                     detail='invalid file type'
                 )
 
-        if clear_email and email or clear_photo and photo:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="conflict between flags and request body"
-            )
-
-        fields_for_update: Dict[str, str | None] = {}
-
-        if username:
-            if self.user_data_access_obj.get_user_by_username(username):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="username is already taken"
-                )
-
-            fields_for_update["username"] = username
-
-        if email:
-            background_tasks.add_task(
-                email_sending_task,
-                payload.sub, email
-            )
-        elif clear_email:
-            fields_for_update["email"] = None
-
-        photo_path = os.path.join(
-            config.USER_CONTENT_PATH,
-            str(payload.sub)
-        )
-
-        if photo:
-            self.file_writer(photo_path, photo.file.read())
-            fields_for_update["photo_path"] = photo_path
+            self.file_writer(photo_path)
+            fields["photo_path"] = photo_path
         elif clear_photo:
             if not exists(photo_path):
                 raise HTTPException(
@@ -115,12 +90,23 @@ class UserUpdateService:
                 )
 
             self.file_deleter(photo_path)
-            fields_for_update["photo_path"] = None
+            fields["photo_path"] = None
 
-        user = self.user_data_access_obj.update(
-            user_id=payload.sub,
-            **fields_for_update
-        )
+        if username:
+            if self.user_data_access_obj.get_user_by_username(username):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="username is already taken"
+                )
+
+            fields["username"] = username
+
+        if email:
+            background_tasks.add_task(email_sending_task, payload.sub, email)
+        elif clear_email:
+            fields["email"] = None
+
+        user = self.user_data_access_obj.update(payload.sub, **fields)
 
         return self.converter(user)[0]
 

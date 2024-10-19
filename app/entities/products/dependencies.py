@@ -1,8 +1,7 @@
 import os
 from typing import Annotated, Callable
-from fastapi import (
-    BackgroundTasks, HTTPException, Query, UploadFile, File, Form, status
-)
+from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import UploadFile, File, Form, Query
 
 from entities.products.models import (
     ProductModel,
@@ -216,7 +215,7 @@ class ProductUpdateService:
             if exists(photo_path):
                 self.file_writer(photo_path, photo.file.read())
 
-        fields_for_update = {
+        fields = {
             key: value
             for key, value in {
                 'product_name': product_name,
@@ -227,10 +226,7 @@ class ProductUpdateService:
             if value is not None
         }
 
-        product = self.product_data_access_obj.update(
-            product_id=product_id,
-            **fields_for_update
-        )
+        product = self.product_data_access_obj.update(product_id, **fields)
 
         if not product:
             raise HTTPException(
