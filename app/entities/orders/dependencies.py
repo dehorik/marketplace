@@ -17,23 +17,15 @@ admin_dependency = AuthorizationService(min_role_id=2)
 superuser_dependency = AuthorizationService(min_role_id=3)
 
 
-class BaseDependency:
-    def __init__(
-            self,
-            order_dao: OrderDataAccessObject = get_order_dao()
-    ):
-        """
-        :param order_dao: объект для работы с БД (заказы и товары в корзине)
-        """
-
-        self.order_data_access_obj = order_dao
-
-
-class CartItemCreationService(BaseDependency):
+class CartItemCreationService:
     """Добавление товара в корзину"""
 
-    def __init__(self, converter: Converter = Converter(CartItemModel)):
-        super().__init__()
+    def __init__(
+            self,
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            converter: Converter = Converter(CartItemModel)
+    ):
+        self.order_data_access_obj = order_dao
         self.converter = converter
 
     def __call__(
@@ -55,11 +47,15 @@ class CartItemCreationService(BaseDependency):
             )
 
 
-class CartItemRemovalService(BaseDependency):
+class CartItemRemovalService:
     """Удаление товара из корзины"""
 
-    def __init__(self, converter: Converter = Converter(CartItemModel)):
-        super().__init__()
+    def __init__(
+            self,
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            converter: Converter = Converter(CartItemModel)
+    ):
+        self.order_data_access_obj = order_dao
         self.converter = converter
 
     def __call__(
@@ -81,14 +77,15 @@ class CartItemRemovalService(BaseDependency):
         return self.converter(cart_item)[0]
 
 
-class CartItemLoaderService(BaseDependency):
+class CartItemLoaderService:
     """Загрузка карточек товаров в корзине"""
 
     def __init__(
             self,
+            order_dao: OrderDataAccessObject = get_order_dao(),
             converter: Converter = Converter(CartItemCardModel)
     ):
-        super().__init__()
+        self.order_data_access_obj = order_dao
         self.converter = converter
 
     def __call__(

@@ -53,7 +53,7 @@ def get_jwt_decoder() -> JWTDecoder:
     )
 
 
-class AccessTokenCreator:
+class AccessTokenEncoder:
     """Для выпуска access токенов"""
 
     def __init__(
@@ -80,7 +80,7 @@ class AccessTokenCreator:
         return self.__jwt_encoder(payload)
 
 
-class RefreshTokenCreator:
+class RefreshTokenEncoder:
     """Для выпуска refresh токенов"""
 
     def __init__(

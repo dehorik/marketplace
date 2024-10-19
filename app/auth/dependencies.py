@@ -4,11 +4,9 @@ from fastapi import HTTPException, Depends, Response, Cookie, Form, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from auth.tokens import (
-    JWTEncoder,
     JWTDecoder,
-    AccessTokenCreator,
-    RefreshTokenCreator,
-    get_jwt_encoder,
+    AccessTokenEncoder,
+    RefreshTokenEncoder,
     get_jwt_decoder
 )
 from auth.models import (
@@ -28,36 +26,19 @@ from utils import Converter
 http_bearer = HTTPBearer()
 
 
-class BaseDependency:
+class RegistrationService:
     def __init__(
             self,
-            jwt_encoder: JWTEncoder = get_jwt_encoder(),
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            access_token_creator: AccessTokenCreator = AccessTokenCreator(),
-            refresh_token_creator: RefreshTokenCreator = RefreshTokenCreator(),
+            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
+            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
             redis_client: RedisClient = get_redis_client(),
-            user_dao: UserDataAccessObject = get_user_dao()
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel)
     ):
-        """
-        :param jwt_encoder: объект для выпуска jwt
-        :param jwt_decoder: объект для декодирования jwt
-        :param access_token_creator: объект для выпуска access jwt
-        :param refresh_token_creator: объект для выпуска refresh jwt
-        :param redis_client: объект для работы с Redis
-        :param user_dao: объект для работы с БД (пользователи)
-        """
-
-        self.jwt_encoder = jwt_encoder
-        self.jwt_decoder = jwt_decoder
-        self.access_token_creator = access_token_creator
-        self.refresh_token_creator = refresh_token_creator
+        self.access_token_encoder = access_token_encoder
+        self.refresh_token_encoder = refresh_token_encoder
         self.redis_client = redis_client
         self.user_data_access_obj = user_dao
-
-
-class RegistrationService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
         self.converter = converter
 
     def __call__(
@@ -78,8 +59,8 @@ class RegistrationService(BaseDependency):
         )
         user = self.converter(user)[0]
 
-        access_token = self.access_token_creator(user)
-        refresh_token = self.refresh_token_creator(user)
+        access_token = self.access_token_encoder(user)
+        refresh_token = self.refresh_token_encoder(user)
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
@@ -91,9 +72,19 @@ class RegistrationService(BaseDependency):
         )
 
 
-class LoginService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
+class LoginService:
+    def __init__(
+            self,
+            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
+            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
+            redis_client: RedisClient = get_redis_client(),
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel)
+    ):
+        self.access_token_encoder = access_token_encoder
+        self.refresh_token_encoder = refresh_token_encoder
+        self.redis_client = redis_client
+        self.user_data_access_obj = user_dao
         self.converter = converter
 
     def __call__(
@@ -121,8 +112,8 @@ class LoginService(BaseDependency):
 
         user = self.converter(user)[0]
 
-        access_token = self.access_token_creator(user)
-        refresh_token = self.refresh_token_creator(user)
+        access_token = self.access_token_encoder(user)
+        refresh_token = self.refresh_token_encoder(user)
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(user.user_id, refresh_token)
 
@@ -134,7 +125,15 @@ class LoginService(BaseDependency):
         )
 
 
-class LogoutService(BaseDependency):
+class LogoutService:
+    def __init__(
+            self,
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            redis_client: RedisClient = get_redis_client()
+    ):
+        self.jwt_decoder = jwt_decoder
+        self.redis_client = redis_client
+
     def __call__(
             self,
             response: Response,
@@ -147,7 +146,7 @@ class LogoutService(BaseDependency):
             )
 
         try:
-            response.delete_cookie('refresh_token')
+            response.delete_cookie(config.COOKIE_KEY)
             payload = self.jwt_decoder(refresh_token)
             self.redis_client.delete_token(payload['sub'], refresh_token)
         except NonExistentTokenError:
@@ -168,7 +167,19 @@ class LogoutService(BaseDependency):
             )
 
 
-class TokenRefreshService(BaseDependency):
+class TokenRefreshService:
+    def __init__(
+            self,
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
+            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
+            redis_client: RedisClient = get_redis_client()
+    ):
+        self.jwt_decoder = jwt_decoder
+        self.access_token_encoder = access_token_encoder
+        self.refresh_token_encoder = refresh_token_encoder
+        self.redis_client = redis_client
+
     def __call__(
             self,
             response: Response,
@@ -181,12 +192,12 @@ class TokenRefreshService(BaseDependency):
             )
 
         try:
-            response.delete_cookie('refresh_token')
+            response.delete_cookie(config.COOKIE_KEY)
             payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
             self.redis_client.delete_token(payload.sub, refresh_token)
 
-            refresh_token = self.refresh_token_creator(payload)
-            access_token = self.access_token_creator(payload)
+            refresh_token = self.refresh_token_encoder(payload)
+            access_token = self.access_token_encoder(payload)
 
             set_refresh_cookie(response, refresh_token)
             self.redis_client.append_token(payload.sub, refresh_token)
@@ -213,12 +224,17 @@ class TokenRefreshService(BaseDependency):
             )
 
 
-class AccessTokenValidationService(BaseDependency):
+class AccessTokenValidationService:
     """Валидация access токена из заголовков"""
+
+    def __init__(self, jwt_decoder: JWTDecoder = get_jwt_decoder()):
+        self.jwt_decoder = jwt_decoder
 
     def __call__(
             self,
-            token: Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
+            token: Annotated[
+                HTTPAuthorizationCredentials, Depends(http_bearer)
+            ]
     ) -> PayloadTokenModel:
         try:
             return PayloadTokenModel(**self.jwt_decoder(token.credentials))
@@ -232,15 +248,16 @@ class AccessTokenValidationService(BaseDependency):
 access_token_validation_service = AccessTokenValidationService()
 
 
-class AuthorizationService(BaseDependency):
+class AuthorizationService:
     def __init__(
             self,
             min_role_id: int,
+            user_dao: UserDataAccessObject = get_user_dao(),
             converter: Converter = Converter(UserModel)
     ):
-        super().__init__()
-        self.converter = converter
         self.__min_role_id = min_role_id
+        self.user_data_access_obj = user_dao
+        self.converter = converter
 
     def __call__(
             self,
@@ -266,7 +283,7 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
     max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     response.set_cookie(
-        key='refresh_token',
+        key=config.COOKIE_KEY,
         value=refresh_token,
         max_age=max_age,
         httponly=True

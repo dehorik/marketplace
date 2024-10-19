@@ -19,27 +19,15 @@ admin_dependency = AuthorizationService(min_role_id=2)
 superuser_dependency = AuthorizationService(min_role_id=3)
 
 
-class BaseDependency:
+class CommentCreationService:
     def __init__(
             self,
             file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file,
-            comment_dao: CommentDataAccessObject = get_comment_dao()
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            converter: Converter = Converter(CommentModel)
     ):
-        """
-        :param file_writer: ссылка на функцию для записи и перезаписи файлов
-        :param file_deleter: ссылка на функцию для удаления файлов
-        :param comment_dao: объект для работы с базой данных (отзывы)
-        """
-
         self.file_writer = file_writer
-        self.file_deleter = file_deleter
         self.comment_data_access_obj = comment_dao
-
-
-class CommentCreationService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(CommentModel)):
-        super().__init__()
         self.converter = converter
 
     def __call__(
@@ -88,11 +76,15 @@ class CommentCreationService(BaseDependency):
             )
 
 
-class CommentLoaderService(BaseDependency):
+class CommentLoaderService:
     """Подгрузка отзывов под товаром"""
 
-    def __init__(self, converter: Converter = Converter(CommentItemModel)):
-        super().__init__()
+    def __init__(
+            self,
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            converter: Converter = Converter(CommentItemModel)
+    ):
+        self.comment_data_access_obj = comment_dao
         self.converter = converter
 
     def __call__(
@@ -119,9 +111,17 @@ class CommentLoaderService(BaseDependency):
         )
 
 
-class CommentUpdateService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(CommentModel)):
-        super().__init__()
+class CommentUpdateService:
+    def __init__(
+            self,
+            file_writer: Callable = write_file,
+            file_deleter: Callable = delete_file,
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            converter: Converter = Converter(CommentModel)
+    ):
+        self.file_writer = file_writer
+        self.file_deleter = file_deleter
+        self.comment_data_access_obj = comment_dao
         self.converter = converter
 
     def __call__(
@@ -219,9 +219,15 @@ class CommentUpdateService(BaseDependency):
         return self.converter(comment)[0]
 
 
-class CommentRemovalService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(CommentModel)):
-        super().__init__()
+class CommentRemovalService:
+    def __init__(
+            self,
+            file_deleter: Callable = delete_file,
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            converter: Converter = Converter(CommentModel)
+    ):
+        self.file_deleter = file_deleter
+        self.comment_data_access_obj = comment_dao
         self.converter = converter
 
     def __call__(self, comment_id: int) -> CommentModel:

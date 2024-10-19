@@ -14,10 +14,8 @@ from auth import AuthorizationService
 from core.tasks import product_removal_task
 from core.database import (
     ProductDataAccessObject,
-    CommentDataAccessObject,
     OrderDataAccessObject,
     get_product_dao,
-    get_comment_dao,
     get_order_dao
 )
 from core.settings import config
@@ -29,35 +27,17 @@ admin_dependency = AuthorizationService(min_role_id=2)
 superuser_dependency = AuthorizationService(min_role_id=3)
 
 
-class BaseDependency:
+class CatalogLoaderService:
+    """Получение последних созданных товаров"""
+
     def __init__(
             self,
             file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file,
             product_dao: ProductDataAccessObject = get_product_dao(),
-            comment_dao: CommentDataAccessObject = get_comment_dao(),
-            order_dao: OrderDataAccessObject = get_order_dao()
+            converter: Converter = Converter(ProductCardModel)
     ):
-        """
-        :param file_writer: ссылка на функцию для записи и перезаписи файлов
-        :param file_deleter: ссылка на функцию для удаления файлов
-        :param product_dao: объект для работы с базой данных (товары)
-        :param comment_dao: объект для работы с базой данных (отзывы)
-        :param order_dao: объект для работы с базой данных (заказы)
-        """
-
         self.file_writer = file_writer
-        self.file_deleter = file_deleter
         self.product_data_access_obj = product_dao
-        self.comment_data_access_obj = comment_dao
-        self.order_data_access_obj = order_dao
-
-
-class CatalogLoaderService(BaseDependency):
-    """Получение последних созданных товаров"""
-
-    def __init__(self, converter: Converter = Converter(ProductCardModel)):
-        super().__init__()
         self.converter = converter
 
     def __call__(
@@ -81,11 +61,15 @@ class CatalogLoaderService(BaseDependency):
         )
 
 
-class ProductSearchService(BaseDependency):
+class ProductSearchService:
     """Поиск товара по названию"""
 
-    def __init__(self, converter: Converter = Converter(ProductCardModel)):
-        super().__init__()
+    def __init__(
+            self,
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            converter: Converter = Converter(ProductCardModel)
+    ):
+        self.product_data_access_obj = product_dao
         self.converter = converter
 
     def __call__(
@@ -111,9 +95,15 @@ class ProductSearchService(BaseDependency):
         )
 
 
-class ProductCreationService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ProductModel)):
-        super().__init__()
+class ProductCreationService:
+    def __init__(
+            self,
+            file_writer: Callable = write_file,
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            converter: Converter = Converter(ProductModel)
+    ):
+        self.file_writer = file_writer
+        self.product_data_access_obj = product_dao
         self.converter = converter
 
     def __call__(
@@ -152,9 +142,13 @@ class ProductCreationService(BaseDependency):
         return product
 
 
-class ProductFetchService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ProductModel)):
-        super().__init__()
+class ProductFetchService:
+    def __init__(
+            self,
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            converter: Converter = Converter(ProductModel)
+    ):
+        self.product_data_access_obj = product_dao
         self.converter = converter
 
     def __call__(self, product_id: int) -> ExtendedProductModel:
@@ -177,9 +171,15 @@ class ProductFetchService(BaseDependency):
         )
 
 
-class ProductUpdateService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(ProductModel)):
-        super().__init__()
+class ProductUpdateService:
+    def __init__(
+            self,
+            file_writer: Callable = write_file,
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            converter: Converter = Converter(ProductModel)
+    ):
+        self.file_writer = file_writer
+        self.product_data_access_obj = product_dao
         self.converter = converter
 
     def __call__(
@@ -241,10 +241,18 @@ class ProductUpdateService(BaseDependency):
         return self.converter(product)[0]
 
 
-class ProductRemovalService(BaseDependency):
-    def __init__(self, product_converter: Converter = Converter(ProductModel)):
-        super().__init__()
-        self.product_converter = product_converter
+class ProductRemovalService:
+    def __init__(
+            self,
+            file_deleter: Callable = delete_file,
+            product_dao: ProductDataAccessObject = get_product_dao(),
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            converter: Converter = Converter(ProductModel)
+    ):
+        self.file_deleter = file_deleter
+        self.product_data_access_obj = product_dao
+        self.order_data_access_obj = order_dao
+        self.converter = converter
 
     def __call__(
             self,
@@ -266,7 +274,7 @@ class ProductRemovalService(BaseDependency):
             )
 
         background_tasks.add_task(product_removal_task)
-        product = self.product_converter(product)[0]
+        product = self.converter(product)[0]
         self.file_deleter(product.photo_path)
 
         return product

@@ -25,30 +25,13 @@ admin_dependency = AuthorizationService(min_role_id=2)
 superuser_dependency = AuthorizationService(min_role_id=3)
 
 
-class BaseDependency:
+class UserFetchService:
     def __init__(
             self,
-            file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file,
             user_dao: UserDataAccessObject = get_user_dao(),
-            jwt_decoder: JWTDecoder = get_jwt_decoder()
+            converter: Converter = Converter(UserModel)
     ):
-        """
-        :param file_writer: ссылка на функцию для записи и перезаписи файлов
-        :param file_deleter: ссылка на функцию для удаления файлов
-        :param user_dao: объект для работы с БД (пользователи)
-        :param jwt_decoder: объект для декодирования jwt
-        """
-
-        self.file_writer = file_writer
-        self.file_deleter = file_deleter
         self.user_data_access_obj = user_dao
-        self.jwt_decoder = jwt_decoder
-
-
-class UserFetchService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
         self.converter = converter
 
     def __call__(
@@ -59,9 +42,17 @@ class UserFetchService(BaseDependency):
         return self.converter(user)[0]
 
 
-class UserUpdateService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
+class UserUpdateService:
+    def __init__(
+            self,
+            file_writer: Callable = write_file,
+            file_deleter: Callable = delete_file,
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel)
+    ):
+        self.file_writer = file_writer
+        self.file_deleter = file_deleter
+        self.user_data_access_obj = user_dao
         self.converter = converter
 
     def __call__(
@@ -134,9 +125,15 @@ class UserUpdateService(BaseDependency):
         return self.converter(user)[0]
 
 
-class EmailVerificationService(BaseDependency):
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
+class EmailVerificationService:
+    def __init__(
+            self,
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel)
+    ):
+        self.jwt_decoder = jwt_decoder
+        self.user_data_access_obj = user_dao
         self.converter = converter
 
     def __call__(self, body: EmailVerificationModel) -> UserModel:
@@ -157,11 +154,15 @@ class EmailVerificationService(BaseDependency):
             )
 
 
-class RoleManagementService(BaseDependency):
+class RoleManagementService:
     """Управление ролями пользователей"""
 
-    def __init__(self, converter: Converter = Converter(UserModel)):
-        super().__init__()
+    def __init__(
+            self,
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel)
+    ):
+        self.user_data_access_obj = user_dao
         self.converter = converter
 
     def __call__(
