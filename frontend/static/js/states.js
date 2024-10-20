@@ -13,6 +13,14 @@ class SearchedProductStateData {
 }
 
 
+class ReviewsStateData {
+    constructor(product_id, last_comment_id) {
+        this.product_id = product_id;
+        this.last_comment_id = last_comment_id;
+    }
+}
+
+
 class State {
     constructor(data) {
         this.data = data;
@@ -26,7 +34,7 @@ class State {
         localStorage.setItem("state", JSON.stringify(this.data));
     }
 
-     static deleteFromStorage() {
+    static deleteFromStorage() {
         localStorage.removeItem("state");
     }
 }

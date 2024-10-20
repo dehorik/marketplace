@@ -13,7 +13,7 @@ window.addEventListener('load', () => {
 });
 
 
-function update_catalog(amount=9) {
+function update_catalog(amount = 9) {
     const state = get_state_obj();
 
     let url = "/products/latest";
@@ -37,8 +37,7 @@ function update_catalog(amount=9) {
 
             if (products.length === 0 && product_grid.innerHTML === "") {
                 message_area.innerHTML = "Ничего не найдено!";
-            }
-            else if (products.length !== 0){
+            } else if (products.length !== 0) {
                 state.data.last_product_id = products.slice(-1)[0].product_id;
                 state.saveToStorage();
 
