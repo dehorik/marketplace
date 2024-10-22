@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from entities.users.dependencies import (
     user_fetch_service,
     user_update_service,
+    user_removal_service,
     email_verification_service,
     role_management_service
 )
@@ -35,6 +36,10 @@ def get_user(user: Annotated[UserModel, Depends(user_fetch_service)]):
 
 @router.patch("/me/data", response_model=UserModel)
 def update_user(user: Annotated[UserModel, Depends(user_update_service)]):
+    return user
+
+@router.delete("/me", response_model=UserModel)
+def delete_user(user: Annotated[UserModel, Depends(user_removal_service)]):
     return user
 
 @router.get("/email-verification", response_class=HTMLResponse)

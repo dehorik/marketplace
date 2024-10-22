@@ -2,15 +2,18 @@ import os
 from pydantic import EmailStr
 from jwt import InvalidTokenError
 from typing import Annotated, Dict, Callable
-from fastapi import BackgroundTasks, HTTPException, Depends, status
-from fastapi import UploadFile, File, Form
+from fastapi import BackgroundTasks, HTTPException, Depends
+from fastapi import UploadFile, File, Form, Response, status
 from psycopg2.errors import ForeignKeyViolation
 
 from entities.users.models import UserModel, EmailVerificationModel
 from auth import (
     AuthorizationService,
-    JWTDecoder,
+    RefreshTokenValidationService,
     PayloadTokenModel,
+    RedisClient,
+    JWTDecoder,
+    get_redis_client,
     get_jwt_decoder
 )
 from core.tasks import email_sending_task, EmailTokenPayloadModel
@@ -18,6 +21,8 @@ from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
 
+
+refresh_token_validation_service = RefreshTokenValidationService()
 
 user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
@@ -80,7 +85,7 @@ class UserUpdateService:
                     detail='invalid file type'
                 )
 
-            self.file_writer(photo_path)
+            self.file_writer(photo_path, photo.file.read())
             fields["photo_path"] = photo_path
         elif clear_photo:
             if not exists(photo_path):
@@ -109,6 +114,48 @@ class UserUpdateService:
         user = self.user_data_access_obj.update(payload.sub, **fields)
 
         return self.converter(user)[0]
+
+
+class UserRemovalService:
+    def __init__(
+            self,
+            file_deleter: Callable = delete_file,
+            redis_client: RedisClient = get_redis_client(),
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel),
+    ):
+        self.file_delter = file_deleter
+        self.redis_client = redis_client
+        self.jwt_decoder = jwt_decoder
+        self.user_data_access_obj = user_dao
+        self.converter = converter
+
+    def __call__(
+            self,
+            response: Response,
+            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
+    ) -> UserModel:
+        payload = self.jwt_decoder(refresh_token)
+        payload = PayloadTokenModel(**payload)
+
+        admins = self.user_data_access_obj.get_admins(2)
+        if len(admins) == 1 and payload.sub == admins[0][0]:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="deletion not available"
+            )
+
+        response.delete_cookie(config.COOKIE_KEY)
+        self.redis_client.delete_user(payload.sub)
+
+        user = self.user_data_access_obj.delete(payload.sub)
+        user = self.converter(user)[0]
+
+        if user.photo_path:
+            self.file_delter(user.photo_path)
+
+        return user
 
 
 class EmailVerificationService:
@@ -183,5 +230,6 @@ class RoleManagementService:
 # dependencies
 user_fetch_service = UserFetchService()
 user_update_service = UserUpdateService()
+user_removal_service = UserRemovalService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()

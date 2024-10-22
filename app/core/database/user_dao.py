@@ -101,8 +101,47 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchall()
 
-    def delete(self):
-        pass
+    def delete(self, user_id: int) -> list:
+        self.__cursor.execute(
+            """
+                DELETE
+                FROM users
+                WHERE user_id = %s
+                RETURNING 
+                    user_id,
+                    role_id, 
+                    username,
+                    email,
+                    photo_path;
+            """,
+            [user_id]
+        )
+
+        return self.__cursor.fetchall()
+
+    def get_admins(self, role_id: int = 1) -> list:
+        """
+        :param role_id: параметр, указывающий, от какой роли
+               будут отбираться аккаунты (не включительно)
+        """
+
+        self.__cursor.execute(
+            """
+                SELECT
+                    users.user_id,
+                    role.role_id,
+                    role.role_name,
+                    users.username,
+                    users.photo_path
+                FROM 
+                    users INNER JOIN role
+                    ON users.role_id = role.role_id
+                WHERE role.role_id > %s; 
+            """,
+            [role_id]
+        )
+
+        return self.__cursor.fetchall()
 
     def get_user_by_username(self, username: str) -> list:
         # извлекается хеш пароля!

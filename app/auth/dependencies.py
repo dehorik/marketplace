@@ -16,8 +16,8 @@ from auth.models import (
     PayloadTokenModel
 )
 from auth.redis_client import RedisClient, get_redis_client
-from auth.exceptions import NonExistentUserError, NonExistentTokenError
 from auth.hashing_psw import get_password_hash, verify_password
+from auth.exceptions import NonExistentUserError
 from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
 from utils import Converter
@@ -125,6 +125,51 @@ class LoginService:
         )
 
 
+class RefreshTokenValidationService:
+    def __init__(
+            self,
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            redis_client: RedisClient = get_redis_client()
+    ):
+        self.jwt_decoder = jwt_decoder
+        self.redis_client = redis_client
+
+    def __call__(
+            self,
+            refresh_token: Annotated[str | None, Cookie()] = None
+    ) -> str:
+        if refresh_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='not authenticated'
+            )
+
+        try:
+            payload = self.jwt_decoder(refresh_token)
+            payload = PayloadTokenModel(**payload)
+
+            if refresh_token not in self.redis_client.get_tokens(payload.sub):
+                # если refresh токена в redis нет - им кто-то уже воспользовался
+                # для безопасности пользователя
+                # следует удалить все его refresh токены
+                self.redis_client.delete_user(payload.sub)
+
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='not authenticated'
+                )
+
+            return refresh_token
+        except (InvalidTokenError, NonExistentUserError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='not authenticated'
+            )
+
+
+refresh_token_validation_service = RefreshTokenValidationService()
+
+
 class LogoutService:
     def __init__(
             self,
@@ -137,33 +182,12 @@ class LogoutService:
     def __call__(
             self,
             response: Response,
-            refresh_token: Annotated[str | None, Cookie()] = None
+            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
     ) -> None:
-        if refresh_token is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='unauthorized'
-            )
-
-        try:
-            response.delete_cookie(config.COOKIE_KEY)
-            payload = self.jwt_decoder(refresh_token)
-            self.redis_client.delete_token(payload['sub'], refresh_token)
-        except NonExistentTokenError:
-            # если refresh токена в redis нет - им кто-то уже воспользовался
-            # для безопасности пользователя
-            # следует удалить все его refresh токены
-            self.redis_client.delete_user(payload['sub'])
-
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='invalid token'
-            )
-        except (InvalidTokenError, NonExistentUserError):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='invalid token'
-            )
+        response.delete_cookie(config.COOKIE_KEY)
+        payload = self.jwt_decoder(refresh_token)
+        payload = PayloadTokenModel(**payload)
+        self.redis_client.delete_token(payload.sub, refresh_token)
 
 
 class TokenRefreshService:
@@ -182,44 +206,22 @@ class TokenRefreshService:
     def __call__(
             self,
             response: Response,
-            refresh_token: Annotated[str | None, Cookie()] = None
+            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
     ) -> AccessTokenModel:
-        if refresh_token is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='unauthorized'
-            )
+        response.delete_cookie(config.COOKIE_KEY)
+        payload = self.jwt_decoder(refresh_token)
+        payload = PayloadTokenModel(**payload)
+        self.redis_client.delete_token(payload.sub, refresh_token)
 
-        try:
-            response.delete_cookie(config.COOKIE_KEY)
-            payload = PayloadTokenModel(**self.jwt_decoder(refresh_token))
-            self.redis_client.delete_token(payload.sub, refresh_token)
+        refresh_token = self.refresh_token_encoder(payload)
+        access_token = self.access_token_encoder(payload)
 
-            refresh_token = self.refresh_token_encoder(payload)
-            access_token = self.access_token_encoder(payload)
+        set_refresh_cookie(response, refresh_token)
+        self.redis_client.append_token(payload.sub, refresh_token)
 
-            set_refresh_cookie(response, refresh_token)
-            self.redis_client.append_token(payload.sub, refresh_token)
-
-            return AccessTokenModel(
-                access_token=access_token
-            )
-        except NonExistentTokenError:
-            # если рефреш токена нет в redis - им кто-то
-            # воспользовался вместо пользователя
-            # (удалим все рефреш токены пользователя у себя,
-            # тем самым удалив и токен злоумышленника)
-            self.redis_client.delete_user(payload.sub)
-
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='invalid token'
-            )
-        except (InvalidTokenError, NonExistentUserError):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='invalid token'
-            )
+        return AccessTokenModel(
+            access_token=access_token
+        )
 
 
 class AccessTokenValidationService:
@@ -237,9 +239,9 @@ class AccessTokenValidationService:
         try:
             return PayloadTokenModel(**self.jwt_decoder(token.credentials))
         except InvalidTokenError:
-            raise HTTPException(
+            HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='invalid token'
+                detail='not authenticated'
             )
 
 
