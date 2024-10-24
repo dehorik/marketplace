@@ -1,3 +1,5 @@
+from typing import List
+from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -8,6 +10,7 @@ class UserModel(BaseModel):
     role_id: int
     username: str = Field(min_length=6, max_length=16)
     email: EmailStr | None = None
+    registration_date: datetime
     photo_path: str | None = None
 
 
@@ -22,6 +25,10 @@ class AdminModel(BaseModel):
     role_name: str
     username: str = Field(min_length=6, max_length=16)
     photo_path: str | None = None
+
+
+class AdminListModel(BaseModel):
+    admins: List[AdminModel]
 
 
 class EmailVerificationModel(BaseModel):

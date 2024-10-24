@@ -9,10 +9,7 @@ from entities.orders.dependencies import (
 from entities.orders.models import CartItemModel, CartItemCardListModel
 
 
-router = APIRouter(
-    prefix='/orders',
-    tags=['orders']
-)
+router = APIRouter(prefix='/orders', tags=['orders'])
 
 
 @router.post(

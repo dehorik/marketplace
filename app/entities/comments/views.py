@@ -10,10 +10,7 @@ from entities.comments.dependencies import (
 from entities.comments.models import CommentModel, CommentItemListModel
 
 
-router = APIRouter(
-    prefix='/comments',
-    tags=['comments']
-)
+router = APIRouter(prefix='/comments', tags=['comments'])
 
 
 @router.post(

@@ -14,10 +14,7 @@ from auth.models import ExtendedUserModel, AccessTokenModel
 from core.settings import ROOT_PATH
 
 
-router = APIRouter(
-    prefix='/auth',
-    tags=['auth']
-)
+router = APIRouter(prefix='/auth', tags=['auth'])
 
 
 templates = Jinja2Templates(

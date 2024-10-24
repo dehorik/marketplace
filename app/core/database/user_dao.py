@@ -6,10 +6,12 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с пользователями"""
 
     def __init__(self, session: Session):
+        print("start")
         self.__session = session
         self.__cursor = session.get_cursor()
 
     def __del__(self):
+        print("stop")
         self.close()
 
     def close(self) -> None:
@@ -24,15 +26,17 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 INSERT INTO users (
                     role_id, 
                     username, 
-                    hashed_password
+                    hashed_password,
+                    registration_date
                 )
                 VALUES
-                    (1, %s, %s)
+                    (1, %s, %s, CURRENT_DATE)
                 RETURNING 
                     user_id,
                     role_id, 
                     username,
                     email,
+                    registration_date,
                     photo_path;
             """,
             [username, hashed_password]
@@ -48,6 +52,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     role_id, 
                     username, 
                     email, 
+                    registration_date,
                     photo_path
                 FROM users
                 WHERE user_id = %s;
@@ -66,6 +71,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                         role_id, 
                         username,
                         email,
+                        registration_date,
                         photo_path
                     FROM users
                     WHERE user_id = {user_id};
@@ -95,6 +101,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     role_id, 
                     username,
                     email,
+                    registration_date,
                     photo_path;
             """
         )
@@ -112,6 +119,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     role_id, 
                     username,
                     email,
+                    registration_date,
                     photo_path;
             """,
             [user_id]
@@ -136,7 +144,8 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 FROM 
                     users INNER JOIN role
                     ON users.role_id = role.role_id
-                WHERE role.role_id > %s; 
+                WHERE role.role_id > %s
+                ORDER BY role.role_id DESC, users.username ASC;
             """,
             [role_id]
         )
@@ -153,6 +162,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     role_id, 
                     username,
                     email,
+                    registration_date,
                     photo_path,
                     hashed_password
                 FROM users
@@ -174,6 +184,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     role_id, 
                     username,
                     email,
+                    registration_date,
                     photo_path;
             """,
             [role_id, user_id]

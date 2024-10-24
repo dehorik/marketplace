@@ -6,7 +6,12 @@ from fastapi import BackgroundTasks, HTTPException, Depends
 from fastapi import UploadFile, File, Form, Response, status
 from psycopg2.errors import ForeignKeyViolation
 
-from entities.users.models import UserModel, EmailVerificationModel
+from entities.users.models import (
+    UserModel,
+    AdminModel,
+    AdminListModel,
+    EmailVerificationModel
+)
 from auth import (
     AuthorizationService,
     RefreshTokenValidationService,
@@ -227,9 +232,30 @@ class RoleManagementService:
         return self.converter(user)[0]
 
 
+class AdminFetchService:
+    def __init__(
+            self,
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(AdminModel)
+    ):
+        self.user_data_access_obj = user_dao
+        self.converter = converter
+
+    def __call__(
+            self,
+            payload: Annotated[PayloadTokenModel, Depends(superuser_dependency)]
+    ) -> AdminListModel:
+        admins = self.user_data_access_obj.get_admins()
+
+        return AdminListModel(
+            admins=self.converter(admins)
+        )
+
+
 # dependencies
 user_fetch_service = UserFetchService()
 user_update_service = UserUpdateService()
 user_removal_service = UserRemovalService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()
+admin_fetch_service = AdminFetchService()

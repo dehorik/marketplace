@@ -25,6 +25,7 @@ def create_users_table(sql_cursor: cursor) -> None:
                 username VARCHAR(255),
                 hashed_password VARCHAR(255),
                 email VARCHAR(255) DEFAULT NULL,
+                registration_date DATE,
                 photo_path VARCHAR(255) DEFAULT NULL,
                 
                 FOREIGN KEY (role_id) 
@@ -128,10 +129,11 @@ def create_owner_account(sql_cursor: cursor) -> None:
             INSERT INTO users (
                 role_id,
                 username,
-                hashed_password
+                hashed_password,
+                registration_date
             )    
             VALUES (
-                (SELECT MAX(role_id) FROM role), %s, %s
+                (SELECT MAX(role_id) FROM role), %s, %s, CURRENT_DATE
             );
         """,
         [config.SUPERUSER_USERNAME, password_hash]

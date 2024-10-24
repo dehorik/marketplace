@@ -9,6 +9,7 @@ class UserModel(BaseModel):
     role_id: int
     username: str = Field(min_length=6, max_length=16)
     email: EmailStr | None = None
+    registration_date: datetime
     photo_path: str | None = None
 
 

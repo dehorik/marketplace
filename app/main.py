@@ -25,10 +25,7 @@ async def lifespan(application: FastAPI):
     redis.close()
 
 
-app = FastAPI(
-    lifespan=lifespan,
-    title='marketplace'
-)
+app = FastAPI(lifespan=lifespan, title='marketplace')
 
 app.mount(
     '/static',

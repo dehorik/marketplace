@@ -9,16 +9,14 @@ from entities.users.dependencies import (
     user_update_service,
     user_removal_service,
     email_verification_service,
-    role_management_service
+    role_management_service,
+    admin_fetch_service
 )
-from entities.users.models import UserModel
+from entities.users.models import UserModel, AdminListModel
 from core.settings import ROOT_PATH
 
 
-router = APIRouter(
-    prefix='/users',
-    tags=['users']
-)
+router = APIRouter(prefix='/users', tags=['users'])
 
 
 templates = Jinja2Templates(
@@ -60,3 +58,9 @@ def verify_email(
 @router.patch("/role", response_model=UserModel)
 def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
     return user
+
+@router.get("/admins", response_model=AdminListModel)
+def get_admins(
+        admins: Annotated[AdminListModel, Depends(admin_fetch_service)]
+):
+    return admins
