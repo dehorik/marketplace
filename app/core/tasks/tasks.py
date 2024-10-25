@@ -1,16 +1,22 @@
 import os
-import datetime
 from typing import Callable
+from datetime import UTC, datetime, timedelta
 from jinja2 import Environment, FileSystemLoader
 
-from core.tasks.models import EmailTokenPayloadModel
+
 from auth import JWTEncoder, get_jwt_encoder
-from core.database import CommentDataAccessObject, get_comment_dao
+from core.tasks.models import EmailTokenPayloadModel, OrderLetterDataModel
+from core.database import (
+    CommentDataAccessObject,
+    OrderDataAccessObject,
+    get_comment_dao,
+    get_order_dao
+)
 from core.settings import ROOT_PATH
-from utils import EmailSender, get_email_sender, delete_file
+from utils import EmailSender, get_email_sender, delete_file, Converter
 
 
-class EmailSendingTask:
+class EmailVerificationTask:
     def __init__(
             self,
             jwt_encoder: JWTEncoder = get_jwt_encoder(),
@@ -20,8 +26,8 @@ class EmailSendingTask:
         self.email_sender = email_sender
 
     def __call__(self, user_id: int, email: str) -> None:
-        iat = datetime.datetime.now(datetime.UTC)
-        exp = iat + datetime.timedelta(minutes=30)
+        iat = datetime.now(UTC)
+        exp = iat + timedelta(minutes=30)
         payload = EmailTokenPayloadModel(
             sub=user_id,
             email=email,
@@ -34,7 +40,7 @@ class EmailSendingTask:
         loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
         env = Environment(loader=loader)
         template = env.get_template("email_verification_letter.html")
-        letter = template.render(token=token)
+        letter = template.render(token=token, year=datetime.now().year)
 
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 
@@ -58,5 +64,37 @@ class ProductRemovalTask:
                 self.file_deleter(photo_path)
 
 
-email_sending_task = EmailSendingTask()
+class OrderNotificationTask:
+    def __init__(
+            self,
+            email_sender: EmailSender = get_email_sender(),
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            converter: Converter = Converter(OrderLetterDataModel)
+    ):
+        self.email_sender = email_sender
+        self.order_data_access_obj = order_dao
+        self.converter = converter
+
+    def __call__(self, order_id: int) -> None:
+        order = self.order_data_access_obj.get_order_letter_data(order_id)
+        order = self.converter(order)[0]
+
+        if not order.email:
+            return
+
+        date_start = order.date_start.strftime("%d-%m-%Y %H:%M").replace("-", ".")
+        date_end = order.date_start.strftime("%d-%m-%Y %H:%M").replace("-", ".")
+        order.date_start = date_start
+        order.date_end = date_end
+
+        loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
+        env = Environment(loader=loader)
+        template = env.get_template("order_creation_letter.html")
+        letter = template.render(order=order, year=datetime.now().year)
+
+        self.email_sender.send_letter(order.email, "Новый заказ", letter)
+
+
+email_verification_task = EmailVerificationTask()
 product_removal_task = ProductRemovalTask()
+order_notification_task = OrderNotificationTask()

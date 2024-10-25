@@ -93,6 +93,28 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchall()
 
+    def get_order_letter_data(self, order_id: int) -> list:
+        self.__cursor.execute(
+            """
+                SELECT 
+                    orders.order_id,
+                    orders.date_start,
+                    orders.date_end,
+                    orders.delivery_address,
+                    users.username,
+                    users.email,
+                    product.product_name,
+                    product.product_price
+                FROM product
+                    INNER JOIN orders USING(product_id)
+                    INNER JOIN users USING(user_id)
+                WHERE order_id = %s;
+            """,
+            [order_id]
+        )
+
+        return self.__cursor.fetchall()
+
     def get_all_orders(self, product_id: int) -> list:
         """Получить все заказы определенного товара"""
 

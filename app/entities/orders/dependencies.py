@@ -1,7 +1,7 @@
 from random import randint
 from typing import Annotated
 from datetime import UTC, datetime, timedelta
-from fastapi import HTTPException, Depends, Query, status
+from fastapi import HTTPException, BackgroundTasks, Depends, Query, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.orders.models import (
@@ -11,6 +11,7 @@ from entities.orders.models import (
     OrderModel,
     OrderCreationModel
 )
+from core.tasks import order_notification_task
 from auth import PayloadTokenModel, AuthorizationService
 from core.database import OrderDataAccessObject, get_order_dao
 from utils import Converter
@@ -126,6 +127,7 @@ class OrderCreationService:
 
     def __call__(
             self,
+            background_tasks: BackgroundTasks,
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             data: OrderCreationModel
     ) -> OrderModel:
@@ -138,8 +140,11 @@ class OrderCreationService:
                 date_end,
                 data.delivery_address
             )
+            order = self.converter(order)[0]
 
-            return self.converter(order)[0]
+            background_tasks.add_task(order_notification_task, order.order_id)
+
+            return order
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

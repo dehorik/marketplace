@@ -1,7 +1,9 @@
 from core.tasks.tasks import (
-    EmailSendingTask,
+    EmailVerificationTask,
     ProductRemovalTask,
-    email_sending_task,
-    product_removal_task
+    OrderNotificationTask,
+    email_verification_task,
+    product_removal_task,
+    order_notification_task
 )
 from core.tasks.models import EmailTokenPayloadModel

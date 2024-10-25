@@ -21,7 +21,7 @@ from auth import (
     get_redis_client,
     get_jwt_decoder
 )
-from core.tasks import email_sending_task, EmailTokenPayloadModel
+from core.tasks import email_verification_task, EmailTokenPayloadModel
 from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
 from utils import Converter, exists, write_file, delete_file
@@ -112,7 +112,10 @@ class UserUpdateService:
             fields["username"] = username
 
         if email:
-            background_tasks.add_task(email_sending_task, payload.sub, email)
+            background_tasks.add_task(
+                email_verification_task,
+                payload.sub, email
+            )
         elif clear_email:
             fields["email"] = None
 
