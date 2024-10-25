@@ -1,5 +1,5 @@
-import datetime
 from pathlib import Path
+from datetime import UTC, datetime, timedelta
 import jwt
 
 from auth.models import PayloadTokenModel, UserModel
@@ -69,12 +69,12 @@ class AccessTokenEncoder:
             raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.now(UTC)
         payload = {
             "token_type": "access",
             "sub": sub,
             "iat": now,
-            "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
+            "exp": now + timedelta(minutes=self.__exp_minutes)
         }
 
         return self.__jwt_encoder(payload)
@@ -96,12 +96,12 @@ class RefreshTokenEncoder:
             raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.now(UTC)
         payload = {
             "token_type": "refresh",
             "sub": sub,
             "iat": now,
-            "exp": now + datetime.timedelta(minutes=self.__exp_minutes)
+            "exp": now + timedelta(minutes=self.__exp_minutes)
         }
 
         return self.__jwt_encoder(payload)

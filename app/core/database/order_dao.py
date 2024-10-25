@@ -1,3 +1,4 @@
+from datetime import datetime
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 
@@ -18,17 +19,79 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self):
-        pass
+    def create(
+            self,
+            user_id: int,
+            product_id: int,
+            date_end: datetime,
+            delivery_address: str
+    ) -> list:
+        self.__cursor.execute(
+            """
+                INSERT INTO orders (
+                    user_id,
+                    product_id,
+                    date_start,
+                    date_end,
+                    delivery_address
+                )
+                VALUES (%s, %s, CURRENT_DATE, %s, %s)
+                RETURNING *;
+            """,
+            [user_id, product_id, date_end, delivery_address]
+        )
 
-    def read(self):
-        pass
+        return self.__cursor.fetchall()
+
+    def read(
+            self,
+            user_id: int,
+            amount: int = 10,
+            last_order_id: int | None = None
+    ) -> list:
+        condition = f"WHERE orders.user_id = {user_id}"
+
+        if last_order_id:
+            condition += f"AND orders.order_id < {last_order_id}"
+
+        self.__cursor.execute(
+            f"""
+                SELECT 
+                    orders.order_id,
+                    product.product_id,
+                    orders.user_id,
+                    orders.date_start,
+                    orders.date_end,
+                    orders.delivery_address,
+                    product.product_name,
+                    product.product_price,
+                    product.is_hidden,
+                    product.photo_path
+                FROM 
+                    product INNER JOIN orders
+                    ON product.product_id = orders.product_id
+                {condition}
+                ORDER BY orders.date_start DESC
+                LIMIT {amount};
+            """
+        )
+
+        return self.__cursor.fetchall()
 
     def update(self):
         pass
 
-    def delete(self):
-        pass
+    def delete(self, order_id: int) -> list:
+        self.__cursor.execute(
+            """
+                DELETE 
+                FROM orders
+                WHERE order_id = %s
+                RETURNING *;
+            """
+        )
+
+        return self.__cursor.fetchall()
 
     def get_all_orders(self, product_id: int) -> list:
         """Получить все заказы определенного товара"""

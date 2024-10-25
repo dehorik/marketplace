@@ -40,12 +40,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     (%s, %s, %s, %s)
                 RETURNING product_id;
             """,
-            [
-                product_name,
-                product_price,
-                product_description,
-                is_hidden
-            ]
+            [product_name, product_price, product_description, is_hidden]
         )
 
         product_id = self.__cursor.fetchone()[0]
@@ -54,7 +49,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         self.__cursor.execute(
             """                 
                 UPDATE product
-                    SET photo_path = %s
+                SET photo_path = %s
                 WHERE product_id = %s
                 RETURNING *;
             """,
@@ -72,6 +67,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     product_price, 
                     product_description,
                     is_hidden,
+                    amount_orders,
                     photo_path,
                     (
                         SELECT 
@@ -119,7 +115,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         self.__cursor.execute(
             f"""
                 UPDATE product 
-                    SET {set_values}                
+                SET {set_values}                
                 WHERE product_id = {product_id}
                 RETURNING *;
             """
@@ -145,13 +141,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             amount: int = 9,
             last_product_id: int | None = None
     ) -> list:
+        condition = "WHERE product.is_hidden != true"
+
         if last_product_id:
-            condition = f"""
-                WHERE product.product_id < {last_product_id} 
-                AND product.is_hidden != true
-            """
-        else:
-            condition = "WHERE product.is_hidden != true"
+            condition += f"AND product.product_id < {last_product_id}"
 
         self.__cursor.execute(
             f"""

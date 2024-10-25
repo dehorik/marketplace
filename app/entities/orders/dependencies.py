@@ -1,11 +1,15 @@
+from random import randint
 from typing import Annotated
+from datetime import UTC, datetime, timedelta
 from fastapi import HTTPException, Depends, Query, status
-from psycopg2.errors import ForeignKeyViolation
+from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.orders.models import (
     CartItemModel,
     CartItemCardModel,
-    CartItemCardListModel
+    CartItemCardListModel,
+    OrderModel,
+    OrderCreationModel
 )
 from auth import PayloadTokenModel, AuthorizationService
 from core.database import OrderDataAccessObject, get_order_dao
@@ -111,7 +115,40 @@ class CartItemLoaderService:
         )
 
 
+class OrderCreationService:
+    def __init__(
+            self,
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            converter: Converter = Converter(OrderModel)
+    ):
+        self.order_data_access_obj = order_dao
+        self.converter = converter
+
+    def __call__(
+            self,
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            data: OrderCreationModel
+    ) -> OrderModel:
+        try:
+            now = datetime.now(UTC)
+            date_end = now + timedelta(days=randint(1, 3))
+            order = self.order_data_access_obj.create(
+                payload.sub,
+                data.product_id,
+                date_end,
+                data.delivery_address
+            )
+
+            return self.converter(order)[0]
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="the product cannot be ordered"
+            )
+
+
 # dependencies
 cart_item_creation_service = CartItemCreationService()
 cart_item_removal_service = CartItemRemovalService()
 cart_item_loader_service = CartItemLoaderService()
+order_creation_service = OrderCreationService()

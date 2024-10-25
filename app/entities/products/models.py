@@ -10,6 +10,7 @@ class ProductModel(BaseModel):
     product_price: int = Field(gt=0, le=100000)
     product_description: str = Field(min_length=2, max_length=300)
     is_hidden: bool = False
+    amount_orders: int
     photo_path: str
 
 

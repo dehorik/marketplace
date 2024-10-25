@@ -59,7 +59,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             self.__cursor.execute(
                 """
                     UPDATE comment 
-                        SET photo_path = %s
+                    SET photo_path = %s
                     WHERE comment_id = %s
                     RETURNING *;
                 """,
@@ -129,7 +129,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         self.__cursor.execute(
             f"""
                 UPDATE comment 
-                    SET {set_values}            
+                SET {set_values}            
                 WHERE comment_id = {comment_id}
                 RETURNING *;
             """

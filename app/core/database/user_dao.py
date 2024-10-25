@@ -6,12 +6,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     """Класс для выполнения crud операций с пользователями"""
 
     def __init__(self, session: Session):
-        print("start")
         self.__session = session
         self.__cursor = session.get_cursor()
 
     def __del__(self):
-        print("stop")
         self.close()
 
     def close(self) -> None:
@@ -94,7 +92,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         self.__cursor.execute(
             f"""
                 UPDATE users
-                    SET {set_values}
+                SET {set_values}
                 WHERE user_id = {user_id}
                 RETURNING 
                     user_id,
@@ -177,7 +175,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         self.__cursor.execute(
             """
                 UPDATE users
-                    SET role_id = %s
+                SET role_id = %s
                 WHERE user_id = %s
                 RETURNING
                     user_id,

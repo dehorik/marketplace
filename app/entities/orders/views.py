@@ -4,9 +4,14 @@ from fastapi import APIRouter, Depends, status
 from entities.orders.dependencies import (
     cart_item_creation_service,
     cart_item_removal_service,
-    cart_item_loader_service
+    cart_item_loader_service,
+    order_creation_service
 )
-from entities.orders.models import CartItemModel, CartItemCardListModel
+from entities.orders.models import (
+    CartItemModel,
+    CartItemCardListModel,
+    OrderModel
+)
 
 
 router = APIRouter(prefix='/orders', tags=['orders'])
@@ -33,3 +38,13 @@ def get_cart(
         cart_items: Annotated[CartItemCardListModel, Depends(cart_item_loader_service)]
 ):
     return cart_items
+
+@router.post(
+    "/",
+    response_model=OrderModel,
+    status_code=status.HTTP_201_CREATED
+)
+def create_order(
+        order: Annotated[OrderModel, Depends(order_creation_service)]
+):
+    return order

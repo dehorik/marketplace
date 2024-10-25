@@ -43,6 +43,7 @@ def create_product_table(sql_cursor: cursor) -> None:
                 product_price INT,
                 product_description TEXT,
                 is_hidden BOOLEAN DEFAULT false,
+                amount_orders INT DEFAULT 0,
                 photo_path VARCHAR(255)
             );
         """
@@ -75,8 +76,8 @@ def create_orders_table(sql_cursor: cursor) -> None:
         """
             CREATE TABLE IF NOT EXISTS orders (
                 order_id SERIAL PRIMARY KEY,
-                product_id INT,
                 user_id INT,
+                product_id INT,
                 date_start DATE,
                 date_end DATE,
                 delivery_address VARCHAR(255),
@@ -88,6 +89,38 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 REFERENCES users (user_id)
                 ON DELETE CASCADE
             );
+            
+            CREATE FUNCTION check_product() 
+            RETURNS TRIGGER AS $check_product$
+                BEGIN
+                    IF EXISTS (
+                        SELECT product_id
+                        FROM product 
+                        WHERE product_id = NEW.product_id AND is_hidden = true
+                    ) THEN
+                        RAISE EXCEPTION 'product is hidden';
+                    END IF;
+                RETURN NEW;                 
+                END;
+            $check_product$ LANGUAGE plpgsql;
+            
+            CREATE FUNCTION increase_amount_orders() 
+            RETURNS TRIGGER AS $increase_amount_orders$
+                BEGIN 
+                    UPDATE product
+                    SET amount_orders = amount_orders + 1
+                    WHERE product_id = NEW.product_id;
+                RETURN NEW; 
+                END; 
+            $increase_amount_orders$ LANGUAGE plpgsql;
+                
+            CREATE TRIGGER check_product
+            BEFORE INSERT ON orders
+            FOR EACH ROW EXECUTE FUNCTION check_product(); 
+            
+            CREATE TRIGGER increase_amount_orders
+            AFTER INSERT ON orders
+            FOR EACH ROW EXECUTE FUNCTION increase_amount_orders();
         """
     )
 
