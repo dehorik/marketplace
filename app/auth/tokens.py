@@ -31,13 +31,13 @@ class JWTDecoder:
         self.__algorithm = algorithm
 
     def __call__(self, token: str | bytes) -> dict:
-        dt = jwt.decode(
+        payload = jwt.decode(
             jwt=token,
             key=self.__public_key,
             algorithms=[self.__algorithm]
         )
 
-        return dt
+        return payload
 
 
 def get_jwt_encoder() -> JWTEncoder:

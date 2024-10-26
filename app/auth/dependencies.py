@@ -237,9 +237,12 @@ class AccessTokenValidationService:
             ]
     ) -> PayloadTokenModel:
         try:
-            return PayloadTokenModel(**self.jwt_decoder(token.credentials))
+            payload = self.jwt_decoder(token.credentials)
+            payload = PayloadTokenModel(**payload)
+
+            return payload
         except InvalidTokenError:
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='not authenticated'
             )

@@ -3,7 +3,6 @@ from typing import Callable
 from datetime import UTC, datetime, timedelta
 from jinja2 import Environment, FileSystemLoader
 
-
 from auth import JWTEncoder, get_jwt_encoder
 from core.tasks.models import EmailTokenPayloadModel, OrderLetterDataModel
 from core.database import (
@@ -82,10 +81,8 @@ class OrderNotificationTask:
         if not order.email:
             return
 
-        date_start = order.date_start.strftime("%d-%m-%Y %H:%M").replace("-", ".")
-        date_end = order.date_start.strftime("%d-%m-%Y %H:%M").replace("-", ".")
-        order.date_start = date_start
-        order.date_end = date_end
+        order.date_start = order.date_start.strftime("%d.%m.%Y %H:%M")
+        order.date_end = order.date_end.strftime("%d.%m.%Y %H:%M")
 
         loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
         env = Environment(loader=loader)

@@ -35,7 +35,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     date_end,
                     delivery_address
                 )
-                VALUES (%s, %s, CURRENT_DATE, %s, %s)
+                VALUES (%s, %s, NOW(), %s, %s)
                 RETURNING *;
             """,
             [user_id, product_id, date_end, delivery_address]

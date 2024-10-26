@@ -25,7 +25,7 @@ def create_users_table(sql_cursor: cursor) -> None:
                 username VARCHAR(255),
                 hashed_password VARCHAR(255),
                 email VARCHAR(255) DEFAULT NULL,
-                registration_date DATE,
+                registration_date TIMESTAMP WITH TIME ZONE,
                 photo_path VARCHAR(255) DEFAULT NULL,
                 
                 FOREIGN KEY (role_id) 
@@ -57,7 +57,7 @@ def create_comment_table(sql_cursor: cursor) -> None:
                 user_id INT,
                 product_id INT,
                 comment_rating INT,
-                comment_date DATE,
+                comment_date TIMESTAMP WITH TIME ZONE,
                 comment_text VARCHAR(255) DEFAULT NULL,
                 photo_path VARCHAR(255) DEFAULT NULL,
             
@@ -78,8 +78,8 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 order_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
-                date_start DATE,
-                date_end DATE,
+                date_start TIMESTAMP WITH TIME ZONE,
+                date_end TIMESTAMP WITH TIME ZONE,
                 delivery_address VARCHAR(255),
                 
                 FOREIGN KEY (product_id) 
@@ -166,7 +166,7 @@ def create_owner_account(sql_cursor: cursor) -> None:
                 registration_date
             )    
             VALUES (
-                (SELECT MAX(role_id) FROM role), %s, %s, CURRENT_DATE
+                (SELECT MAX(role_id) FROM role), %s, %s, NOW()
             );
         """,
         [config.SUPERUSER_USERNAME, password_hash]
