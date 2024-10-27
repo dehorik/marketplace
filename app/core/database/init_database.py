@@ -47,6 +47,21 @@ def create_users_table(sql_cursor: cursor) -> None:
                 END;
             $check_username$ LANGUAGE plpgsql;
             
+            CREATE FUNCTION check_email()
+            RETURNS TRIGGER AS $check_email$
+                BEGIN
+                    IF EXISTS (
+                        SELECT email
+                        FROM users 
+                        WHERE email = NEW.email
+                    )
+                    THEN 
+                        RAISE EXCEPTION 'email is already taken';
+                    END IF;
+                RETURN NEW;
+                END;
+            $check_email$ LANGUAGE plpgsql;
+            
             CREATE FUNCTION check_role()
             RETURNS TRIGGER AS $check_role$
                 BEGIN
@@ -62,17 +77,23 @@ def create_users_table(sql_cursor: cursor) -> None:
                 END;
             $check_role$ LANGUAGE plpgsql;
                 
+            CREATE TRIGGER check_username
+            BEFORE INSERT ON users
+            FOR EACH ROW
+            EXECUTE FUNCTION check_username();  
+                
             CREATE TRIGGER update_username
             BEFORE UPDATE ON users
             FOR EACH ROW 
             WHEN (OLD.username IS DISTINCT FROM NEW.username)
             EXECUTE FUNCTION check_username();
             
-            CREATE TRIGGER check_username
-            BEFORE INSERT ON users
+            CREATE TRIGGER update_email
+            BEFORE UPDATE ON users
             FOR EACH ROW
-            EXECUTE FUNCTION check_username();
-            
+            WHEN (OLD.email IS DISTINCT FROM NEW.email)
+            EXECUTE FUNCTION check_email();
+        
             CREATE TRIGGER check_role
             BEFORE DELETE ON users
             FOR EACH ROW EXECUTE FUNCTION check_role();

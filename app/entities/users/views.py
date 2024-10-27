@@ -10,7 +10,7 @@ from entities.users.dependencies import (
     user_removal_service,
     email_verification_service,
     role_management_service,
-    admin_fetch_service
+    fetch_admins_service
 )
 from entities.users.models import UserModel, AdminListModel
 from core.settings import ROOT_PATH
@@ -24,15 +24,15 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/me", response_class=HTMLResponse)
+@router.get("/me/home", response_class=HTMLResponse)
 def get_user_page():
     pass
 
-@router.get("/me/data", response_model=UserModel)
+@router.get("/me", response_model=UserModel)
 def get_user(user: Annotated[UserModel, Depends(user_fetch_service)]):
     return user
 
-@router.patch("/me/data", response_model=UserModel)
+@router.patch("/me", response_model=UserModel)
 def update_user(user: Annotated[UserModel, Depends(user_update_service)]):
     return user
 
@@ -61,6 +61,6 @@ def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
 
 @router.get("/admins", response_model=AdminListModel)
 def get_admins(
-        admins: Annotated[AdminListModel, Depends(admin_fetch_service)]
+        admins: Annotated[AdminListModel, Depends(fetch_admins_service)]
 ):
     return admins

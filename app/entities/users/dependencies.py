@@ -130,10 +130,10 @@ class UserUpdateService:
                 )
 
             return self.converter(user)[0]
-        except RaiseException:
+        except RaiseException as error:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="username is already taken"
+                detail=error
             )
 
 
@@ -203,6 +203,12 @@ class EmailVerificationService:
                 )
 
             return self.converter(user)[0]
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="email is already connected"
+            )
+
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -250,7 +256,7 @@ class RoleManagementService:
         return self.converter(user)[0]
 
 
-class AdminFetchService:
+class FetchAdminsService:
     def __init__(
             self,
             user_dao: UserDataAccessObject = get_user_dao(),
@@ -276,4 +282,4 @@ user_update_service = UserUpdateService()
 user_removal_service = UserRemovalService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()
-admin_fetch_service = AdminFetchService()
+fetch_admins_service = FetchAdminsService()
