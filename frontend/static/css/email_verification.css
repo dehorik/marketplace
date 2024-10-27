@@ -1,29 +1,35 @@
 body {
-    background-color: #f4f4f4;;
-}
-
-header {
-    margin: 35px 0 0 35px;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
-    width: 400px;
-    height: 300px;
-    margin: 70px auto;
-    text-align: center;
-    border: rgba(223,226,204,0.94) 3px solid;
-    border-radius: 10px;
+    max-width: 600px;
+    padding: 15px;
     background-color: white;
-    font-size: 20px;
-    font-family: Arial, sans-serif;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 200px auto;
 }
 
-.title {
-    font-size: 25px;
-    font-weight: 550;
-    margin: 50px 0 0 0;
+h1 {
+    color: #333;
 }
 
-.message {
-    margin: 80px 0 0 0;
+.button {
+     display: block;
+     width: 200px;
+     margin: 25px auto;
+     padding: 10px 15px;
+     color: white;
+     background-color: #007bff;
+     text-decoration: none;
+     border-radius: 5px;
+     text-align: center;
+ }
+
+.button:hover {
+    background-color: #0056b3;
 }

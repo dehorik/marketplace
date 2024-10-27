@@ -130,10 +130,10 @@ class UserUpdateService:
                 )
 
             return self.converter(user)[0]
-        except RaiseException as error:
+        except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=error
+                detail="username is already taken"
             )
 
 
