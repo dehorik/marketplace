@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from jinja2 import Environment, FileSystemLoader
 
 from auth import JWTEncoder, get_jwt_encoder
-from core.tasks.models import EmailTokenPayloadModel, OrderLetterDataModel
+from core.tasks.models import EmailTokenPayloadModel, OrderNotificationModel
 from core.database import (
     CommentDataAccessObject,
     OrderDataAccessObject,
@@ -68,7 +68,7 @@ class OrderNotificationTask:
             self,
             email_sender: EmailSender = get_email_sender(),
             order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderLetterDataModel)
+            converter: Converter = Converter(OrderNotificationModel)
     ):
         self.email_sender = email_sender
         self.order_data_access_obj = order_dao

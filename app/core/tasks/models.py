@@ -9,7 +9,7 @@ class EmailTokenPayloadModel(BaseModel):
     exp: datetime
 
 
-class OrderLetterDataModel(BaseModel):
+class OrderNotificationModel(BaseModel):
     order_id: int
     date_start: datetime | str
     date_end: datetime | str

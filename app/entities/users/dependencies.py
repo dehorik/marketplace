@@ -4,7 +4,7 @@ from jwt import InvalidTokenError
 from typing import Annotated, Dict, Callable
 from fastapi import BackgroundTasks, HTTPException, Depends
 from fastapi import UploadFile, File, Form, Response, status
-from psycopg2.errors import ForeignKeyViolation
+from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.users.models import (
     UserModel,
@@ -48,6 +48,13 @@ class UserFetchService:
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)]
     ) -> UserModel:
         user = self.user_data_access_obj.read(payload.sub)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
+            )
+
         return self.converter(user)[0]
 
 
@@ -102,15 +109,6 @@ class UserUpdateService:
             self.file_deleter(photo_path)
             fields["photo_path"] = None
 
-        if username:
-            if self.user_data_access_obj.get_user_by_username(username):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="username is already taken"
-                )
-
-            fields["username"] = username
-
         if email:
             background_tasks.add_task(
                 email_verification_task,
@@ -119,9 +117,24 @@ class UserUpdateService:
         elif clear_email:
             fields["email"] = None
 
-        user = self.user_data_access_obj.update(payload.sub, **fields)
+        if username:
+            fields["username"] = username
 
-        return self.converter(user)[0]
+        try:
+            user = self.user_data_access_obj.update(payload.sub, **fields)
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="user not found"
+                )
+
+            return self.converter(user)[0]
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="username is already taken"
+            )
 
 
 class UserRemovalService:
@@ -147,23 +160,19 @@ class UserRemovalService:
         payload = self.jwt_decoder(refresh_token)
         payload = PayloadTokenModel(**payload)
 
-        admins = self.user_data_access_obj.get_admins(2)
-        if len(admins) == 1 and payload.sub == admins[0][0]:
+        try:
+            user = self.user_data_access_obj.delete(payload.sub)
+            user = self.converter(user)[0]
+
+            response.delete_cookie(config.COOKIE_KEY)
+            self.redis_client.delete_user(payload.sub)
+
+            return user
+        except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="deletion not available"
             )
-
-        response.delete_cookie(config.COOKIE_KEY)
-        self.redis_client.delete_user(payload.sub)
-
-        user = self.user_data_access_obj.delete(payload.sub)
-        user = self.converter(user)[0]
-
-        if user.photo_path:
-            self.file_delter(user.photo_path)
-
-        return user
 
 
 class EmailVerificationService:
@@ -186,6 +195,12 @@ class EmailVerificationService:
                 user_id=payload.sub,
                 email=payload.email
             )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="user not found"
+                )
 
             return self.converter(user)[0]
         except InvalidTokenError:

@@ -2,6 +2,7 @@ from typing import Annotated
 from jwt.exceptions import InvalidTokenError
 from fastapi import HTTPException, Depends, Response, Cookie, Form, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from psycopg2.errors import RaiseException
 
 from auth.tokens import (
     JWTDecoder,
@@ -47,29 +48,29 @@ class RegistrationService:
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        if self.user_data_access_obj.get_user_by_username(username):
+        try:
+            user = self.user_data_access_obj.create(
+                username,
+                get_password_hash(password)
+            )
+            user = self.converter(user)[0]
+
+            access_token = self.access_token_encoder(user)
+            refresh_token = self.refresh_token_encoder(user)
+            set_refresh_cookie(response, refresh_token)
+            self.redis_client.append_token(user.user_id, refresh_token)
+
+            return ExtendedUserModel(
+                user=user,
+                token=AccessTokenModel(
+                    access_token=access_token
+                )
+            )
+        except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail='username is alredy taken'
             )
-
-        user = self.user_data_access_obj.create(
-            username,
-            get_password_hash(password)
-        )
-        user = self.converter(user)[0]
-
-        access_token = self.access_token_encoder(user)
-        refresh_token = self.refresh_token_encoder(user)
-        set_refresh_cookie(response, refresh_token)
-        self.redis_client.append_token(user.user_id, refresh_token)
-
-        return ExtendedUserModel(
-            user=user,
-            token=AccessTokenModel(
-                access_token=access_token
-            )
-        )
 
 
 class LoginService:

@@ -32,8 +32,3 @@ class OrderModel(BaseModel):
     date_start: datetime
     date_end: datetime
     delivery_address: str = Field(min_length=6, max_length=24)
-
-
-class OrderCreationModel(BaseModel):
-    product_id: int = Field(ge=1)
-    delivery_address: str = Field(min_length=6, max_length=24)

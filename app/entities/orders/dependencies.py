@@ -1,7 +1,7 @@
 from random import randint
 from typing import Annotated
 from datetime import UTC, datetime, timedelta
-from fastapi import HTTPException, BackgroundTasks, Depends, Query, status
+from fastapi import HTTPException, BackgroundTasks, Depends, Query, Form, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.orders.models import (
@@ -9,7 +9,6 @@ from entities.orders.models import (
     CartItemCardModel,
     CartItemCardListModel,
     OrderModel,
-    OrderCreationModel
 )
 from core.tasks import order_notification_task
 from auth import PayloadTokenModel, AuthorizationService
@@ -129,16 +128,17 @@ class OrderCreationService:
             self,
             background_tasks: BackgroundTasks,
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
-            data: OrderCreationModel
+            product_id: Annotated[int, Form(ge=1)],
+            delivery_address: Annotated[str, Form(min_length=6, max_length=30)]
     ) -> OrderModel:
         try:
             now = datetime.now(UTC)
             date_end = now + timedelta(days=randint(1, 3))
             order = self.order_data_access_obj.create(
                 payload.sub,
-                data.product_id,
+                product_id,
                 date_end,
-                data.delivery_address
+                delivery_address
             )
             order = self.converter(order)[0]
 

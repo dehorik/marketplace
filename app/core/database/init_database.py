@@ -9,7 +9,7 @@ from core.settings import config
 def create_role_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS role (
+            CREATE TABLE role (
                 role_id SERIAL PRIMARY KEY,
                 role_name VARCHAR(255)
             );
@@ -19,7 +19,7 @@ def create_role_table(sql_cursor: cursor) -> None:
 def create_users_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE users (
                 user_id SERIAL PRIMARY KEY,
                 role_id INT DEFAULT 1,
                 username VARCHAR(255),
@@ -31,13 +31,58 @@ def create_users_table(sql_cursor: cursor) -> None:
                 FOREIGN KEY (role_id) 
                 REFERENCES role (role_id)
             );
+            
+            CREATE FUNCTION check_username()
+            RETURNS TRIGGER AS $check_username$
+                BEGIN
+                    IF EXISTS (
+                        SELECT username 
+                        FROM users 
+                        WHERE username = NEW.username
+                    )
+                    THEN 
+                        RAISE EXCEPTION 'username is already taken';
+                    END IF;
+                RETURN NEW;
+                END;
+            $check_username$ LANGUAGE plpgsql;
+            
+            CREATE FUNCTION check_role()
+            RETURNS TRIGGER AS $check_role$
+                BEGIN
+                    IF (
+                        SELECT COUNT(user_id)
+                        FROM users
+                        WHERE role_id = (SELECT MAX(role_id) FROM role)
+                    ) = 1 AND OLD.role_id = (SELECT MAX(role_id) FROM role)
+                    THEN 
+                        RAISE EXCEPTION 'deletion not available';
+                    END IF;
+                RETURN OLD;
+                END;
+            $check_role$ LANGUAGE plpgsql;
+                
+            CREATE TRIGGER update_username
+            BEFORE UPDATE ON users
+            FOR EACH ROW 
+            WHEN (OLD.username IS DISTINCT FROM NEW.username)
+            EXECUTE FUNCTION check_username();
+            
+            CREATE TRIGGER check_username
+            BEFORE INSERT ON users
+            FOR EACH ROW
+            EXECUTE FUNCTION check_username();
+            
+            CREATE TRIGGER check_role
+            BEFORE DELETE ON users
+            FOR EACH ROW EXECUTE FUNCTION check_role();
         """
     )
 
 def create_product_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS product (
+            CREATE TABLE product (
                 product_id SERIAL PRIMARY KEY,
                 product_name VARCHAR(255),
                 product_price INT,
@@ -52,7 +97,7 @@ def create_product_table(sql_cursor: cursor) -> None:
 def create_comment_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS comment (
+            CREATE TABLE comment (
                 comment_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
@@ -74,7 +119,7 @@ def create_comment_table(sql_cursor: cursor) -> None:
 def create_orders_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS orders (
+            CREATE TABLE orders (
                 order_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
@@ -127,7 +172,7 @@ def create_orders_table(sql_cursor: cursor) -> None:
 def create_cart_item_table(sql_cursor: cursor) -> None:
     sql_cursor.execute(
         """
-            CREATE TABLE IF NOT EXISTS cart_item (
+            CREATE TABLE cart_item (
                 cart_item_id SERIAL PRIMARY KEY,
                 product_id INT,
                 user_id INT,
