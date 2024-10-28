@@ -43,7 +43,7 @@ class CartItemCreationService:
                 product_id
             )
 
-            return self.converter(cart_item)[0]
+            return self.converter.fetchone(cart_item)
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -67,18 +67,18 @@ class CartItemRemovalService:
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
             item_id: int
     ) -> CartItemModel:
-        cart_item = self.order_data_access_obj.delete_from_cart(
-            payload.sub,
-            item_id
-        )
+        try:
+            cart_item = self.order_data_access_obj.delete_from_cart(
+                payload.sub,
+                item_id
+            )
 
-        if not cart_item:
+            return self.converter.fetchone(cart_item)
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="cart item not found"
             )
-
-        return self.converter(cart_item)[0]
 
 
 class CartItemLoaderService:
@@ -111,7 +111,7 @@ class CartItemLoaderService:
         )
 
         return CartItemCardListModel(
-            cart_items=self.converter(cart_items)
+            cart_items=self.converter.fetchmany(cart_items)
         )
 
 
@@ -140,7 +140,7 @@ class OrderCreationService:
                 date_end,
                 delivery_address
             )
-            order = self.converter(order)[0]
+            order = self.converter.fetchone(order)
 
             background_tasks.add_task(order_notification_task, order.order_id)
 
@@ -149,6 +149,11 @@ class OrderCreationService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="the product cannot be ordered"
+            )
+        except ForeignKeyViolation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="product not found"
             )
 
 

@@ -24,7 +24,7 @@ class EmailVerificationTask:
         self.jwt_encoder = jwt_encoder
         self.email_sender = email_sender
 
-    def __call__(self, user_id: int, email: str) -> None:
+    def __call__(self, user_id: int, email: str, username: str) -> None:
         iat = datetime.now(UTC)
         exp = iat + timedelta(minutes=30)
         payload = EmailTokenPayloadModel(
@@ -39,7 +39,11 @@ class EmailVerificationTask:
         loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
         env = Environment(loader=loader)
         template = env.get_template("email_verification_letter.html")
-        letter = template.render(token=token, year=datetime.now().year)
+        letter = template.render(
+            token=token,
+            username=username,
+            year=datetime.now().year
+        )
 
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 
@@ -75,8 +79,8 @@ class OrderNotificationTask:
         self.converter = converter
 
     def __call__(self, order_id: int) -> None:
-        order = self.order_data_access_obj.get_order_letter_data(order_id)
-        order = self.converter(order)[0]
+        order = self.order_data_access_obj.get_order_data(order_id)
+        order = self.converter.fetchone(order)
 
         if not order.email:
             return

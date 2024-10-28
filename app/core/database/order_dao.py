@@ -25,7 +25,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             product_id: int,
             date_end: datetime,
             delivery_address: str
-    ) -> list:
+    ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO orders (
@@ -41,7 +41,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [user_id, product_id, date_end, delivery_address]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def read(
             self,
@@ -81,7 +81,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
     def update(self):
         pass
 
-    def delete(self, order_id: int) -> list:
+    def delete(self, order_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
@@ -91,9 +91,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def get_order_letter_data(self, order_id: int) -> list:
+    def get_order_data(self, order_id: int) -> tuple:
         self.__cursor.execute(
             """
                 SELECT 
@@ -113,31 +113,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [order_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def get_all_orders(self, product_id: int) -> list:
-        """Получить все заказы определенного товара"""
-
-        self.__cursor.execute(
-            """
-                SELECT 
-                    orders.order_id,
-                    orders.product_id,
-                    orders.user_id,
-                    orders.date_start,
-                    orders.date_end,
-                    orders.delivery_address
-                FROM 
-                    orders INNER JOIN product 
-                    ON orders.product_id = product.product_id
-                WHERE orders.product_id = %s;
-            """,
-            [product_id]
-        )
-
-        return self.__cursor.fetchall()
-
-    def add_to_cart(self, user_id: int, product_id: int) -> list:
+    def add_to_cart(self, user_id: int, product_id: int) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO cart_item (
@@ -150,9 +128,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [product_id, user_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def delete_from_cart(self, user_id: int, cart_item_id: int) -> list:
+    def delete_from_cart(self, user_id: int, cart_item_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
@@ -163,7 +141,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [cart_item_id, user_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def get_cart(
             self,

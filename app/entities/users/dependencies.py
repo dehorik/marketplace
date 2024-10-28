@@ -47,15 +47,16 @@ class UserFetchService:
             self,
             payload: Annotated[PayloadTokenModel, Depends(user_dependency)]
     ) -> UserModel:
-        user = self.user_data_access_obj.read(payload.sub)
+        try:
+            user = self.user_data_access_obj.read(payload.sub)
+            user = self.converter.fetchone(user)
 
-        if not user:
+            return user
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="user not found"
             )
-
-        return self.converter(user)[0]
 
 
 class UserUpdateService:
@@ -97,7 +98,6 @@ class UserUpdateService:
                     detail='invalid file type'
                 )
 
-            self.file_writer(photo_path, photo.file.read())
             fields["photo_path"] = photo_path
         elif clear_photo:
             if not exists(photo_path):
@@ -109,27 +109,32 @@ class UserUpdateService:
             self.file_deleter(photo_path)
             fields["photo_path"] = None
 
-        if email:
-            background_tasks.add_task(
-                email_verification_task,
-                payload.sub, email
-            )
-        elif clear_email:
-            fields["email"] = None
-
         if username:
             fields["username"] = username
 
+        if clear_email:
+            fields["email"] = None
+
         try:
             user = self.user_data_access_obj.update(payload.sub, **fields)
+            user = self.converter.fetchone(user)
 
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="user not found"
+            if email:
+                background_tasks.add_task(
+                    email_verification_task,
+                    payload.sub, email, user.username
                 )
 
-            return self.converter(user)[0]
+            if photo:
+                self.file_writer(user.photo_path, photo.file.read())
+
+            return user
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
+            )
+
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -162,12 +167,18 @@ class UserRemovalService:
 
         try:
             user = self.user_data_access_obj.delete(payload.sub)
-            user = self.converter(user)[0]
+            user = self.converter.fetchone(user)
 
             response.delete_cookie(config.COOKIE_KEY)
             self.redis_client.delete_user(payload.sub)
 
             return user
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="user not found"
+            )
+
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -195,20 +206,14 @@ class EmailVerificationService:
                 user_id=payload.sub,
                 email=payload.email
             )
+            user = self.converter.fetchone(user)
 
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="user not found"
-                )
-
-            return self.converter(user)[0]
-        except RaiseException:
+            return user
+        except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="email is already connected"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
             )
-
         except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -241,19 +246,19 @@ class RoleManagementService:
 
         try:
             user = self.user_data_access_obj.set_role(user_id, role_id)
+            user = self.converter.fetchone(user)
 
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="user not found"
-                )
+            return user
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
+            )
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect role_id"
             )
-
-        return self.converter(user)[0]
 
 
 class FetchAdminsService:
@@ -272,7 +277,7 @@ class FetchAdminsService:
         admins = self.user_data_access_obj.get_admins()
 
         return AdminListModel(
-            admins=self.converter(admins)
+            admins=self.converter.fetchmany(admins)
         )
 
 

@@ -27,7 +27,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             product_price: float,
             product_description: str,
             is_hidden: bool
-    ) -> list:
+    ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO product (
@@ -56,9 +56,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [photo_path, product_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def read(self, product_id: int) -> list:
+    def read(self, product_id: int) -> tuple:
         self.__cursor.execute(
             """
                 SELECT 
@@ -88,9 +88,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [product_id] * 3
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def update(self, product_id: int, **kwargs) -> list:
+    def update(self, product_id: int, **kwargs) -> tuple:
         if not kwargs:
             self.__cursor.execute(
                 """
@@ -101,7 +101,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 [product_id]
             )
 
-            return self.__cursor.fetchall()
+            return self.__cursor.fetchone()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -121,9 +121,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def delete(self, product_id: int) -> list:
+    def delete(self, product_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
@@ -134,7 +134,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [product_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def get_latest_products(
             self,

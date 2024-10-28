@@ -47,21 +47,6 @@ def create_users_table(sql_cursor: cursor) -> None:
                 END;
             $check_username$ LANGUAGE plpgsql;
             
-            CREATE FUNCTION check_email()
-            RETURNS TRIGGER AS $check_email$
-                BEGIN
-                    IF EXISTS (
-                        SELECT email
-                        FROM users 
-                        WHERE email = NEW.email
-                    )
-                    THEN 
-                        RAISE EXCEPTION 'email is already taken';
-                    END IF;
-                RETURN NEW;
-                END;
-            $check_email$ LANGUAGE plpgsql;
-            
             CREATE FUNCTION check_role()
             RETURNS TRIGGER AS $check_role$
                 BEGIN
@@ -87,12 +72,6 @@ def create_users_table(sql_cursor: cursor) -> None:
             FOR EACH ROW 
             WHEN (OLD.username IS DISTINCT FROM NEW.username)
             EXECUTE FUNCTION check_username();
-            
-            CREATE TRIGGER update_email
-            BEFORE UPDATE ON users
-            FOR EACH ROW
-            WHEN (OLD.email IS DISTINCT FROM NEW.email)
-            EXECUTE FUNCTION check_email();
         
             CREATE TRIGGER check_role
             BEFORE DELETE ON users
@@ -112,6 +91,27 @@ def create_product_table(sql_cursor: cursor) -> None:
                 amount_orders INT DEFAULT 0,
                 photo_path VARCHAR(255)
             );
+            
+            CREATE FUNCTION delete_product()
+            RETURNS TRIGGER AS $delete_product$
+                BEGIN
+                    IF EXISTS (
+                        SELECT order_if
+                        FROM orders
+                        WHERE 
+                            orders.product_id = OLD.product_id 
+                            AND orders.date_end > NOW()
+                    )
+                    THEN
+                        RAISE EXCEPTION 'deletion not available';
+                    END IF;
+                RETURN OLD;
+                END;
+            $delete_product$ LANGUAGE plpgsql;
+            
+            CREATE TRIGGER delete_product
+            BEFORE DELETE ON product
+            FOR EACH ROW EXECUTE FUNCTION delete_product();
         """
     )
 
@@ -149,7 +149,8 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 delivery_address VARCHAR(255),
                 
                 FOREIGN KEY (product_id) 
-                REFERENCES product (product_id),
+                REFERENCES product (product_id)
+                ON DELETE CASCADE,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)

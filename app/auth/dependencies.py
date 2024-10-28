@@ -53,7 +53,7 @@ class RegistrationService:
                 username,
                 get_password_hash(password)
             )
-            user = self.converter(user)[0]
+            user = self.converter.fetchone(user)
 
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
@@ -94,36 +94,33 @@ class LoginService:
             username: Annotated[str, Form(min_length=6, max_length=16)],
             password: Annotated[str, Form(min_length=8, max_length=18)]
     ) -> ExtendedUserModel:
-        user = self.user_data_access_obj.get_user_by_username(username)
+        try:
+            user = list(self.user_data_access_obj.get_user_by_username(username))
+            hashed_password = user.pop(-1)
+            user = self.converter.fetchone(user)
 
-        if not user:
-            raise HTTPException(
-                 status_code=status.HTTP_401_UNAUTHORIZED,
-                 detail="incorrect username or password"
+            if not verify_password(password, hashed_password):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="incorrect username or password"
+                )
+
+            access_token = self.access_token_encoder(user)
+            refresh_token = self.refresh_token_encoder(user)
+            set_refresh_cookie(response, refresh_token)
+            self.redis_client.append_token(user.user_id, refresh_token)
+
+            return ExtendedUserModel(
+                user=user,
+                token=AccessTokenModel(
+                    access_token=access_token
+                )
             )
-
-        user[0] = list(user[0])
-        hashed_password = user[0].pop(-1)
-
-        if not verify_password(password, hashed_password):
+        except (ValueError, IndexError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="incorrect username or password"
             )
-
-        user = self.converter(user)[0]
-
-        access_token = self.access_token_encoder(user)
-        refresh_token = self.refresh_token_encoder(user)
-        set_refresh_cookie(response, refresh_token)
-        self.redis_client.append_token(user.user_id, refresh_token)
-
-        return ExtendedUserModel(
-            user=user,
-            token=AccessTokenModel(
-                access_token=access_token
-            )
-        )
 
 
 class RefreshTokenValidationService:
@@ -271,7 +268,7 @@ class AuthorizationService:
     ) -> PayloadTokenModel:
         if self.__min_role_id > 1:
             user = self.user_data_access_obj.read(payload.sub)
-            user = self.converter(user)[0]
+            user = self.converter.fetchone(user)
 
             if not self.__min_role_id <= user.role_id:
                 raise HTTPException(

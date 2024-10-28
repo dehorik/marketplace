@@ -2,6 +2,7 @@ import os
 from typing import Annotated, Callable
 from fastapi import BackgroundTasks, HTTPException, status
 from fastapi import UploadFile, File, Form, Query
+from psycopg2.errors import  RaiseException
 
 from entities.products.models import (
     ProductModel,
@@ -56,7 +57,7 @@ class CatalogLoaderService:
         )
 
         return ProductCardListModel(
-            products=self.converter(products)
+            products=self.converter.fetchmany(products)
         )
 
 
@@ -90,7 +91,7 @@ class ProductSearchService:
         )
 
         return ProductCardListModel(
-            products=self.converter(products)
+            products=self.converter.fetchmany(products)
         )
 
 
@@ -135,7 +136,8 @@ class ProductCreationService:
             product_description,
             is_hidden
         )
-        product = self.converter(product)[0]
+        product = self.converter.fetchone(product)
+
         self.file_writer(product.photo_path, photo.file.read())
 
         return product
@@ -151,23 +153,22 @@ class ProductFetchService:
         self.converter = converter
 
     def __call__(self, product_id: int) -> ExtendedProductModel:
-        product = self.product_data_access_obj.read(product_id)
+        try:
+            product_data = list(self.product_data_access_obj.read(product_id))
+            product_rating = product_data.pop(-2)
+            amount_comments = product_data.pop(-1)
+            product_data = self.converter.fetchone(product_data)
 
-        if not product:
+            return ExtendedProductModel(
+                product_data=product_data,
+                product_rating=product_rating,
+                amount_comments=amount_comments
+            )
+        except (ValueError, IndexError):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='product not found'
             )
-
-        product[0] = list(product[0])
-        product_rating = product[0].pop(-2)
-        amount_comments = product[0].pop(-1)
-
-        return ExtendedProductModel(
-            product_data=self.converter(product)[0],
-            product_rating=product_rating,
-            amount_comments=amount_comments
-        )
 
 
 class ProductUpdateService:
@@ -226,15 +227,16 @@ class ProductUpdateService:
             if value is not None
         }
 
-        product = self.product_data_access_obj.update(product_id, **fields)
+        try:
+            product = self.product_data_access_obj.update(product_id, **fields)
+            product = self.converter.fetchone(product)
 
-        if not product:
+            return product
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='product not found'
             )
-
-        return self.converter(product)[0]
 
 
 class ProductRemovalService:
@@ -255,25 +257,24 @@ class ProductRemovalService:
             background_tasks: BackgroundTasks,
             product_id: int
     ) -> ProductModel:
-        if self.order_data_access_obj.get_all_orders(product_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="there are orders with this product"
-            )
+        try:
+            product = self.product_data_access_obj.delete(product_id)
+            product = self.converter.fetchone(product)
 
-        product = self.product_data_access_obj.delete(product_id)
+            self.file_deleter(product.photo_path)
+            background_tasks.add_task(product_removal_task)
 
-        if not product:
+            return product
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='product not found'
             )
-
-        background_tasks.add_task(product_removal_task)
-        product = self.converter(product)[0]
-        self.file_deleter(product.photo_path)
-
-        return product
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="there are orders with this product"
+            )
 
 
 # dependencies

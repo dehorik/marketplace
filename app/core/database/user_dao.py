@@ -18,7 +18,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self, username: str, hashed_password: str) -> list:
+    def create(self, username: str, hashed_password: str) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO users (
@@ -40,9 +40,9 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [username, hashed_password]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def read(self, user_id: int) -> list:
+    def read(self, user_id: int) -> tuple:
         self.__cursor.execute(
             """
                 SELECT 
@@ -58,9 +58,9 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [user_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def update(self, user_id: int, **kwargs) -> list:
+    def update(self, user_id: int, **kwargs) -> tuple:
         if not kwargs:
             self.__cursor.execute(
                 f"""
@@ -76,7 +76,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 """
             )
 
-            return self.__cursor.fetchall()
+            return self.__cursor.fetchone()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -104,9 +104,9 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def delete(self, user_id: int) -> list:
+    def delete(self, user_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE
@@ -123,7 +123,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [user_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def get_admins(self, role_id: int = 1) -> list:
         """
@@ -150,7 +150,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchall()
 
-    def get_user_by_username(self, username: str) -> list:
+    def get_user_by_username(self, username: str) -> tuple:
         # извлекается хеш пароля!
 
         self.__cursor.execute(
@@ -169,9 +169,9 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [username]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def set_role(self, user_id: int, role_id: int) -> list:
+    def set_role(self, user_id: int, role_id: int) -> tuple:
         self.__cursor.execute(
             """
                 UPDATE users
@@ -188,7 +188,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             [role_id, user_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
 
 def get_user_dao() -> UserDataAccessObject:

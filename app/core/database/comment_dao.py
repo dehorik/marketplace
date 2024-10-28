@@ -28,7 +28,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             comment_rating: int,
             comment_text: str | None = None,
             has_photo: bool = False
-    ) -> list:
+    ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO comment (
@@ -66,7 +66,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 [photo_path, comment_id]
             )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def read(
             self,
@@ -102,7 +102,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchall()
 
-    def update(self, comment_id: int, **kwargs) -> list:
+    def update(self, comment_id: int, **kwargs) -> tuple:
         if not kwargs:
             self.__cursor.execute(
                 """
@@ -113,7 +113,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 [comment_id]
             )
 
-            return self.__cursor.fetchall()
+            return self.__cursor.fetchone()
 
         set_values = ""
         for key, value in kwargs.items():
@@ -135,9 +135,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
-    def delete(self, comment_id: int) -> list:
+    def delete(self, comment_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
@@ -148,7 +148,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             [comment_id]
         )
 
-        return self.__cursor.fetchall()
+        return self.__cursor.fetchone()
 
     def delete_undefined_comments(self) -> list:
         """

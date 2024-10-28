@@ -61,8 +61,7 @@ class CommentCreationService:
                 comment_text=comment_text,
                 has_photo=has_photo
             )
-
-            comment = self.converter(comment)[0]
+            comment = self.converter.fetchone(comment)
 
             if photo:
                 self.file_writer(comment.photo_path, photo.file.read())
@@ -106,7 +105,7 @@ class CommentLoaderService:
         )
 
         return CommentItemListModel(
-            comments=self.converter(comments)
+            comments=self.converter.fetchmany(comments)
         )
 
 
@@ -190,9 +189,12 @@ class CommentUpdateService:
         if comment_rating:
             fields["comment_rating"] = comment_rating
 
-        comment = self.comment_data_access_obj.update(comment_id, **fields)
+        try:
+            comment = self.comment_data_access_obj.update(comment_id, **fields)
+            comment = self.converter.fetchone(comment)
 
-        if not comment:
+            return comment
+        except ValueError:
             if fields["photo_path"]:
                 # если был отправлен запрос на обновление полей
                 # несуществующего отзыва, и изображение было записано,
@@ -203,8 +205,6 @@ class CommentUpdateService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="comment not found"
             )
-
-        return self.converter(comment)[0]
 
 
 class CommentRemovalService:
@@ -219,20 +219,19 @@ class CommentRemovalService:
         self.converter = converter
 
     def __call__(self, comment_id: int) -> CommentModel:
-        comment = self.comment_data_access_obj.delete(comment_id)
+        try:
+            comment = self.comment_data_access_obj.delete(comment_id)
+            comment = self.converter.fetchone(comment)
 
-        if not comment:
+            if comment.photo_path:
+                self.file_deleter(comment.photo_path)
+
+            return comment
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='comment not found'
             )
-
-        comment = self.converter(comment)[0]
-
-        if comment.photo_path:
-            self.file_deleter(comment.photo_path)
-
-        return comment
 
 
 # dependencies
