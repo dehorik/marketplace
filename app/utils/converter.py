@@ -5,9 +5,6 @@ class Converter:
     """Конвертер данных из строк базы данных в pydantic модель"""
 
     def __init__(self, model):
-        self.__class__.fetchone.__annotations__["return"] = model
-        self.__class__.fetchmany.__annotations__["return"] = List[model]
-
         self.__model = model
 
     @staticmethod

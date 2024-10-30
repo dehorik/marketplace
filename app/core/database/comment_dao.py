@@ -25,8 +25,8 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             self,
             user_id: int,
             product_id: int,
-            comment_rating: int,
-            comment_text: str | None = None,
+            rating: int,
+            text: str | None = None,
             has_photo: bool = False
     ) -> tuple:
         self.__cursor.execute(
@@ -34,27 +34,19 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 INSERT INTO comment (
                     user_id,
                     product_id,
-                    comment_rating,
-                    comment_date,
-                    comment_text
+                    rating,
+                    creation_date,
+                    text
                 )
-                VALUES (%s, %s, %s, CURRENT_DATE, %s)
-                RETURNING comment_id;
+                VALUES (%s, %s, %s, NOW(), %s)
+                RETURNING *;
             """,
-            [
-                user_id,
-                product_id,
-                comment_rating,
-                comment_text
-            ]
+            [user_id, product_id, rating, text]
         )
 
         if has_photo:
-            comment_id = self.__cursor.fetchone()[0]
-            photo_path = os.path.join(
-                config.COMMENT_CONTENT_PATH,
-                str(comment_id)
-            )
+            comment_id = str(self.__cursor.fetchone()[0])
+            photo_path = os.path.join(config.COMMENT_CONTENT_PATH, comment_id)
 
             self.__cursor.execute(
                 """
@@ -72,12 +64,12 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             self,
             product_id: int,
             amount: int = 10,
-            last_comment_id: int | None = None
+            last_id: int | None = None
     ) -> list:
         condition = f"WHERE product.product_id = {product_id}"
 
-        if last_comment_id:
-            condition += f"AND comment.comment_id < {last_comment_id}"
+        if last_id:
+            condition += f"AND comment.comment_id < {last_id}"
 
         self.__cursor.execute(
             f"""
@@ -87,9 +79,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                     product.product_id, 
                     users.username,
                     users.photo_path,
-                    comment.comment_rating,
-                    comment.comment_date,
-                    comment.comment_text,
+                    comment.rating,
+                    comment.creation_date,
+                    comment.text,
                     comment.photo_path   
                 FROM users 
                     INNER JOIN comment USING(user_id)
@@ -102,59 +94,75 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchall()
 
-    def update(self, comment_id: int, **kwargs) -> tuple:
-        if not kwargs:
+    def update(
+            self,
+            comment_id: int,
+            user_id: int,
+            rating: int | None = None,
+            text: str | None = None,
+            photo_path: str | None = None
+    ) -> tuple:
+        if not any([rating, text, photo_path]):
             self.__cursor.execute(
                 """
                     SELECT *
                     FROM comment
-                    WHERE comment_id = %s;
+                    WHERE comment_id = %s AND user_id = %s;
                 """,
-                [comment_id]
+                [comment_id, user_id]
             )
 
             return self.__cursor.fetchone()
 
+        fields = {
+            key: value
+            for key, value in {
+                "rating": rating,
+                "text": text,
+                "photo_path": photo_path
+            }.items()
+            if value is not None
+        }
+
         set_values = ""
-        for key, value in kwargs.items():
-            if type(value) is str:
-                set_values += f"{key} = '{value}', "
-            elif value is None:
+        for key, value in fields.items():
+            if type(value) is str and value.lower() == "null":
                 set_values += f"{key} = NULL, "
+            elif type(value) is str:
+                set_values += f"{key} = '{value}', "
             else:
                 set_values += f"{key} = {value}, "
         else:
-            set_values += "comment_date = CURRENT_DATE"
+            set_values += "comment_date = NOW()"
 
         self.__cursor.execute(
             f"""
                 UPDATE comment 
                 SET {set_values}            
-                WHERE comment_id = {comment_id}
+                WHERE comment_id = {comment_id} AND user_id = {user_id}
                 RETURNING *;
             """
         )
 
         return self.__cursor.fetchone()
 
-    def delete(self, comment_id: int) -> tuple:
+    def delete(self, comment_id: int, user_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
                 FROM comment
-                WHERE comment_id = %s
+                WHERE comment_id = %s AND user_id = %s
                 RETURNING *;
             """,
-            [comment_id]
+            [comment_id, user_id]
         )
 
         return self.__cursor.fetchone()
 
     def delete_undefined_comments(self) -> list:
-        """
-        Удаление всех отзывов, у которых отсутствует product_id,
-        т.е удаление отзывов под удаленными товарами
-        """
+        # удаление всех отзывов, у которых product_id или user_id равны null
+        # null появляется вместо внешнего ключа,
+        # если связанная запись была удалена из таблицы
 
         self.__cursor.execute(
             """

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 
 from entities.comments.dependencies import (
     comment_creation_service,
-    comment_loader_service,
+    comment_load_service,
     comment_update_service,
     comment_removal_service
 )
@@ -25,7 +25,7 @@ def create_comment(
 
 @router.get("/latest", response_model=CommentItemListModel)
 def load_comments(
-        comments: Annotated[CommentItemListModel, Depends(comment_loader_service)]
+        comments: Annotated[CommentItemListModel, Depends(comment_load_service)]
 ):
     return comments
 

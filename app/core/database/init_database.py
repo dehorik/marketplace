@@ -122,18 +122,38 @@ def create_comment_table(sql_cursor: cursor) -> None:
                 comment_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
-                comment_rating INT,
-                comment_date TIMESTAMP WITH TIME ZONE,
-                comment_text VARCHAR(255) DEFAULT NULL,
+                rating INT,
+                creation_date TIMESTAMP WITH TIME ZONE,
+                text VARCHAR(255) DEFAULT NULL,
                 photo_path VARCHAR(255) DEFAULT NULL,
             
                 FOREIGN KEY (user_id) 
-                REFERENCES users (user_id),
+                REFERENCES users (user_id)
+                ON DELETE SET NULL,
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id) 
                 ON DELETE SET NULL
             );
+            
+            CREATE FUNCTION verify_product()
+            RETURNS TRIGGER AS $verify_product$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT product_id
+                        FROM product
+                        WHERE product_id = NEW.product_id AND is_hidden = false
+                    )
+                    THEN
+                        RAISE EXCEPTION 'product is hidden or does not exist';
+                    END IF;
+                RETURN NEW;    
+                END;       
+            $verify_product$ LANGUAGE plpgsql;     
+            
+            CREATE TRIGGER verify_upsert
+            BEFORE INSERT OR UPDATE ON comment
+            FOR EACH ROW EXECUTE FUNCTION verify_product();            
         """
     )
 

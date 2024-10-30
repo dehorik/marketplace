@@ -1,17 +1,19 @@
 import os
-from typing import Annotated, Callable, Dict
-from fastapi import Form, UploadFile, HTTPException, File, Query, status
-from psycopg2.errors import ForeignKeyViolation
+from typing import Annotated, Callable
+from fastapi import Depends, HTTPException, BackgroundTasks, status
+from fastapi import Form, UploadFile, File, Query, Path
+from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.comments.models import (
     CommentModel,
     CommentItemModel,
     CommentItemListModel
 )
-from auth import AuthorizationService
+from auth import AuthorizationService, PayloadTokenModel
+from core.tasks import file_write_task, file_deletion_task
 from core.database import CommentDataAccessObject, get_comment_dao
 from core.settings import config
-from utils import Converter, exists, write_file, delete_file
+from utils import Converter, write_file, delete_file
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -32,49 +34,50 @@ class CommentCreationService:
 
     def __call__(
             self,
-            user_id: int,
-            product_id: int,
-            comment_rating: Annotated[
-                int, Form(ge=1, le=5)
-            ],
-            comment_text: Annotated[
-                str | None, Form(min_length=2, max_length=100)
-            ] = None,
-            photo: Annotated[
-                UploadFile, File()
-            ] = None
+            background_tasks: BackgroundTasks,
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            product_id: Annotated[int, Query(ge=1)],
+            rating: Annotated[int, Form(ge=1, le=5)],
+            text: Annotated[str | None, Form(min_length=2, max_length=100)] = None,
+            photo: Annotated[UploadFile | None, File()] = None
     ) -> CommentModel:
         if photo:
-            if not photo.content_type.split('/')[0] == 'image':
+            if not check_file(photo):
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
                 )
 
         try:
-            has_photo = True if photo else False
-
             comment = self.comment_data_access_obj.create(
-                user_id=user_id,
+                user_id=payload.sub,
                 product_id=product_id,
-                comment_rating=comment_rating,
-                comment_text=comment_text,
-                has_photo=has_photo
+                rating=rating,
+                text=text,
+                has_photo=bool(photo)
             )
             comment = self.converter.fetchone(comment)
 
             if photo:
-                self.file_writer(comment.photo_path, photo.file.read())
+                background_tasks.add_task(
+                    file_write_task,
+                    comment.photo_path, photo.file.read()
+                )
 
             return comment
-        except ForeignKeyViolation:
+        except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="product not found"
             )
+        except ForeignKeyViolation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
+            )
 
 
-class CommentLoaderService:
+class CommentLoadService:
     """Подгрузка отзывов под товаром"""
 
     def __init__(
@@ -89,19 +92,19 @@ class CommentLoaderService:
             self,
             product_id: Annotated[int, Query(ge=1)],
             amount: Annotated[int, Query(ge=0)] = 10,
-            last_comment_id: Annotated[int | None, Query(ge=1)] = None
+            last_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CommentItemListModel:
         """
-        :param product_id: product_id товара
+        :param product_id: id товара
         :param amount: нужное количество отзывов
-        :param last_comment_id: comment_id последнего подгруженного отзыва;
+        :param last_id: comment_id последнего подгруженного отзыва;
                (если это первый запрос на подгрузку отзывов - оставить None)
         """
 
         comments = self.comment_data_access_obj.read(
             product_id=product_id,
             amount=amount,
-            last_comment_id=last_comment_id
+            last_id=last_id
         )
 
         return CommentItemListModel(
@@ -124,83 +127,75 @@ class CommentUpdateService:
 
     def __call__(
             self,
-            comment_id: int,
+            background_tasks: BackgroundTasks,
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            comment_id: Annotated[int, Path(ge=1)],
             clear_text: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
-            comment_rating: Annotated[
-                int | None, Form(ge=1, le=5)
-            ] = None,
-            comment_text: Annotated[
-                str | None, Form(min_length=2, max_length=100)
-            ] = None,
-            photo: Annotated[
-                UploadFile, File()
-            ] = None
+            rating: Annotated[int | None, Form(ge=1, le=5)] = None,
+            text: Annotated[str | None, Form(min_length=2, max_length=100)] = None,
+            photo: Annotated[UploadFile | None, File()] = None
     ) -> CommentModel:
         """
         :param comment_id: id отзыва
-
         :param clear_text: флаг очистки поля с текстом
         :param clear_photo: флаг удаления фотографии
-
-        :param comment_rating: рейтинг для обновления
-        :param comment_text: текст отзыва для обновления
+        :param rating: рейтинг для обновления
+        :param text: текст отзыва для обновления
         :param photo: фото к отзыву для записи или перезаписи
 
-        ВАЖНО
         Флаги используются для того, чтобы указать те поля, значения из
         которых нужно удалить. Одновременная передача значения true во флаг и
         отправка данных для соответствующего поля приведет к ошибке.
         """
 
-        if clear_text and comment_text or clear_photo and photo:
+        if clear_text and text or clear_photo and photo:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="conflict between flags and request body"
+                detail="conflict between flags and form data"
             )
 
-        fields: Dict[str, str | int | None] = {}
-
-        photo_path = os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
         if photo:
-            if not photo.content_type.split('/')[0] == 'image':
+            if not check_file(photo):
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
                 )
 
-            self.file_writer(photo_path, photo.file.read())
-            fields["photo_path"] = photo_path
+            photo_path = os.path.join(
+                config.COMMENT_CONTENT_PATH,
+                str(comment_id)
+            )
         elif clear_photo:
-            if not exists(photo_path):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="photo does not exist"
-                )
+            photo_path = "null"
+        else:
+            photo_path = None
 
-            self.file_deleter(photo_path)
-            fields["photo_path"] = None
-
-        if comment_text:
-            fields["comment_text"] = comment_text
-        elif clear_text:
-            fields["comment_text"] = None
-
-        if comment_rating:
-            fields["comment_rating"] = comment_rating
+        text = "null" if clear_text else text
 
         try:
-            comment = self.comment_data_access_obj.update(comment_id, **fields)
+            comment = self.comment_data_access_obj.update(
+                comment_id=comment_id,
+                user_id=payload.sub,
+                rating=rating,
+                text=text,
+                photo_path=photo_path
+            )
             comment = self.converter.fetchone(comment)
 
-            return comment
-        except ValueError:
-            if fields["photo_path"]:
-                # если был отправлен запрос на обновление полей
-                # несуществующего отзыва, и изображение было записано,
-                # то такое изображение необходимо удалить
-                self.file_deleter(fields["photo_path"])
+            if photo:
+                background_tasks.add_task(
+                    file_write_task,
+                    comment.photo_path, photo.file.read()
+                )
+            elif clear_photo:
+                background_tasks.add_task(
+                    file_deletion_task,
+                    comment.photo_path
+                )
 
+            return comment
+        except (ValueError, RaiseException):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="comment not found"
@@ -218,13 +213,21 @@ class CommentRemovalService:
         self.comment_data_access_obj = comment_dao
         self.converter = converter
 
-    def __call__(self, comment_id: int) -> CommentModel:
+    def __call__(
+            self,
+            background_tasks: BackgroundTasks,
+            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            comment_id: Annotated[int, Path(ge=1)]
+    ) -> CommentModel:
         try:
-            comment = self.comment_data_access_obj.delete(comment_id)
+            comment = self.comment_data_access_obj.delete(comment_id, payload.sub)
             comment = self.converter.fetchone(comment)
 
             if comment.photo_path:
-                self.file_deleter(comment.photo_path)
+                background_tasks.add_task(
+                    file_deletion_task,
+                    comment.photo_path
+                )
 
             return comment
         except ValueError:
@@ -234,8 +237,11 @@ class CommentRemovalService:
             )
 
 
-# dependencies
+def check_file(file: UploadFile) -> bool:
+    return file.content_type.split('/')[0] == 'image'
+
+
 comment_creation_service = CommentCreationService()
-comment_loader_service = CommentLoaderService()
+comment_load_service = CommentLoadService()
 comment_update_service = CommentUpdateService()
 comment_removal_service = CommentRemovalService()

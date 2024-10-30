@@ -12,7 +12,14 @@ from core.database import (
     get_order_dao
 )
 from core.settings import ROOT_PATH
-from utils import EmailSender, get_email_sender, delete_file, Converter
+from utils import (
+    Converter,
+    EmailSender,
+    get_email_sender,
+    exists,
+    write_file,
+    delete_file
+)
 
 
 class EmailVerificationTask:
@@ -96,6 +103,25 @@ class OrderNotificationTask:
         self.email_sender.send_letter(order.email, "Новый заказ", letter)
 
 
+class FileWriteTask:
+    def __init__(self, file_writer: Callable = write_file):
+        self.file_writer = file_writer
+
+    def __call__(self, path: str, file: bytes) -> None:
+        self.file_writer(path, file)
+
+
+class FileDeletionTask:
+    def __init__(self, file_deleter: Callable = delete_file):
+        self.file_deleter = file_deleter
+
+    def __call__(self, path: str) -> None:
+        if exists(path):
+            self.file_deleter(path)
+
+
 email_verification_task = EmailVerificationTask()
 product_removal_task = ProductRemovalTask()
 order_notification_task = OrderNotificationTask()
+file_write_task = FileWriteTask()
+file_deletion_task = FileDeletionTask()
