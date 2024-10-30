@@ -14,6 +14,15 @@ class UserModel(BaseModel):
     photo_path: str | None = None
 
 
+class EmailVerificationRequest(BaseModel):
+    token: str
+
+
+class ChangeRoleRequest(BaseModel):
+    user_id: int = Field(ge=1)
+    role_id: int = Field(ge=1)
+
+
 class AdminModel(BaseModel):
     """
     Схема данных пользователя в списке администраторов
@@ -29,8 +38,3 @@ class AdminModel(BaseModel):
 
 class AdminListModel(BaseModel):
     admins: List[AdminModel]
-
-
-class EmailVerificationModel(BaseModel):
-    """Схема тела запроса для верификации почты"""
-    token: str

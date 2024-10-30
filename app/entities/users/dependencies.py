@@ -1,30 +1,38 @@
 import os
+from typing import Annotated
 from pydantic import EmailStr
 from jwt import InvalidTokenError
-from typing import Annotated, Dict, Callable
-from fastapi import BackgroundTasks, HTTPException, Depends
-from fastapi import UploadFile, File, Form, Response, status
+from fastapi import UploadFile, File, Form
+from fastapi import BackgroundTasks, HTTPException, Depends,  Response, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.users.models import (
     UserModel,
+    EmailVerificationRequest,
+    ChangeRoleRequest,
     AdminModel,
     AdminListModel,
-    EmailVerificationModel
+
 )
 from auth import (
-    AuthorizationService,
     RefreshTokenValidationService,
+    AuthorizationService,
     PayloadTokenModel,
     RedisClient,
     JWTDecoder,
     get_redis_client,
     get_jwt_decoder
 )
-from core.tasks import email_verification_task, EmailTokenPayloadModel
+from core.tasks import (
+    email_verification_task,
+    comments_removal_task,
+    file_write_task,
+    file_deletion_task,
+    EmailTokenPayloadModel
+)
 from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
-from utils import Converter, exists, write_file, delete_file
+from utils import Converter
 
 
 refresh_token_validation_service = RefreshTokenValidationService()
@@ -62,13 +70,9 @@ class UserFetchService:
 class UserUpdateService:
     def __init__(
             self,
-            file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file,
             user_dao: UserDataAccessObject = get_user_dao(),
             converter: Converter = Converter(UserModel)
     ):
-        self.file_writer = file_writer
-        self.file_deleter = file_deleter
         self.user_data_access_obj = user_dao
         self.converter = converter
 
@@ -88,36 +92,43 @@ class UserUpdateService:
                 detail="conflict between flags and request body"
             )
 
-        fields: Dict[str, str | None] = {}
-
-        photo_path = os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
         if photo:
-            if not photo.content_type.split('/')[0] == 'image':
+            if not check_file(photo):
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail='invalid file type'
                 )
 
-            fields["photo_path"] = photo_path
+            photo_path = os.path.join(
+                config.USER_CONTENT_PATH,
+                str(payload.sub)
+            )
         elif clear_photo:
-            if not exists(photo_path):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="photo does not exist"
-                )
+            photo_path = "null"
+        else:
+            photo_path = None
 
-            self.file_deleter(photo_path)
-            fields["photo_path"] = None
-
-        if username:
-            fields["username"] = username
-
-        if clear_email:
-            fields["email"] = None
+        email = "null" if clear_email else None
 
         try:
-            user = self.user_data_access_obj.update(payload.sub, **fields)
+            user = self.user_data_access_obj.update(
+                user_id=payload.sub,
+                username=username,
+                email=email,
+                photo_path=photo_path
+            )
             user = self.converter.fetchone(user)
+
+            if photo:
+                background_tasks.add_task(
+                    file_write_task,
+                    user.photo_path, photo.file.read()
+                )
+            elif clear_photo:
+                background_tasks.add_task(
+                    file_deletion_task,
+                    os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
+                )
 
             if email:
                 background_tasks.add_task(
@@ -125,16 +136,12 @@ class UserUpdateService:
                     payload.sub, email, user.username
                 )
 
-            if photo:
-                self.file_writer(user.photo_path, photo.file.read())
-
             return user
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="user not found"
             )
-
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -142,51 +149,9 @@ class UserUpdateService:
             )
 
 
-class UserRemovalService:
-    def __init__(
-            self,
-            file_deleter: Callable = delete_file,
-            redis_client: RedisClient = get_redis_client(),
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel),
-    ):
-        self.file_delter = file_deleter
-        self.redis_client = redis_client
-        self.jwt_decoder = jwt_decoder
-        self.user_data_access_obj = user_dao
-        self.converter = converter
-
-    def __call__(
-            self,
-            response: Response,
-            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
-    ) -> UserModel:
-        payload = self.jwt_decoder(refresh_token)
-        payload = PayloadTokenModel(**payload)
-
-        try:
-            user = self.user_data_access_obj.delete(payload.sub)
-            user = self.converter.fetchone(user)
-
-            response.delete_cookie(config.COOKIE_KEY)
-            self.redis_client.delete_user(payload.sub)
-
-            return user
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="user not found"
-            )
-
-        except RaiseException:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="deletion not available"
-            )
-
-
 class EmailVerificationService:
+    """Привязка почты к аккаунту"""
+
     def __init__(
             self,
             jwt_decoder: JWTDecoder = get_jwt_decoder(),
@@ -197,9 +162,9 @@ class EmailVerificationService:
         self.user_data_access_obj = user_dao
         self.converter = converter
 
-    def __call__(self, body: EmailVerificationModel) -> UserModel:
+    def __call__(self, data: EmailVerificationRequest) -> UserModel:
         try:
-            payload = self.jwt_decoder(body.token)
+            payload = self.jwt_decoder(data.token)
             payload = EmailTokenPayloadModel(**payload)
 
             user = self.user_data_access_obj.update(
@@ -235,17 +200,19 @@ class RoleManagementService:
     def __call__(
             self,
             payload: Annotated[PayloadTokenModel, Depends(superuser_dependency)],
-            user_id: Annotated[int, Form(ge=1)],
-            role_id: Annotated[int, Form(ge=1)]
+            data: ChangeRoleRequest
     ) -> UserModel:
-        if payload.sub == user_id:
+        if payload.sub == data.user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="you cannot change your role"
             )
 
         try:
-            user = self.user_data_access_obj.set_role(user_id, role_id)
+            user = self.user_data_access_obj.update(
+                user_id=data.user_id,
+                role_id=data.role_id
+            )
             user = self.converter.fetchone(user)
 
             return user
@@ -258,6 +225,56 @@ class RoleManagementService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="incorrect role_id"
+            )
+
+
+class UserRemovalService:
+    def __init__(
+            self,
+            jwt_decoder: JWTDecoder = get_jwt_decoder(),
+            redis_client: RedisClient = get_redis_client(),
+            user_dao: UserDataAccessObject = get_user_dao(),
+            converter: Converter = Converter(UserModel),
+    ):
+        self.jwt_decoder = jwt_decoder
+        self.redis_client = redis_client
+        self.user_data_access_obj = user_dao
+        self.converter = converter
+
+    def __call__(
+            self,
+            response: Response,
+            background_tasks: BackgroundTasks,
+            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
+    ) -> UserModel:
+        try:
+            payload = self.jwt_decoder(refresh_token)
+            payload = PayloadTokenModel(**payload)
+
+            response.delete_cookie(config.COOKIE_KEY)
+            self.redis_client.delete_user(payload.sub)
+
+            user = self.user_data_access_obj.delete(payload.sub)
+            user = self.converter.fetchone(user)
+
+            if user.photo_path:
+                background_tasks.add_task(
+                    file_deletion_task,
+                    user.photo_path
+                )
+
+            background_tasks.add_task(comments_removal_task)
+
+            return user
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="user not found"
+            )
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="deletion not available"
             )
 
 
@@ -275,16 +292,18 @@ class FetchAdminsService:
             payload: Annotated[PayloadTokenModel, Depends(superuser_dependency)]
     ) -> AdminListModel:
         admins = self.user_data_access_obj.get_admins()
+        admins = self.converter.fetchmany(admins)
 
-        return AdminListModel(
-            admins=self.converter.fetchmany(admins)
-        )
+        return AdminListModel(admins=admins)
 
 
-# dependencies
+def check_file(file: UploadFile) -> bool:
+    return file.content_type.split('/')[0] == 'image'
+
+
 user_fetch_service = UserFetchService()
 user_update_service = UserUpdateService()
-user_removal_service = UserRemovalService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()
+user_removal_service = UserRemovalService()
 fetch_admins_service = FetchAdminsService()

@@ -55,7 +55,7 @@ class EmailVerificationTask:
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 
 
-class ProductRemovalTask:
+class CommentsRemovalTask:
     def __init__(
             self,
             file_deleter: Callable = delete_file,
@@ -70,7 +70,7 @@ class ProductRemovalTask:
         for comment in comments:
             photo_path = comment[-1]
 
-            if photo_path:
+            if photo_path and exists(photo_path):
                 self.file_deleter(photo_path)
 
 
@@ -121,7 +121,7 @@ class FileDeletionTask:
 
 
 email_verification_task = EmailVerificationTask()
-product_removal_task = ProductRemovalTask()
+comments_removal_task = CommentsRemovalTask()
 order_notification_task = OrderNotificationTask()
 file_write_task = FileWriteTask()
 file_deletion_task = FileDeletionTask()

@@ -7,9 +7,9 @@ from fastapi.responses import HTMLResponse
 from entities.users.dependencies import (
     user_fetch_service,
     user_update_service,
-    user_removal_service,
     email_verification_service,
     role_management_service,
+    user_removal_service,
     fetch_admins_service
 )
 from entities.users.models import UserModel, AdminListModel
@@ -36,10 +36,6 @@ def get_user(user: Annotated[UserModel, Depends(user_fetch_service)]):
 def update_user(user: Annotated[UserModel, Depends(user_update_service)]):
     return user
 
-@router.delete("/me", response_model=UserModel)
-def delete_user(user: Annotated[UserModel, Depends(user_removal_service)]):
-    return user
-
 @router.get("/email-verification", response_class=HTMLResponse)
 def get_email_verification_page(
         request: Request, token: Annotated[str, Query()]
@@ -57,6 +53,10 @@ def verify_email(
 
 @router.patch("/role", response_model=UserModel)
 def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
+    return user
+
+@router.delete("/me", response_model=UserModel)
+def delete_user(user: Annotated[UserModel, Depends(user_removal_service)]):
     return user
 
 @router.get("/admins", response_model=AdminListModel)

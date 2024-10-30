@@ -28,7 +28,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     registration_date
                 )
                 VALUES
-                    (1, %s, %s, CURRENT_DATE)
+                    (1, %s, %s, NOW())
                 RETURNING 
                     user_id,
                     role_id, 
@@ -60,10 +60,17 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def update(self, user_id: int, **kwargs) -> tuple:
-        if not kwargs:
+    def update(
+            self,
+            user_id: int,
+            role_id: int | None = None,
+            username: str | None = None,
+            email: str | None = None,
+            photo_path: str | None = None
+    ) -> tuple:
+        if not any([role_id, username, email, photo_path]):
             self.__cursor.execute(
-                f"""
+                """
                     SELECT 
                         user_id,
                         role_id, 
@@ -72,18 +79,30 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                         registration_date,
                         photo_path
                     FROM users
-                    WHERE user_id = {user_id};
-                """
+                    WHERE user_id = %s;
+                """,
+                [user_id]
             )
 
             return self.__cursor.fetchone()
 
+        fields = {
+            key: value
+            for key, value in {
+                "role_id": role_id,
+                "username": username,
+                "email": email,
+                "photo_path": photo_path
+            }
+            if value is not None
+        }
+
         set_values = ""
-        for key, value in kwargs.items():
-            if type(value) is str:
-                set_values += f"{key} = '{value}', "
-            elif value is None:
+        for key, value in fields.items():
+            if type(value) is str and value.lower() == "null":
                 set_values += f"{key} = NULL, "
+            elif type(value) is str:
+                set_values += f"{key} = '{value}', "
             else:
                 set_values += f"{key} = {value}, "
         else:
@@ -167,25 +186,6 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 WHERE username = %s;
             """,
             [username]
-        )
-
-        return self.__cursor.fetchone()
-
-    def set_role(self, user_id: int, role_id: int) -> tuple:
-        self.__cursor.execute(
-            """
-                UPDATE users
-                SET role_id = %s
-                WHERE user_id = %s
-                RETURNING
-                    user_id,
-                    role_id, 
-                    username,
-                    email,
-                    registration_date,
-                    photo_path;
-            """,
-            [role_id, user_id]
         )
 
         return self.__cursor.fetchone()

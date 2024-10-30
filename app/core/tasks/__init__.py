@@ -1,11 +1,11 @@
 from core.tasks.tasks import (
     EmailVerificationTask,
-    ProductRemovalTask,
+    CommentsRemovalTask,
     OrderNotificationTask,
     FileWriteTask,
     FileDeletionTask,
     email_verification_task,
-    product_removal_task,
+    comments_removal_task,
     order_notification_task,
     file_write_task,
     file_deletion_task

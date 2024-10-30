@@ -133,7 +133,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             else:
                 set_values += f"{key} = {value}, "
         else:
-            set_values += "comment_date = NOW()"
+            set_values += "creation_date = NOW()"
 
         self.__cursor.execute(
             f"""

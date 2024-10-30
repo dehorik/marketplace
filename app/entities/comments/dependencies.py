@@ -1,7 +1,7 @@
 import os
-from typing import Annotated, Callable
-from fastapi import Depends, HTTPException, BackgroundTasks, status
+from typing import Annotated
 from fastapi import Form, UploadFile, File, Query, Path
+from fastapi import Depends, HTTPException, BackgroundTasks, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.comments.models import (
@@ -10,10 +10,10 @@ from entities.comments.models import (
     CommentItemListModel
 )
 from auth import AuthorizationService, PayloadTokenModel
-from core.tasks import file_write_task, file_deletion_task
 from core.database import CommentDataAccessObject, get_comment_dao
+from core.tasks import file_write_task, file_deletion_task
 from core.settings import config
-from utils import Converter, write_file, delete_file
+from utils import Converter
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -24,11 +24,9 @@ superuser_dependency = AuthorizationService(min_role_id=3)
 class CommentCreationService:
     def __init__(
             self,
-            file_writer: Callable = write_file,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel)
     ):
-        self.file_writer = file_writer
         self.comment_data_access_obj = comment_dao
         self.converter = converter
 
@@ -106,22 +104,17 @@ class CommentLoadService:
             amount=amount,
             last_id=last_id
         )
+        comments = self.converter.fetchmany(comments)
 
-        return CommentItemListModel(
-            comments=self.converter.fetchmany(comments)
-        )
+        return CommentItemListModel(comments=comments)
 
 
 class CommentUpdateService:
     def __init__(
             self,
-            file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel)
     ):
-        self.file_writer = file_writer
-        self.file_deleter = file_deleter
         self.comment_data_access_obj = comment_dao
         self.converter = converter
 
@@ -191,7 +184,7 @@ class CommentUpdateService:
             elif clear_photo:
                 background_tasks.add_task(
                     file_deletion_task,
-                    comment.photo_path
+                    os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
                 )
 
             return comment
@@ -205,11 +198,9 @@ class CommentUpdateService:
 class CommentRemovalService:
     def __init__(
             self,
-            file_deleter: Callable = delete_file,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel)
     ):
-        self.file_deleter = file_deleter
         self.comment_data_access_obj = comment_dao
         self.converter = converter
 

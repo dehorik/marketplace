@@ -11,7 +11,7 @@ from entities.products.models import (
     ProductCardListModel
 )
 from auth import AuthorizationService
-from core.tasks import product_removal_task
+from core.tasks import comments_removal_task
 from core.database import (
     ProductDataAccessObject,
     OrderDataAccessObject,
@@ -262,7 +262,7 @@ class ProductRemovalService:
             product = self.converter.fetchone(product)
 
             self.file_deleter(product.photo_path)
-            background_tasks.add_task(product_removal_task)
+            background_tasks.add_task(comments_removal_task)
 
             return product
         except ValueError:
