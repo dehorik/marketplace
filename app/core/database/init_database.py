@@ -84,9 +84,9 @@ def create_product_table(sql_cursor: cursor) -> None:
         """
             CREATE TABLE product (
                 product_id SERIAL PRIMARY KEY,
-                product_name VARCHAR(255),
-                product_price INT,
-                product_description TEXT,
+                name VARCHAR(255),
+                price INT,
+                description TEXT,
                 is_hidden BOOLEAN DEFAULT false,
                 amount_orders INT DEFAULT 0,
                 photo_path VARCHAR(255)
@@ -96,7 +96,7 @@ def create_product_table(sql_cursor: cursor) -> None:
             RETURNS TRIGGER AS $delete_product$
                 BEGIN
                     IF EXISTS (
-                        SELECT order_if
+                        SELECT order_id
                         FROM orders
                         WHERE 
                             orders.product_id = OLD.product_id 

@@ -23,28 +23,28 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
     def create(
             self,
-            product_name: str,
-            product_price: float,
-            product_description: str,
+            name: str,
+            price: float,
+            description: str,
             is_hidden: bool
     ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO product (
-                    product_name, 
-                    product_price, 
-                    product_description,
+                    name, 
+                    price, 
+                    description,
                     is_hidden
                 )
                 VALUES
                     (%s, %s, %s, %s)
                 RETURNING product_id;
             """,
-            [product_name, product_price, product_description, is_hidden]
+            [name, price, description, is_hidden]
         )
 
-        product_id = self.__cursor.fetchone()[0]
-        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
+        product_id = str(self.__cursor.fetchone()[0])
+        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, product_id)
 
         self.__cursor.execute(
             """                 
@@ -63,20 +63,20 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
                 SELECT 
                     product_id,
-                    product_name,
-                    product_price, 
-                    product_description,
+                    name,
+                    price, 
+                    description,
                     is_hidden,
                     amount_orders,
                     photo_path,
                     (
                         SELECT 
-                            ROUND(AVG(comment_rating), 1) as product_rating
+                            ROUND(AVG(rating), 1) as rating
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id
                         WHERE product.product_id = %s
-                    ) AS product_rating,
+                    ) AS rating,
                     (
                         SELECT COUNT(comment_id)
                         FROM comment 
@@ -90,8 +90,15 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def update(self, product_id: int, **kwargs) -> tuple:
-        if not kwargs:
+    def update(
+            self,
+            product_id: int,
+            name: str | None = None,
+            price: int | None = None,
+            description: str | None = None,
+            is_hidden: bool | None = None
+    ) -> tuple:
+        if not any([name, price, description, is_hidden]):
             self.__cursor.execute(
                 """
                     SELECT *
@@ -103,8 +110,19 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
             return self.__cursor.fetchone()
 
+        fields = {
+            key: value
+            for key, value in {
+                "name": name,
+                "price": price,
+                "description": description,
+                "is_hidden": is_hidden
+            }.items()
+            if value is not None
+        }
+
         set_values = ""
-        for key, value in kwargs.items():
+        for key, value in fields.items():
             if type(value) is str:
                 set_values += f"{key} = '{value}', "
             else:
@@ -139,26 +157,28 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
     def get_latest_products(
             self,
             amount: int = 9,
-            last_product_id: int | None = None
+            last_id: int | None = None
     ) -> list:
-        condition = "WHERE product.is_hidden != true"
+        condition = """
+            WHERE product.is_hidden != true
+        """
 
-        if last_product_id:
-            condition += f"AND product.product_id < {last_product_id}"
+        if last_id:
+            condition += f"AND product.product_id < {last_id}"
 
         self.__cursor.execute(
             f"""
                 SELECT 
                     product.product_id, 
-                    product.product_name, 
-                    product.product_price, 
-                    rating.product_rating,
+                    product.name, 
+                    product.price, 
+                    rating.rating,
                     product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
                             product.product_id,
-                            ROUND(AVG(comment_rating), 1) as product_rating
+                            ROUND(AVG(comment.rating), 1) as rating
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id
@@ -175,31 +195,31 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
     def search_product(
             self,
-            product_name: str,
+            name: str,
             amount: int = 9,
-            last_product_id: int | None = None
+            last_id: int | None = None
     ) -> list:
         condition = f"""
-            WHERE LOWER(product.product_name) LIKE '%{product_name.lower()}%'
+            WHERE LOWER(product.name) LIKE '%{name.lower()}%'
             AND product.is_hidden != true
         """
 
-        if last_product_id:
-            condition += f"AND product.product_id < {last_product_id}"
+        if last_id:
+            condition += f"AND product.product_id < {last_id}"
 
         self.__cursor.execute(
             f"""
                 SELECT 
                     product.product_id,
-                    product.product_name,
-                    product.product_price,
-                    rating.product_rating,
+                    product.name,
+                    product.price,
+                    rating.rating,
                     product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
                             product.product_id,
-                            ROUND(AVG(comment_rating), 1) as product_rating
+                            ROUND(AVG(comment.rating), 1) as rating
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id

@@ -5,12 +5,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from entities.products.dependencies import (
-    catalog_loader_service,
-    product_search_service,
     product_creation_service,
     product_fetch_service,
     product_update_service,
-    product_removal_service
+    product_removal_service,
+    catalog_load_service,
+    product_search_service
 )
 from entities.products.models import (
     ProductModel,
@@ -28,18 +28,6 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/latest", response_model=ProductCardListModel)
-def load_catalog(
-        products: Annotated[ProductCardListModel, Depends(catalog_loader_service)]
-):
-    return products
-
-@router.get("/search", response_model=ProductCardListModel)
-def search_product(
-        products: Annotated[ProductCardListModel, Depends(product_search_service)]
-):
-    return products
-
 @router.post(
     "/",
     response_model=ProductModel,
@@ -49,6 +37,20 @@ def create_product(
         product: Annotated[ProductModel, Depends(product_creation_service)]
 ):
     return product
+
+
+@router.get("/latest", response_model=ProductCardListModel)
+def load_catalog(
+        products: Annotated[ProductCardListModel, Depends(catalog_load_service)]
+):
+    return products
+
+@router.get("/search", response_model=ProductCardListModel)
+def search_product(
+        products: Annotated[ProductCardListModel, Depends(product_search_service)]
+):
+    return products
+
 
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(

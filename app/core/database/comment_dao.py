@@ -66,7 +66,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             amount: int = 10,
             last_id: int | None = None
     ) -> list:
-        condition = f"WHERE product.product_id = {product_id}"
+        condition = f"""
+            WHERE product.product_id = {product_id}
+        """
 
         if last_id:
             condition += f"AND comment.comment_id < {last_id}"
