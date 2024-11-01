@@ -8,7 +8,7 @@ function account_check() {
         refresh_tokens();
 
         axios.get(
-            "/users/me/data", {
+            "/users/me", {
                 headers: {
                     Authorization: `Bearer ${get_token()}`
                 }

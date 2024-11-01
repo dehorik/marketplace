@@ -30,52 +30,7 @@ def create_users_table(sql_cursor: cursor) -> None:
                 
                 FOREIGN KEY (role_id) 
                 REFERENCES role (role_id)
-            );
-            
-            CREATE FUNCTION check_username()
-            RETURNS TRIGGER AS $check_username$
-                BEGIN
-                    IF EXISTS (
-                        SELECT username 
-                        FROM users 
-                        WHERE username = NEW.username
-                    )
-                    THEN 
-                        RAISE EXCEPTION 'username is already taken';
-                    END IF;
-                RETURN NEW;
-                END;
-            $check_username$ LANGUAGE plpgsql;
-            
-            CREATE FUNCTION check_role()
-            RETURNS TRIGGER AS $check_role$
-                BEGIN
-                    IF (
-                        SELECT COUNT(user_id)
-                        FROM users
-                        WHERE role_id = (SELECT MAX(role_id) FROM role)
-                    ) = 1 AND OLD.role_id = (SELECT MAX(role_id) FROM role)
-                    THEN 
-                        RAISE EXCEPTION 'deletion not available';
-                    END IF;
-                RETURN OLD;
-                END;
-            $check_role$ LANGUAGE plpgsql;
-                
-            CREATE TRIGGER check_username
-            BEFORE INSERT ON users
-            FOR EACH ROW
-            EXECUTE FUNCTION check_username();  
-                
-            CREATE TRIGGER update_username
-            BEFORE UPDATE ON users
-            FOR EACH ROW 
-            WHEN (OLD.username IS DISTINCT FROM NEW.username)
-            EXECUTE FUNCTION check_username();
-        
-            CREATE TRIGGER check_role
-            BEFORE DELETE ON users
-            FOR EACH ROW EXECUTE FUNCTION check_role();
+            );   
         """
     )
 
@@ -91,27 +46,6 @@ def create_product_table(sql_cursor: cursor) -> None:
                 amount_orders INT DEFAULT 0,
                 photo_path VARCHAR(255)
             );
-            
-            CREATE FUNCTION delete_product()
-            RETURNS TRIGGER AS $delete_product$
-                BEGIN
-                    IF EXISTS (
-                        SELECT order_id
-                        FROM orders
-                        WHERE 
-                            orders.product_id = OLD.product_id 
-                            AND orders.date_end > NOW()
-                    )
-                    THEN
-                        RAISE EXCEPTION 'deletion not available';
-                    END IF;
-                RETURN OLD;
-                END;
-            $delete_product$ LANGUAGE plpgsql;
-            
-            CREATE TRIGGER delete_product
-            BEFORE DELETE ON product
-            FOR EACH ROW EXECUTE FUNCTION delete_product();
         """
     )
 
@@ -134,26 +68,7 @@ def create_comment_table(sql_cursor: cursor) -> None:
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id) 
                 ON DELETE SET NULL
-            );
-            
-            CREATE FUNCTION verify_product()
-            RETURNS TRIGGER AS $verify_product$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT product_id
-                        FROM product
-                        WHERE product_id = NEW.product_id AND is_hidden = false
-                    )
-                    THEN
-                        RAISE EXCEPTION 'product is hidden or does not exist';
-                    END IF;
-                RETURN NEW;    
-                END;       
-            $verify_product$ LANGUAGE plpgsql;     
-            
-            CREATE TRIGGER verify_upsert
-            BEFORE INSERT OR UPDATE ON comment
-            FOR EACH ROW EXECUTE FUNCTION verify_product();            
+            );    
         """
     )
 
@@ -176,20 +91,92 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 REFERENCES users (user_id)
                 ON DELETE CASCADE
             );
-            
-            CREATE FUNCTION check_product() 
-            RETURNS TRIGGER AS $check_product$
+        """
+    )
+
+def create_cart_item_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
+        """
+            CREATE TABLE cart_item (
+                cart_item_id SERIAL PRIMARY KEY,
+                user_id INT,
+                product_id INT,
+                
+                FOREIGN KEY (user_id) 
+                REFERENCES users (user_id)
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id)
+                ON DELETE CASCADE
+            ); 
+        """
+    )
+
+def create_triggers(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
+        """
+            CREATE FUNCTION check_username()
+            RETURNS TRIGGER AS $check_username$
                 BEGIN
                     IF EXISTS (
-                        SELECT product_id
-                        FROM product 
-                        WHERE product_id = NEW.product_id AND is_hidden = true
-                    ) THEN
-                        RAISE EXCEPTION 'product is hidden';
+                        SELECT username 
+                        FROM users 
+                        WHERE username = NEW.username
+                    )
+                    THEN 
+                        RAISE EXCEPTION 'username is already taken';
                     END IF;
-                RETURN NEW;                 
+                RETURN NEW;
                 END;
-            $check_product$ LANGUAGE plpgsql;
+            $check_username$ LANGUAGE plpgsql;
+        
+            CREATE FUNCTION check_superusers()
+            RETURNS TRIGGER AS $check_superusers$
+                BEGIN
+                    IF (
+                        SELECT COUNT(user_id)
+                        FROM users
+                        WHERE role_id = (SELECT MAX(role_id) FROM role)
+                    ) = 1 AND OLD.role_id = (SELECT MAX(role_id) FROM role)
+                    THEN 
+                        RAISE EXCEPTION 'deletion not available';
+                    END IF;
+                RETURN OLD;
+                END;
+            $check_superusers$ LANGUAGE plpgsql;
+        
+            CREATE FUNCTION check_orders()
+            RETURNS TRIGGER AS $check_orders$
+                BEGIN
+                    IF EXISTS (
+                        SELECT order_id
+                        FROM orders
+                        WHERE 
+                            orders.product_id = OLD.product_id 
+                            AND orders.date_end > NOW()
+                    )
+                    THEN
+                        RAISE EXCEPTION 'deletion not available';
+                    END IF;
+                RETURN OLD;
+                END;
+            $check_orders$ LANGUAGE plpgsql;
+        
+            CREATE FUNCTION check_product()
+            RETURNS TRIGGER AS $check_product$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT product_id
+                        FROM product
+                        WHERE product_id = NEW.product_id AND is_hidden = false
+                    )
+                    THEN
+                        RAISE EXCEPTION 'product is hidden or does not exist';
+                    END IF;
+                RETURN NEW;    
+                END;       
+            $check_product$ LANGUAGE plpgsql;     
             
             CREATE FUNCTION increase_amount_orders() 
             RETURNS TRIGGER AS $increase_amount_orders$
@@ -200,33 +187,42 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 RETURN NEW; 
                 END; 
             $increase_amount_orders$ LANGUAGE plpgsql;
+        
+        
+            CREATE TRIGGER user_creation
+            BEFORE INSERT ON users
+            FOR EACH ROW
+            EXECUTE FUNCTION check_username();  
                 
-            CREATE TRIGGER check_product
+            CREATE TRIGGER user_update
+            BEFORE UPDATE ON users
+            FOR EACH ROW 
+            WHEN (OLD.username IS DISTINCT FROM NEW.username)
+            EXECUTE FUNCTION check_username();
+        
+            CREATE TRIGGER user_deletion
+            BEFORE DELETE ON users
+            FOR EACH ROW EXECUTE FUNCTION check_superusers();
+            
+            CREATE TRIGGER product_deletion
+            BEFORE DELETE ON product
+            FOR EACH ROW EXECUTE FUNCTION check_orders();
+            
+            CREATE TRIGGER verify_upsert
+            BEFORE INSERT OR UPDATE ON comment
+            FOR EACH ROW EXECUTE FUNCTION check_product();    
+            
+            CREATE TRIGGER order_creation
             BEFORE INSERT ON orders
             FOR EACH ROW EXECUTE FUNCTION check_product(); 
             
-            CREATE TRIGGER increase_amount_orders
+            CREATE TRIGGER new_order
             AFTER INSERT ON orders
             FOR EACH ROW EXECUTE FUNCTION increase_amount_orders();
-        """
-    )
-
-def create_cart_item_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
-        """
-            CREATE TABLE cart_item (
-                cart_item_id SERIAL PRIMARY KEY,
-                product_id INT,
-                user_id INT,
-                
-                FOREIGN KEY (product_id) 
-                REFERENCES product (product_id)
-                ON DELETE CASCADE,
-                
-                FOREIGN KEY (user_id) 
-                REFERENCES users (user_id)
-                ON DELETE CASCADE
-            ); 
+            
+            CREATE TRIGGER cart_item_creation
+            BEFORE INSERT ON cart_item
+            FOR EACH ROW EXECUTE FUNCTION check_product(); 
         """
     )
 
@@ -276,6 +272,7 @@ def init_database() -> None:
     create_comment_table(sql_cursor)
     create_orders_table(sql_cursor)
     create_cart_item_table(sql_cursor)
+    create_triggers(sql_cursor)
 
     create_roles(
         sql_cursor,

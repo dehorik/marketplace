@@ -19,15 +19,15 @@ function update_catalog(amount=9) {
     let url = "/products/latest";
     let params = {
         amount: amount,
-        last_product_id: state.data.last_product_id
+        last_id: state.data.last_id
     };
 
-    if (state.data.product_name) {
+    if (state.data.name) {
         url = "/products/search";
         params = {
-            product_name: state.data.product_name,
+            name: state.data.name,
             amount: amount,
-            last_product_id: state.data.last_product_id
+            last_id: state.data.last_id
         }
     }
 
@@ -39,7 +39,7 @@ function update_catalog(amount=9) {
                 message_area.innerHTML = "Ничего не найдено!";
             }
             else if (products.length !== 0){
-                state.data.last_product_id = products.slice(-1)[0].product_id;
+                state.data.last_id = products.slice(-1)[0].product_id;
                 state.saveToStorage();
 
                 for (let i in products) {
@@ -63,7 +63,7 @@ function create_item(product) {
     product_name.className = "merchants-item-text";
     const link = document.createElement('a');
     link.href = `/products/${product.product_id}`;
-    link.innerHTML = product.product_name;
+    link.innerHTML = product.name;
     product_name.append(link);
 
     const wrapper1 = document.createElement('div');
@@ -71,9 +71,9 @@ function create_item(product) {
     const wrapper2 = document.createElement('div');
     wrapper2.className = "merchants-item-info";
     const product_price = document.createElement('div');
-    product_price.setAttribute('data-base-price', '7'); //чё это бля? ты думал, что сервер может не вернуть цену?
+    product_price.setAttribute('data-base-price', '7');
     product_price.className = "merchants-item-price";
-    product_price.innerHTML = `${product.product_price} $`;
+    product_price.innerHTML = `${product.price} $`;
     wrapper1.append(wrapper2);
     wrapper2.append(product_price);
 

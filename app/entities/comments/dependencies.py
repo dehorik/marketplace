@@ -1,5 +1,5 @@
 import os
-from typing import Annotated
+from typing import Annotated, Callable
 from fastapi import Form, UploadFile, File, Query, Path
 from fastapi import Depends, HTTPException, BackgroundTasks, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
@@ -9,11 +9,10 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
-from auth import AuthorizationService, PayloadTokenModel
+from auth import AuthorizationService, TokenPayloadModel
 from core.database import CommentDataAccessObject, get_comment_dao
-from core.tasks import file_write_task, file_deletion_task
 from core.settings import config
-from utils import Converter
+from utils import Converter, write_file, delete_file
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -25,15 +24,17 @@ class CommentCreationService:
     def __init__(
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel)
+            converter: Converter = Converter(CommentModel),
+            file_writer: Callable = write_file
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
+        self.file_writer = file_writer
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             product_id: Annotated[int, Query(ge=1)],
             rating: Annotated[int, Form(ge=1, le=5)],
             text: Annotated[str | None, Form(min_length=2, max_length=100)] = None,
@@ -58,7 +59,7 @@ class CommentCreationService:
 
             if photo:
                 background_tasks.add_task(
-                    file_write_task,
+                    self.file_writer,
                     comment.photo_path, photo.file.read()
                 )
 
@@ -113,15 +114,19 @@ class CommentUpdateService:
     def __init__(
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel)
+            converter: Converter = Converter(CommentModel),
+            file_writer: Callable = write_file,
+            file_deleter: Callable = delete_file
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
+        self.file_writer = file_writer
+        self.file_deleter = file_deleter
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             comment_id: Annotated[int, Path(ge=1)],
             clear_text: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
@@ -178,12 +183,12 @@ class CommentUpdateService:
 
             if photo:
                 background_tasks.add_task(
-                    file_write_task,
+                    self.file_writer,
                     comment.photo_path, photo.file.read()
                 )
             elif clear_photo:
                 background_tasks.add_task(
-                    file_deletion_task,
+                    self.file_deleter,
                     os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
                 )
 
@@ -199,15 +204,17 @@ class CommentRemovalService:
     def __init__(
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel)
+            converter: Converter = Converter(CommentModel),
+            file_deleter: Callable = delete_file
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
+        self.file_deleter = file_deleter
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(user_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             comment_id: Annotated[int, Path(ge=1)]
     ) -> CommentModel:
         try:
@@ -216,7 +223,7 @@ class CommentRemovalService:
 
             if comment.photo_path:
                 background_tasks.add_task(
-                    file_deletion_task,
+                    self.file_deleter,
                     comment.photo_path
                 )
 

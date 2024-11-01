@@ -14,7 +14,7 @@ from auth.models import (
     UserModel,
     ExtendedUserModel,
     AccessTokenModel,
-    PayloadTokenModel
+    TokenPayloadModel
 )
 from auth.redis_client import RedisClient, get_redis_client
 from auth.hashing_psw import get_password_hash, verify_password
@@ -116,7 +116,7 @@ class LoginService:
                     access_token=access_token
                 )
             )
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="incorrect username or password"
@@ -144,7 +144,7 @@ class RefreshTokenValidationService:
 
         try:
             payload = self.jwt_decoder(refresh_token)
-            payload = PayloadTokenModel(**payload)
+            payload = TokenPayloadModel(**payload)
 
             if refresh_token not in self.redis_client.get_tokens(payload.sub):
                 # если refresh токена в redis нет - им кто-то уже воспользовался
@@ -184,7 +184,7 @@ class LogoutService:
     ) -> None:
         response.delete_cookie(config.COOKIE_KEY)
         payload = self.jwt_decoder(refresh_token)
-        payload = PayloadTokenModel(**payload)
+        payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
 
 
@@ -208,18 +208,15 @@ class TokenRefreshService:
     ) -> AccessTokenModel:
         response.delete_cookie(config.COOKIE_KEY)
         payload = self.jwt_decoder(refresh_token)
-        payload = PayloadTokenModel(**payload)
+        payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
 
         refresh_token = self.refresh_token_encoder(payload)
         access_token = self.access_token_encoder(payload)
-
         set_refresh_cookie(response, refresh_token)
         self.redis_client.append_token(payload.sub, refresh_token)
 
-        return AccessTokenModel(
-            access_token=access_token
-        )
+        return AccessTokenModel(access_token=access_token)
 
 
 class AccessTokenValidationService:
@@ -230,13 +227,11 @@ class AccessTokenValidationService:
 
     def __call__(
             self,
-            token: Annotated[
-                HTTPAuthorizationCredentials, Depends(http_bearer)
-            ]
-    ) -> PayloadTokenModel:
+            token: Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
+    ) -> TokenPayloadModel:
         try:
             payload = self.jwt_decoder(token.credentials)
-            payload = PayloadTokenModel(**payload)
+            payload = TokenPayloadModel(**payload)
 
             return payload
         except InvalidTokenError:
@@ -263,9 +258,9 @@ class AuthorizationService:
     def __call__(
             self,
             payload: Annotated[
-                PayloadTokenModel, Depends(access_token_validation_service)
+                TokenPayloadModel, Depends(access_token_validation_service)
             ]
-    ) -> PayloadTokenModel:
+    ) -> TokenPayloadModel:
         if self.__min_role_id > 1:
             user = self.user_data_access_obj.read(payload.sub)
             user = self.converter.fetchone(user)
@@ -291,7 +286,6 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-# dependencies
 registration_service = RegistrationService()
 login_service = LoginService()
 logout_service = LogoutService()

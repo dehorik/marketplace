@@ -1,6 +1,6 @@
 from auth.views import router as auth_router
 from auth.dependencies import AuthorizationService, RefreshTokenValidationService
-from auth.models import PayloadTokenModel
+from auth.models import TokenPayloadModel
 from auth.tokens import (
     JWTEncoder,
     JWTDecoder,

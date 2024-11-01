@@ -1,14 +1,14 @@
 class CatalogStateData {
-    constructor(last_product_id) {
-        this.last_product_id = last_product_id;
+    constructor(last_id) {
+        this.last_id = last_id;
     }
 }
 
 
 class SearchedProductStateData {
-    constructor(product_name, last_product_id) {
-        this.product_name = product_name;
-        this.last_product_id = last_product_id;
+    constructor(name, last_id) {
+        this.name = name;
+        this.last_id = last_id;
     }
 }
 

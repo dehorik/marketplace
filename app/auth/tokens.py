@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import UTC, datetime, timedelta
 import jwt
 
-from auth.models import PayloadTokenModel, UserModel
+from auth.models import TokenPayloadModel, UserModel
 from core.settings import config
 
 
@@ -64,8 +64,8 @@ class AccessTokenEncoder:
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_minutes
 
-    def __call__(self, data: UserModel | PayloadTokenModel) -> str:
-        if type(data) is not UserModel and type(data) is not PayloadTokenModel:
+    def __call__(self, data: UserModel | TokenPayloadModel) -> str:
+        if type(data) is not UserModel and type(data) is not TokenPayloadModel:
             raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub
@@ -91,8 +91,8 @@ class RefreshTokenEncoder:
         self.__jwt_encoder = jwt_encoder
         self.__exp_minutes = exp_days * 24 * 60
 
-    def __call__(self, data: UserModel | PayloadTokenModel) -> str:
-        if type(data) is not UserModel and type(data) is not PayloadTokenModel:
+    def __call__(self, data: UserModel | TokenPayloadModel) -> str:
+        if type(data) is not UserModel and type(data) is not TokenPayloadModel:
             raise TypeError('invalid payload object')
 
         sub = data.user_id if type(data) is UserModel else data.sub

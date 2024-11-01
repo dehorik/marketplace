@@ -28,10 +28,10 @@ class ExtendedUserModel(BaseModel):
     token: AccessTokenModel
 
 
-class PayloadTokenModel(BaseModel):
+class TokenPayloadModel(BaseModel):
     """Полезная нагрузка токена"""
 
     token_type: str
     sub: int
-    iat: datetime | None = None
-    exp: datetime | None = None
+    iat: datetime
+    exp: datetime

@@ -47,12 +47,14 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             self,
             user_id: int,
             amount: int = 10,
-            last_order_id: int | None = None
+            last_id: int | None = None
     ) -> list:
-        condition = f"WHERE orders.user_id = {user_id}"
+        condition = f"""
+            WHERE orders.user_id = {user_id}
+        """
 
-        if last_order_id:
-            condition += f"AND orders.order_id < {last_order_id}"
+        if last_id:
+            condition += f"AND orders.order_id < {last_id}"
 
         self.__cursor.execute(
             f"""
@@ -63,8 +65,8 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     orders.date_start,
                     orders.date_end,
                     orders.delivery_address,
-                    product.product_name,
-                    product.product_price,
+                    product.name,
+                    product.price,
                     product.is_hidden,
                     product.photo_path
                 FROM 
@@ -93,7 +95,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def get_order_data(self, order_id: int) -> tuple:
+    def get_order_notification_data(self, order_id: int) -> tuple:
         self.__cursor.execute(
             """
                 SELECT 
@@ -103,8 +105,8 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     orders.delivery_address,
                     users.username,
                     users.email,
-                    product.product_name,
-                    product.product_price
+                    product.name,
+                    product.price
                 FROM product
                     INNER JOIN orders USING(product_id)
                     INNER JOIN users USING(user_id)
@@ -115,22 +117,55 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def add_to_cart(self, user_id: int, product_id: int) -> tuple:
+    def craete_cart_item(self, user_id: int, product_id: int) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO cart_item (
-                    product_id,
-                    user_id
+                    user_id,
+                    product_id
                 )
                 VALUES (%s, %s)
                 RETURNING *;
             """,
-            [product_id, user_id]
+            [user_id, product_id]
         )
 
         return self.__cursor.fetchone()
 
-    def delete_from_cart(self, user_id: int, cart_item_id: int) -> tuple:
+    def get_cart_items(
+            self,
+            user_id: int,
+            amount: int = 10,
+            last_id: int | None = None
+    ) -> list:
+        condition = f"""
+            WHERE cart_item.user_id = {user_id}
+            AND product.is_hidden = false
+        """
+
+        if last_id:
+            condition += f"AND cart_item.cart_item_id < {last_id}"
+
+        self.__cursor.execute(
+            f"""
+                SELECT
+                    cart_item.cart_item_id,
+                    cart_item.user_id,
+                    cart_item.product_id,
+                    product.name,
+                    product.price
+                FROM 
+                    cart_item INNER JOIN product
+                    ON cart_item.product_id = product.product_id
+                {condition}
+                ORDER BY cart_item.cart_item_id DESC
+                LIMIT {amount};
+            """
+        )
+
+        return self.__cursor.fetchall()
+
+    def delete_cart_item(self, cart_item_id: int, user_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
@@ -142,39 +177,6 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
         )
 
         return self.__cursor.fetchone()
-
-    def get_cart(
-            self,
-            user_id: int,
-            amount: int = 10,
-            last_item_id: int | None = None
-    ) -> list:
-        condition = f"""
-            WHERE cart_item.user_id = {user_id}
-            AND product.is_hidden = false
-        """
-
-        if last_item_id:
-            condition += f"AND cart_item.cart_item_id < {last_item_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT
-                    cart_item.cart_item_id,
-                    cart_item.user_id,
-                    cart_item.product_id,
-                    product.product_name,
-                    product.product_price
-                FROM 
-                    cart_item INNER JOIN product
-                    ON cart_item.product_id = product.product_id
-                {condition}
-                ORDER BY cart_item.cart_item_id DESC
-                LIMIT {amount};
-            """
-        )
-
-        return self.__cursor.fetchall()
 
 
 def get_order_dao() -> OrderDataAccessObject:

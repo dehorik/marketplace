@@ -15,6 +15,6 @@ class OrderNotificationModel(BaseModel):
     date_end: datetime | str
     delivery_address: str
     username: str
-    email: str
+    email: str | None
     product_name: str
-    product_price: int
+    price: int

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Callable
 from fastapi import UploadFile, File, Form, Query, Path
 from fastapi import BackgroundTasks, Depends, HTTPException, status
 from psycopg2.errors import RaiseException
@@ -9,14 +9,10 @@ from entities.products.models import (
     ProductCardModel,
     ProductCardListModel
 )
-from auth import AuthorizationService, PayloadTokenModel
-from core.tasks import (
-    comments_removal_task,
-    file_write_task,
-    file_deletion_task
-)
+from auth import AuthorizationService, TokenPayloadModel
+from core.tasks import comments_removal_task
 from core.database import ProductDataAccessObject, get_product_dao
-from utils import Converter
+from utils import Converter, write_file, delete_file
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -28,15 +24,17 @@ class ProductCreationService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel)
+            converter: Converter = Converter(ProductModel),
+            file_writer: Callable = write_file
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
+        self.file_writer = file_writer
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(admin_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             name: Annotated[str, Form(min_length=2, max_length=20)],
             price: Annotated[int, Form(gt=0, le=100000)],
             description: Annotated[str, Form(min_length=2, max_length=300)],
@@ -58,7 +56,7 @@ class ProductCreationService:
         product = self.converter.fetchone(product)
 
         background_tasks.add_task(
-            file_write_task,
+            self.file_writer,
             product.photo_path, photo.file.read()
         )
 
@@ -151,15 +149,17 @@ class ProductUpdateService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel)
+            converter: Converter = Converter(ProductModel),
+            file_writer: Callable = write_file
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
+        self.file_writer = file_writer
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(admin_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             product_id: Annotated[int, Path(ge=1)],
             name: Annotated[str | None, Form(min_length=2, max_length=30)] = None,
             price: Annotated[int | None, Form(gt=0, le=100000)] = None,
@@ -186,7 +186,7 @@ class ProductUpdateService:
 
             if photo:
                 background_tasks.add_task(
-                    file_write_task,
+                    self.file_writer,
                     product.photo_path, photo.file.read()
                 )
 
@@ -202,15 +202,17 @@ class ProductRemovalService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel)
+            converter: Converter = Converter(ProductModel),
+            file_delter: Callable = delete_file
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
+        self.file_delter = file_delter
 
     def __call__(
             self,
             background_tasks: BackgroundTasks,
-            payload: Annotated[PayloadTokenModel, Depends(admin_dependency)],
+            payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             product_id: Annotated[int, Path(ge=1)]
     ) -> ProductModel:
         try:
@@ -218,7 +220,7 @@ class ProductRemovalService:
             product = self.converter.fetchone(product)
 
             background_tasks.add_task(
-                file_deletion_task,
+                self.file_delter,
                 product.photo_path
             )
             background_tasks.add_task(comments_removal_task)

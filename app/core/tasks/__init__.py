@@ -2,12 +2,8 @@ from core.tasks.tasks import (
     EmailVerificationTask,
     CommentsRemovalTask,
     OrderNotificationTask,
-    FileWriteTask,
-    FileDeletionTask,
     email_verification_task,
     comments_removal_task,
-    order_notification_task,
-    file_write_task,
-    file_deletion_task
+    order_notification_task
 )
 from core.tasks.models import EmailTokenPayloadModel
