@@ -33,7 +33,7 @@ def get_cart_items(
 ):
     return cart_items
 
-@router.delete("/cart/{item_id}", response_model=CartItemModel)
+@router.delete("/cart/{cart_item_id}", response_model=CartItemModel)
 def delete_cart_item(
         cart_item: Annotated[CartItemModel, Depends(cart_item_removal_service)]
 ):

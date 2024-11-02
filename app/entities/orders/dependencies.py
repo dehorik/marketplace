@@ -1,10 +1,12 @@
+import os.path
 from random import randint
-from typing import Annotated
+from typing import Annotated, Callable
 from datetime import UTC, datetime, timedelta
 from fastapi import Form, Query, Path
 from fastapi import HTTPException, BackgroundTasks, Depends, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
+from core.settings import config
 from entities.orders.models import (
     CartItemCreationRequest,
     CartItemModel,
@@ -15,8 +17,8 @@ from entities.orders.models import (
 from auth import AuthorizationService, TokenPayloadModel
 from core.tasks import order_notification_task
 from core.database import OrderDataAccessObject, get_order_dao
-from utils import Converter
-
+from utils import Converter, write_file
+from utils.file_tools import copy_file
 
 user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
@@ -127,10 +129,12 @@ class OrderCreationService:
     def __init__(
             self,
             order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderModel)
+            converter: Converter = Converter(OrderModel),
+            file_copier: Callable = copy_file
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
+        self.file_copier = file_copier
 
     def __call__(
             self,
@@ -149,6 +153,15 @@ class OrderCreationService:
                 delivery_address
             )
             order = self.converter.fetchone(order)
+
+            product_photo_path = os.path.join(
+                config.PRODUCT_CONTENT_PATH,
+                str(product_id)
+            )
+            background_tasks.add_task(
+                self.file_copier,
+                product_photo_path, order.photo_path
+            )
 
             background_tasks.add_task(
                 order_notification_task,

@@ -109,13 +109,13 @@ class UserUpdateService:
         else:
             photo_path = None
 
-        email = "null" if clear_email else None
+        set_email = "null" if clear_email else None
 
         try:
             user = self.user_data_access_obj.update(
                 user_id=payload.sub,
                 username=username,
-                email=email,
+                email=set_email,
                 photo_path=photo_path
             )
             user = self.converter.fetchone(user)

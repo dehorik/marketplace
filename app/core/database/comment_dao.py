@@ -45,8 +45,11 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         )
 
         if has_photo:
-            comment_id = str(self.__cursor.fetchone()[0])
-            photo_path = os.path.join(config.COMMENT_CONTENT_PATH, comment_id)
+            comment_id = self.__cursor.fetchone()[0]
+            photo_path = os.path.join(
+                config.COMMENT_CONTENT_PATH,
+                str(comment_id)
+            )
 
             self.__cursor.execute(
                 """

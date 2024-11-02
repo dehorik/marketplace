@@ -93,7 +93,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 "username": username,
                 "email": email,
                 "photo_path": photo_path
-            }
+            }.items()
             if value is not None
         }
 

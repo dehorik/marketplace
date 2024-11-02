@@ -1,6 +1,8 @@
+import os
 from datetime import datetime
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
+from core.settings import config
 
 
 class OrderDataAccessObject(InterfaceDataAccessObject):
@@ -31,14 +33,42 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 INSERT INTO orders (
                     user_id,
                     product_id,
+                    product_name,
+                    product_price,
                     date_start,
                     date_end,
                     delivery_address
                 )
-                VALUES (%s, %s, NOW(), %s, %s)
+                VALUES (
+                    %s, %s, 
+                    (SELECT name FROM product WHERE product_id = %s),
+                    (SELECT price FROM product WHERE product_id = %s),
+                    NOW(),
+                    %s, %s 
+                )
+                RETURNING order_id;
+            """,
+            [
+                user_id,
+                product_id,
+                product_id,
+                product_id,
+                date_end,
+                delivery_address,
+            ]
+        )
+
+        order_id = self.__cursor.fetchone()[0]
+        photo_path = os.path.join(config.ORDER_CONTENT_PATH, str(order_id))
+
+        self.__cursor.execute(
+            """
+                UPDATE orders
+                SET photo_path = %s
+                WHERE order_id = %s
                 RETURNING *;
             """,
-            [user_id, product_id, date_end, delivery_address]
+            [photo_path, order_id]
         )
 
         return self.__cursor.fetchone()
@@ -60,15 +90,15 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             f"""
                 SELECT 
                     orders.order_id,
-                    product.product_id,
                     orders.user_id,
+                    product.product_id,
+                    orders.product_name,
+                    orders.product_price,
                     orders.date_start,
                     orders.date_end,
                     orders.delivery_address,
-                    product.name,
-                    product.price,
-                    product.is_hidden,
-                    product.photo_path
+                    orders.photo_path,
+                    product.is_hidden
                 FROM 
                     product INNER JOIN orders
                     ON product.product_id = orders.product_id
@@ -100,16 +130,16 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             """
                 SELECT 
                     orders.order_id,
+                    orders.product_name,
+                    orders.product_price,
                     orders.date_start,
                     orders.date_end,
                     orders.delivery_address,
                     users.username,
-                    users.email,
-                    product.name,
-                    product.price
-                FROM product
-                    INNER JOIN orders USING(product_id)
-                    INNER JOIN users USING(user_id)
+                    users.email
+                FROM
+                    orders INNER JOIN users
+                    ON orders.user_id = users.user_id
                 WHERE order_id = %s;
             """,
             [order_id]

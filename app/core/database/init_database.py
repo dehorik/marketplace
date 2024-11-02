@@ -79,17 +79,20 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 order_id SERIAL PRIMARY KEY,
                 user_id INT,
                 product_id INT,
+                product_name VARCHAR(255),
+                product_price INT,
                 date_start TIMESTAMP WITH TIME ZONE,
                 date_end TIMESTAMP WITH TIME ZONE,
                 delivery_address VARCHAR(255),
+                photo_path VARCHAR(255),
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id)
-                ON DELETE CASCADE,
+                ON DELETE RESTRICT,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
-                ON DELETE CASCADE
+                ON DELETE RESTRICT
             );
         """
     )
@@ -146,23 +149,6 @@ def create_triggers(sql_cursor: cursor) -> None:
                 END;
             $check_superusers$ LANGUAGE plpgsql;
         
-            CREATE FUNCTION check_orders()
-            RETURNS TRIGGER AS $check_orders$
-                BEGIN
-                    IF EXISTS (
-                        SELECT order_id
-                        FROM orders
-                        WHERE 
-                            orders.product_id = OLD.product_id 
-                            AND orders.date_end > NOW()
-                    )
-                    THEN
-                        RAISE EXCEPTION 'deletion not available';
-                    END IF;
-                RETURN OLD;
-                END;
-            $check_orders$ LANGUAGE plpgsql;
-        
             CREATE FUNCTION check_product()
             RETURNS TRIGGER AS $check_product$
                 BEGIN
@@ -203,10 +189,6 @@ def create_triggers(sql_cursor: cursor) -> None:
             CREATE TRIGGER user_deletion
             BEFORE DELETE ON users
             FOR EACH ROW EXECUTE FUNCTION check_superusers();
-            
-            CREATE TRIGGER product_deletion
-            BEFORE DELETE ON product
-            FOR EACH ROW EXECUTE FUNCTION check_orders();
             
             CREATE TRIGGER verify_upsert
             BEFORE INSERT OR UPDATE ON comment

@@ -43,8 +43,8 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [name, price, description, is_hidden]
         )
 
-        product_id = str(self.__cursor.fetchone()[0])
-        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, product_id)
+        product_id = self.__cursor.fetchone()[0]
+        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
 
         self.__cursor.execute(
             """                 

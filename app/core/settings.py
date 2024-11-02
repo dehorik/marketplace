@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int
 
     # path to images from database
-    USER_CONTENT_PATH: str
-    PRODUCT_CONTENT_PATH: str
     COMMENT_CONTENT_PATH: str
+    ORDER_CONTENT_PATH: str
+    PRODUCT_CONTENT_PATH: str
+    USER_CONTENT_PATH: str
 
     # auth
     PRIVATE_KEY_PATH: str
