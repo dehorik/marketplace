@@ -248,12 +248,10 @@ class UserDeletionService:
             self,
             response: Response,
             background_tasks: BackgroundTasks,
-            refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
+            refresh_token: Annotated[str, Depends(refresh_token_validation_service)],
+            payload: Annotated[TokenPayloadModel, Depends(user_dependency)]
     ) -> UserModel:
         try:
-            payload = self.jwt_decoder(refresh_token)
-            payload = TokenPayloadModel(**payload)
-
             response.delete_cookie(config.COOKIE_KEY)
             self.redis_client.delete_user(payload.sub)
 

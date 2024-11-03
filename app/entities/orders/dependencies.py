@@ -18,9 +18,13 @@ from entities.orders.models import (
     OrderCardListModel
 )
 from auth import AuthorizationService, TokenPayloadModel
-from core.tasks import order_notification_task
+from core.tasks import (
+    order_creation_notification_task,
+    order_update_notification_task
+)
 from core.database import OrderDataAccessObject, get_order_dao
 from utils import Converter, copy_file, delete_file
+
 
 user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
@@ -170,7 +174,7 @@ class OrderCreationService:
             )
 
             background_tasks.add_task(
-                order_notification_task,
+                order_creation_notification_task,
                 order.order_id
             )
 
@@ -223,13 +227,18 @@ class OrderUpdateService:
 
     def __call__(
             self,
+            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             order_id: Annotated[int, Path(ge=1)],
             data: OrderUpdateRequest
     ) -> OrderModel:
         try:
             now = datetime.now(UTC)
-            delta = timedelta(hours=randint(0, 12), minutes=randint(0, 60))
+            delta = timedelta(
+                days=randint(0, 3),
+                hours=randint(0, 24),
+                minutes=randint(0, 60)
+            )
             date_end = now + delta
             order = self.order_data_access_obj.update(
                 order_id,
@@ -238,6 +247,11 @@ class OrderUpdateService:
                 data.delivery_address
             )
             order = self.converter.fetchone(order)
+
+            background_tasks.add_task(
+                order_update_notification_task,
+                order.order_id
+            )
 
             return order
         except ValueError:

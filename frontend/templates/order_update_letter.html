@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ItemHub</title>
+    <style>
+        p {
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .order-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .order-details p {
+            margin: 5px 0;
+        }
+
+        .footer {
+            background-color: #4CAF50;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Ваш заказ был изменён!</h1>
+    </div>
+    <div class="content">
+        <p>Здравствуйте, <b>{{order.username}}</b>.</p>
+        <p>Вы успешно изменили адрес доставки заказа.</p>
+        <p><b>Данные заказа:</b></p>
+        <div class="order-details">
+            <p><b>Наименование товара:</b> {{order.product_name}}</p>
+            <p><b>Цена:</b> {{order.product_price}} $</p>
+            <p><b>Заказ от:</b> {{order.date_start}}</p>
+            <p><b>Новая дата доставки:</b> {{order.date_end}}</p>
+            <p><b>Новый адрес доставки:</b> {{order.delivery_address}}</p>
+        </div>
+        <p>Спасибо за выбор <b>ItemHub!</b></p>
+    </div>
+    <div class="footer">
+        <p style="color: #ffffff">&copy; {{year}} ItemHub. Все права защищены.</p>
+    </div>
+</div>
+</body>
+</html>
