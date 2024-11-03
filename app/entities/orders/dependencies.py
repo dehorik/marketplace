@@ -1,9 +1,8 @@
-import os.path
+import os
 from random import randint
 from typing import Annotated, Callable
 from datetime import UTC, datetime, timedelta
-from fastapi import Form, Query, Path
-from fastapi import HTTPException, BackgroundTasks, Depends, status
+from fastapi import HTTPException, BackgroundTasks, Depends, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from core.settings import config
@@ -12,13 +11,14 @@ from entities.orders.models import (
     CartItemModel,
     CartItemCardModel,
     CartItemCardListModel,
+    OrderCreationRequest,
     OrderModel
 )
 from auth import AuthorizationService, TokenPayloadModel
 from core.tasks import order_notification_task
 from core.database import OrderDataAccessObject, get_order_dao
-from utils import Converter, write_file
-from utils.file_tools import copy_file
+from utils import Converter, copy_file
+
 
 user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
@@ -140,23 +140,27 @@ class OrderCreationService:
             self,
             background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
-            product_id: Annotated[int, Form(ge=1)],
-            delivery_address: Annotated[str, Form(min_length=6, max_length=30)]
+            data: OrderCreationRequest
     ) -> OrderModel:
         try:
             now = datetime.now(UTC)
-            date_end = now + timedelta(days=randint(1, 3))
+            delta = timedelta(
+                days=randint(0, 3),
+                hours=randint(0, 24),
+                minutes=randint(0, 60)
+            )
+            date_end = now + delta
             order = self.order_data_access_obj.create(
                 payload.sub,
-                product_id,
+                data.product_id,
                 date_end,
-                delivery_address
+                data.delivery_address
             )
             order = self.converter.fetchone(order)
 
             product_photo_path = os.path.join(
                 config.PRODUCT_CONTENT_PATH,
-                str(product_id)
+                str(data.product_id)
             )
             background_tasks.add_task(
                 self.file_copier,

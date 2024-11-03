@@ -277,7 +277,12 @@ class UserRemovalService:
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="deletion not available"
+                detail="at least one superuser is required"
+            )
+        except ForeignKeyViolation:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="active orders prevent account deletion"
             )
 
 

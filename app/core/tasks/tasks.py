@@ -54,25 +54,6 @@ class EmailVerificationTask:
         self.email_sender.send_letter(email, "Подтверждение почты", letter)
 
 
-class CommentsRemovalTask:
-    def __init__(
-            self,
-            file_deleter: Callable = delete_file,
-            comment_dao: CommentDataAccessObject = get_comment_dao()
-    ):
-        self.file_deleter = file_deleter
-        self.comment_data_access_obj = comment_dao
-
-    def __call__(self) -> None:
-        comments = self.comment_data_access_obj.delete_undefined_comments()
-
-        for comment in comments:
-            photo_path = comment[-1]
-
-            if photo_path and exists(photo_path):
-                self.file_deleter(photo_path)
-
-
 class OrderNotificationTask:
     def __init__(
             self,
@@ -102,6 +83,45 @@ class OrderNotificationTask:
         self.email_sender.send_letter(order.email, "Новый заказ", letter)
 
 
+class CommentsRemovalTask:
+    def __init__(
+            self,
+            comment_dao: CommentDataAccessObject = get_comment_dao(),
+            file_deleter: Callable = delete_file
+    ):
+        self.comment_data_access_obj = comment_dao
+        self.file_deleter = file_deleter
+
+    def __call__(self) -> None:
+        comments = self.comment_data_access_obj.delete_undefined_comments()
+
+        for comment in comments:
+            photo_path = comment[-1]
+
+            if photo_path and exists(photo_path):
+                self.file_deleter(photo_path)
+
+
+class OrdersRemovalTask:
+    def __init__(
+            self,
+            order_dao: OrderDataAccessObject = get_order_dao(),
+            file_deleter: Callable = delete_file
+    ):
+        self.order_data_access_obj = order_dao
+        self.file_deleter = file_deleter
+
+    def __call__(self) -> None:
+        orders = self.order_data_access_obj.delete_undefined_orders()
+
+        for order in orders:
+            photo_path = order[-1]
+
+            if photo_path and exists(photo_path):
+                self.file_deleter(photo_path)
+
+
 email_verification_task = EmailVerificationTask()
-comments_removal_task = CommentsRemovalTask()
 order_notification_task = OrderNotificationTask()
+comments_removal_task = CommentsRemovalTask()
+orders_removal_task = OrdersRemovalTask()

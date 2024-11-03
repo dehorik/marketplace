@@ -10,7 +10,7 @@ from entities.products.models import (
     ProductCardListModel
 )
 from auth import AuthorizationService, TokenPayloadModel
-from core.tasks import comments_removal_task
+from core.tasks import comments_removal_task, orders_removal_task
 from core.database import ProductDataAccessObject, get_product_dao
 from utils import Converter, write_file, delete_file
 
@@ -224,6 +224,7 @@ class ProductRemovalService:
                 product.photo_path
             )
             background_tasks.add_task(comments_removal_task)
+            background_tasks.add_task(orders_removal_task)
 
             return product
         except ValueError:

@@ -88,7 +88,7 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 
                 FOREIGN KEY (product_id) 
                 REFERENCES product (product_id)
-                ON DELETE RESTRICT,
+                ON DELETE SET NULL,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)

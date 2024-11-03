@@ -125,6 +125,18 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
+    def delete_undefined_orders(self) -> list:
+        self.__cursor.execute(
+            """
+                DELETE 
+                FROM orders
+                WHERE product_id IS NULL
+                RETURNING *;
+            """
+        )
+
+        return self.__cursor.fetchall()
+
     def get_order_notification_data(self, order_id: int) -> tuple:
         self.__cursor.execute(
             """

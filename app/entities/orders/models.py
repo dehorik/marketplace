@@ -29,6 +29,11 @@ class CartItemCardListModel(BaseModel):
     cart_items: List[CartItemCardModel]
 
 
+class OrderCreationRequest(BaseModel):
+    product_id: int = Field(ge=1)
+    delivery_address: str = Field(min_length=6, max_length=30)
+
+
 class OrderModel(BaseModel):
     order_id: int
     user_id: int
