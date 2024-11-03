@@ -5,12 +5,16 @@ from entities.orders.dependencies import (
     cart_item_creation_service,
     cart_item_load_service,
     cart_item_removal_service,
-    order_creation_service
+    order_creation_service,
+    order_load_service,
+    order_update_service,
+    order_deletion_service
 )
 from entities.orders.models import (
     CartItemModel,
     CartItemCardListModel,
-    OrderModel
+    OrderModel,
+    OrderCardListModel
 )
 
 
@@ -47,4 +51,18 @@ def delete_cart_item(
 def create_order(
         order: Annotated[OrderModel, Depends(order_creation_service)]
 ):
+    return order
+
+@router.get("/latest", response_model=OrderCardListModel)
+def load_orders(
+        orders: Annotated[OrderCardListModel, Depends(order_load_service)]
+):
+    return orders
+
+@router.patch("/{order_id}", response_model=OrderModel)
+def update_order(order: Annotated[OrderModel, Depends(order_update_service)]):
+    return order
+
+@router.delete("/{order_id}", response_model=OrderModel)
+def delete_order(order: Annotated[OrderModel, Depends(order_deletion_service)]):
     return order

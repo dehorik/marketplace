@@ -229,7 +229,7 @@ class RoleManagementService:
             )
 
 
-class UserRemovalService:
+class UserDeletionService:
     def __init__(
             self,
             jwt_decoder: JWTDecoder = get_jwt_decoder(),
@@ -313,5 +313,5 @@ user_fetch_service = UserFetchService()
 user_update_service = UserUpdateService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()
-user_removal_service = UserRemovalService()
+user_deletion_service = UserDeletionService()
 fetch_admins_service = FetchAdminsService()

@@ -34,7 +34,13 @@ class OrderCreationRequest(BaseModel):
     delivery_address: str = Field(min_length=6, max_length=30)
 
 
+class OrderUpdateRequest(BaseModel):
+    delivery_address: str = Field(min_length=6, max_length=30)
+
+
 class OrderModel(BaseModel):
+    """Базовая схема заказа"""
+
     order_id: int
     user_id: int
     product_id: int
@@ -44,3 +50,20 @@ class OrderModel(BaseModel):
     date_end: datetime
     delivery_address: str
     photo_path: str
+
+
+class OrderCardModel(BaseModel):
+    order_id: int
+    user_id: int
+    product_id: int
+    product_name: str
+    product_price: int
+    product_is_hidden: bool
+    date_start: datetime
+    date_end: datetime
+    delivery_address: str
+    photo_path: str
+
+
+class OrderCardListModel(BaseModel):
+    orders: List[OrderCardModel]

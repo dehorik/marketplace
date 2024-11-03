@@ -8,7 +8,7 @@ from entities.products.dependencies import (
     product_creation_service,
     product_fetch_service,
     product_update_service,
-    product_removal_service,
+    product_deletion_service,
     catalog_load_service,
     product_search_service
 )
@@ -73,6 +73,6 @@ def update_product(
 
 @router.delete("/{product_id}", response_model=ProductModel)
 def delete_product(
-        product: Annotated[ProductModel, Depends(product_removal_service)]
+        product: Annotated[ProductModel, Depends(product_deletion_service)]
 ):
     return product

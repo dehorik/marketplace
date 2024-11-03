@@ -198,7 +198,7 @@ class ProductUpdateService:
             )
 
 
-class ProductRemovalService:
+class ProductDeletionService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
@@ -246,6 +246,6 @@ def check_file(file: UploadFile) -> bool:
 product_creation_service = ProductCreationService()
 product_fetch_service = ProductFetchService()
 product_update_service = ProductUpdateService()
-product_removal_service = ProductRemovalService()
+product_deletion_service = ProductDeletionService()
 catalog_load_service = CatalogLoadService()
 product_search_service = ProductSearchService()

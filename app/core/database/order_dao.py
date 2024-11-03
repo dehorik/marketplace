@@ -91,36 +91,55 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 SELECT 
                     orders.order_id,
                     orders.user_id,
-                    product.product_id,
+                    orders.product_id,
                     orders.product_name,
                     orders.product_price,
+                    product.is_hidden,
                     orders.date_start,
                     orders.date_end,
                     orders.delivery_address,
-                    orders.photo_path,
-                    product.is_hidden
+                    orders.photo_path
                 FROM 
                     product INNER JOIN orders
                     ON product.product_id = orders.product_id
                 {condition}
-                ORDER BY orders.date_start DESC
+                ORDER BY orders.order_id DESC
                 LIMIT {amount};
             """
         )
 
         return self.__cursor.fetchall()
 
-    def update(self):
-        pass
+    def update(
+            self,
+            order_id: int,
+            user_id: int,
+            date_end: datetime,
+            delivery_address: str
+    ) -> tuple:
+        self.__cursor.execute(
+            """
+                UPDATE orders
+                SET 
+                    date_end = %s,
+                    delivery_address = %s
+                WHERE order_id = %s AND user_id = %s
+                RETURNING *;
+            """,
+            [date_end, delivery_address, order_id, user_id]
+        )
 
-    def delete(self, order_id: int) -> tuple:
+        return self.__cursor.fetchone()
+
+    def delete(self, order_id: int, user_id: int) -> tuple:
         self.__cursor.execute(
             """
                 DELETE 
                 FROM orders
-                WHERE order_id = %s
+                WHERE order_id = %s AND user_id = %s
                 RETURNING *;
-            """
+            """,
+            [order_id, user_id]
         )
 
         return self.__cursor.fetchone()

@@ -9,7 +9,7 @@ from entities.users.dependencies import (
     user_update_service,
     email_verification_service,
     role_management_service,
-    user_removal_service,
+    user_deletion_service,
     fetch_admins_service
 )
 from entities.users.models import UserModel, AdminListModel
@@ -56,7 +56,7 @@ def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
     return user
 
 @router.delete("/me", response_model=UserModel)
-def delete_user(user: Annotated[UserModel, Depends(user_removal_service)]):
+def delete_user(user: Annotated[UserModel, Depends(user_deletion_service)]):
     return user
 
 @router.get("/admins", response_model=AdminListModel)

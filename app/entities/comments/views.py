@@ -5,7 +5,7 @@ from entities.comments.dependencies import (
     comment_creation_service,
     comment_load_service,
     comment_update_service,
-    comment_removal_service
+    comment_deletion_service
 )
 from entities.comments.models import CommentModel, CommentItemListModel
 
@@ -37,6 +37,6 @@ def update_comment(
 
 @router.delete('/{comment_id}', response_model=CommentModel)
 def delete_comment(
-        comment: Annotated[CommentModel, Depends(comment_removal_service)]
+        comment: Annotated[CommentModel, Depends(comment_deletion_service)]
 ):
     return comment

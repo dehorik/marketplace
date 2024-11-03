@@ -200,7 +200,7 @@ class CommentUpdateService:
             )
 
 
-class CommentRemovalService:
+class CommentDeletionService:
     def __init__(
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
@@ -242,4 +242,4 @@ def check_file(file: UploadFile) -> bool:
 comment_creation_service = CommentCreationService()
 comment_load_service = CommentLoadService()
 comment_update_service = CommentUpdateService()
-comment_removal_service = CommentRemovalService()
+comment_deletion_service = CommentDeletionService()
