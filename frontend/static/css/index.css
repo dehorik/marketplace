@@ -1,0 +1,82 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-style: revert;
+}
+
+header {
+    width: 100%;
+    height: 100px;
+}
+
+.navbar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+}
+
+.logo {
+    height: 80%;
+    width: 12%;
+    margin: 2px 0 0 1%;
+}
+
+.logo img {
+    width: 100%;
+    height: 100%;
+}
+
+.search-area {
+    width: 25%;
+    height: 35px;
+    margin: 30px 25%;
+    display: flex;
+}
+
+.search-area img {
+    height: 26px;
+    width: 26px;
+    margin: 4px 5px 0 0;
+}
+
+.search-area form {
+    width: 80%;
+    height: 100%;
+}
+
+.search-area input {
+    width: 100%;
+    height: 100%;
+    padding-left: 9px;
+    padding-right: 9px;
+    font-size: 17px;
+    border: 1px solid black;
+    border-radius: 12px;
+}
+
+.buttons {
+    width: 6%;
+    display: flex;
+    margin: 22px 0 0 0;
+}
+
+.img-link {
+    margin: 0 8px;
+}
+
+.img-link img {
+    width: 45px;
+    height: 45px;
+}
