@@ -13,11 +13,13 @@
 body {
     font-family: Arial, sans-serif;
     font-style: revert;
+    background-color: #F5F7FA;
 }
 
 header {
     width: 100%;
     height: 100px;
+    background-color: #FFFFFF;
 }
 
 .navbar {
@@ -30,7 +32,7 @@ header {
 .logo {
     height: 80%;
     width: 12%;
-    margin: 2px 0 0 1%;
+    margin: 0.5% 0 0 1%;
 }
 
 .logo img {
@@ -41,7 +43,7 @@ header {
 .search-area {
     width: 25%;
     height: 35px;
-    margin: 30px 25%;
+    margin: 30px 25% 0;
     display: flex;
 }
 
@@ -67,9 +69,8 @@ header {
 }
 
 .buttons {
-    width: 6%;
     display: flex;
-    margin: 22px 0 0 0;
+    margin: 1.7% 0 0 -2%;
 }
 
 .img-link {
@@ -79,4 +80,122 @@ header {
 .img-link img {
     width: 45px;
     height: 45px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 16% 16% 16% 16% 16%;
+    grid-template-rows: auto;
+    justify-content: center;
+    row-gap: 3%;
+    column-gap: 3%;
+    padding-top: 2%;
+    padding-bottom: 2%;
+    width: 96%;
+    height: auto;
+    margin: 2% auto 2%;
+    border-radius: 15px;
+    background-color: #FFFFFF;
+}
+
+.product-card {
+    border: 1px solid grey;
+    border-radius: 15px;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
+    padding-bottom: 37%;
+    height: 100%;
+    min-height: 100%;
+}
+
+.product-photo {
+    margin: 5% auto 0;
+    width: 90%;
+    height: 80%;
+    border: 1px solid black;
+    border-radius: 15px;
+}
+
+.product-photo img{
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+}
+
+.product-photo a {
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+}
+
+.product-price {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 8% 0 0 6%;
+}
+
+.product-name {
+    margin: 5% auto 0;
+    height: 8%;
+    width: 87%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.product-name a {
+    text-decoration: none;
+    display: inline-block;
+    width: 100%;
+}
+
+.product-name a:hover {
+    color: rgba(52,82,226,0.94)
+}
+
+.comments-data {
+    display: flex;
+    margin: 4% auto 0;
+    width: 90%;
+    height: 10%;
+}
+
+.product-rating {
+    width: 50%;
+    height: 100%;
+    display: flex;
+}
+
+.product-rating span {
+    margin: 3.5% 0 0 5%;
+    font-weight: bold;
+}
+
+.amount-comments {
+    width: 50%;
+    height: 100%;
+    display: flex;
+}
+
+.amount-comments span {
+    margin: 3.5% 0 0 5%;
+    font-weight: bold;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.comments-data img {
+    height: 84%;
+    width: 28%;
+}
+
+footer {
+    background-color: #FFFFFF;
+    height: 70px;
+}
+
+.footer {
+    text-align: center;
+    padding-top: 2%;
+    font-weight: bold;
 }
