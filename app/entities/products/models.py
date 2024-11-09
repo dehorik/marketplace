@@ -34,7 +34,8 @@ class ProductCardModel(BaseModel):
     product_id: int
     name: str = Field(min_length=2, max_length=20)
     price: int = Field(gt=0, le=100000)
-    rating: float | None = Field(ge=1, le=5, default=None)
+    rating: float
+    amount_comments: int
     photo_path: str
 
 

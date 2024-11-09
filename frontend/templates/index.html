@@ -1,22 +1,24 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/index.css" rel="stylesheet">
+    <link href="/static/css/index.css" rel="stylesheet">
+    <link href="/static/img/favicon.png" rel="icon" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
 </head>
 <body>
 <header>
     <div class="navbar">
         <div class="logo">
-            <img src="../static/img/logo.png" alt="webstore">
+            <img src="/static/img/logo.png" alt="webstore">
         </div>
 
         <div class="search-area">
-            <img src="../static/img/search.png" alt="search">
+            <img src="/static/img/search.png" alt="search">
             <form>
                 <label for="search_area"></label>
                 <input id="search_area" type="text" placeholder="Введите название товара">
@@ -25,329 +27,25 @@
 
         <div class="buttons">
             <div class="img-link">
-                <a><img src="../static/img/profile.png" alt="profile"></a>
+                <a><img src="/static/img/profile.png" alt="profile"></a>
             </div>
             <div class="img-link">
-                <a><img src="../static/img/orders.png" alt="orders"></a>
+                <a><img src="/static/img/orders.png" alt="orders"></a>
             </div>
             <div class="img-link">
-                <a><img src="../static/img/cart_items.png" alt="cart-items"></a>
+                <a><img src="/static/img/cart_items.png" alt="cart-items"></a>
             </div>
         </div>
     </div>
 </header>
 
-<div class="grid">
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-    <div class="product-card">
-        <div class="product-photo">
-            <a><img src="https://ir.ozone.ru/s3/multimedia-1-t/wc200/7187912981.jpg" alt="product-photo"></a>
-        </div>
-        <div class="product-price">100 $</div>
-        <div class="product-name"><a>Китайский хорош машин</a></div>
-        <div class="comments-data">
-            <div class="product-rating">
-                <img src="../static/img/active_star.png" alt="active-star">
-                <span>5.0</span>
-            </div>
-            <div class="amount-comments">
-                <img src="../static/img/comment.png" alt="comment">
-                <span>1</span>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="grid"></div>
 
 <footer>
     <div class="footer">&copy; WebStore 2024</div>
 </footer>
+
+<script src="/static/js/states.js"></script>
+<script src="/static/js/scroll_products.js"></script>
 </body>
 </html>

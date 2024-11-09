@@ -74,7 +74,7 @@ class CatalogLoadService:
 
     def __call__(
             self,
-            amount: Annotated[int, Query(ge=0)] = 9,
+            amount: Annotated[int, Query(ge=0)] = 15,
             last_id: Annotated[int | None, Query(ge=1)] = None
     ) -> ProductCardListModel:
         """
@@ -103,8 +103,8 @@ class ProductSearchService:
 
     def __call__(
             self,
-            name: Annotated[str, Query(min_length=2, max_length=20)],
-            amount: Annotated[int, Query(ge=0)] = 9,
+            name: Annotated[str, Query()],
+            amount: Annotated[int, Query(ge=0)] = 15,
             last_id: Annotated[int | None, Query(ge=1)] = None
     ) -> ProductCardListModel:
         """

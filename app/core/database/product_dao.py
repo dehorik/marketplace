@@ -172,13 +172,15 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     product.product_id, 
                     product.name, 
                     product.price, 
-                    rating.rating,
+                    COALESCE(rating.rating, 0),
+                    COALESCE(rating.amount_comments, 0),
                     product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
                             product.product_id,
-                            ROUND(AVG(comment.rating), 1) as rating
+                            ROUND(AVG(comment.rating), 1) as rating,
+                            COUNT(comment_id) as amount_comments
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id
@@ -213,13 +215,15 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     product.product_id,
                     product.name,
                     product.price,
-                    rating.rating,
+                    COALESCE(rating.rating, 0),
+                    COALESCE(rating.amount_comments, 0),
                     product.photo_path
                 FROM 
                     product LEFT JOIN (
                         SELECT 
                             product.product_id,
-                            ROUND(AVG(comment.rating), 1) as rating
+                            ROUND(AVG(comment.rating), 1) as rating,
+                            COUNT(comment_id) as amount_comments
                         FROM 
                             product INNER JOIN comment 
                             ON product.product_id = comment.product_id

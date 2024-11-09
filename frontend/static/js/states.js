@@ -1,40 +1,27 @@
-class CatalogStateData {
-    constructor(last_id) {
-        this.last_id = last_id;
-    }
-}
-
-
-class SearchedProductStateData {
-    constructor(name, last_id) {
-        this.name = name;
-        this.last_id = last_id;
-    }
-}
-
-
 class State {
-    constructor(data) {
-        this.data = data;
+    constructor() {
+        const state_data = State.getStateData();
+        this.data = state_data ? state_data : {};
     }
 
     static getStateData() {
         return JSON.parse(localStorage.getItem("state"));
     }
 
+    static deleteFromStorage() {
+        localStorage.removeItem("state");
+    }
+
     saveToStorage() {
         localStorage.setItem("state", JSON.stringify(this.data));
     }
 
-     static deleteFromStorage() {
-        localStorage.removeItem("state");
+    get(key) {
+        return this.data[key];
+    }
+
+    set(key, value) {
+        this.data[key] = value;
+        this.saveToStorage();
     }
 }
-
-
-function get_state_obj() {
-    return new State(State.getStateData());
-}
-
-
-

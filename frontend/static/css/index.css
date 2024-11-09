@@ -82,16 +82,24 @@ header {
     height: 45px;
 }
 
+.message-area {
+    position: absolute;
+    margin: 2% 0 0 0;
+    width: 96%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+
 .grid {
     display: grid;
-    grid-template-columns: 16% 16% 16% 16% 16%;
-    grid-template-rows: auto;
     justify-content: center;
-    row-gap: 3%;
+    grid-template-columns: repeat(5, 240px);
+    grid-auto-rows: minmax(400px, auto);
     column-gap: 3%;
-    padding-top: 2%;
-    padding-bottom: 2%;
+    padding-top: 2.8%;
     width: 96%;
+    min-height: 68vh;
     height: auto;
     margin: 2% auto 2%;
     border-radius: 15px;
@@ -99,26 +107,19 @@ header {
 }
 
 .product-card {
+    height: 360px;
+    width: 240px;
     border: 1px solid grey;
     border-radius: 15px;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
-    padding-bottom: 37%;
-    height: 100%;
-    min-height: 100%;
 }
 
 .product-photo {
-    margin: 5% auto 0;
     width: 90%;
-    height: 80%;
+    height: 60%;
     border: 1px solid black;
     border-radius: 15px;
-}
-
-.product-photo img{
-    width: 100%;
-    height: 100%;
-    border-radius: 15px;
+    margin: 5% auto 0;
 }
 
 .product-photo a {
@@ -127,66 +128,72 @@ header {
     display: inline-block;
 }
 
+.product-photo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+}
+
 .product-price {
     font-size: 22px;
     font-weight: bold;
-    margin: 8% 0 0 6%;
+    margin: 5% 0 0 5%;
 }
 
 .product-name {
-    margin: 5% auto 0;
     height: 8%;
     width: 87%;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+    margin: 3% 0 0 5%;
 }
 
 .product-name a {
-    text-decoration: none;
     display: inline-block;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+    color: black;
 }
 
 .product-name a:hover {
-    color: rgba(52,82,226,0.94)
+    color: rgba(52,82,226,0.94);
 }
 
-.comments-data {
+.rating-data {
     display: flex;
-    margin: 4% auto 0;
-    width: 90%;
-    height: 10%;
+    height: 16%;
+    width: 100%;
 }
 
 .product-rating {
     width: 50%;
-    height: 100%;
     display: flex;
 }
 
+.product-rating img {
+    width: 25%;
+    height: 45%;
+    margin: 4% 0 0 8%;
+}
+
 .product-rating span {
-    margin: 3.5% 0 0 5%;
-    font-weight: bold;
+    margin: 8.5% 0 0 5%;
 }
 
 .amount-comments {
     width: 50%;
-    height: 100%;
     display: flex;
 }
 
-.amount-comments span {
-    margin: 3.5% 0 0 5%;
-    font-weight: bold;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+.amount-comments img {
+    width: 22%;
+    height: 45%;
+    margin: 4% 0 0 0;
 }
 
-.comments-data img {
-    height: 84%;
-    width: 28%;
+.amount-comments span {
+    margin: 8% 0 0 5%;;
 }
 
 footer {
