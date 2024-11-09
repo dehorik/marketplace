@@ -14,6 +14,10 @@ window.addEventListener("load", () => {
 function get_products(amount = 15) {
     const state = new State();
 
+    if (Object.keys(state.data).length === 0) {
+        return;
+    }
+
     let url = "/products/latest";
     let params = {
         amount: amount,
@@ -30,7 +34,7 @@ function get_products(amount = 15) {
             let products = response.data.products;
 
             if (products.length === 0) {
-                window.removeEventListener("scroll", check_position);
+                State.deleteFromStorage();
 
                 if (!grid.querySelector(".product-card")) {
                     get_message();

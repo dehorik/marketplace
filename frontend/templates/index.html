@@ -5,8 +5,8 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="/static/css/index.css" rel="stylesheet">
-    <link href="/static/img/favicon.png" rel="icon" type="image/png">
+    <link href="../static/css/index.css" rel="stylesheet">
+    <link href="../static/img/favicon.png" rel="icon" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
 </head>
@@ -14,26 +14,26 @@
 <header>
     <div class="navbar">
         <div class="logo">
-            <img src="/static/img/logo.png" alt="webstore">
+            <img src="../static/img/logo.png" alt="webstore">
         </div>
 
         <div class="search-area">
-            <img src="/static/img/search.png" alt="search">
-            <form>
-                <label for="search_area"></label>
-                <input id="search_area" type="text" placeholder="Введите название товара">
+            <img src="../static/img/search.png" alt="search">
+            <form id="search-form">
+                <label for="search-area"></label>
+                <input id="search-area" type="text" placeholder="Введите название товара">
             </form>
         </div>
 
         <div class="buttons">
             <div class="img-link">
-                <a><img src="/static/img/profile.png" alt="profile"></a>
+                <a href="#"><img src="../static/img/profile.png" alt="profile"></a>
             </div>
             <div class="img-link">
-                <a><img src="/static/img/orders.png" alt="orders"></a>
+                <a href="#"><img src="../static/img/orders.png" alt="orders"></a>
             </div>
             <div class="img-link">
-                <a><img src="/static/img/cart_items.png" alt="cart-items"></a>
+                <a href="#"><img src="../static/img/cart_items.png" alt="cart-items"></a>
             </div>
         </div>
     </div>
@@ -45,7 +45,8 @@
     <div class="footer">&copy; WebStore 2024</div>
 </footer>
 
-<script src="/static/js/states.js"></script>
-<script src="/static/js/scroll_products.js"></script>
+<script src="/static/js/state.js"></script>
+<script src="/static/js/product_loader.js"></script>
+<script src="/static/js/product_search.js"></script>
 </body>
 </html>

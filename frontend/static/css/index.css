@@ -26,13 +26,12 @@ header {
     width: 100%;
     height: 100%;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .logo {
-    height: 80%;
-    width: 12%;
-    margin: 0.5% 0 0 1%;
+    height: 70%;
+    margin: 0 0 0 1.6%;
 }
 
 .logo img {
@@ -41,16 +40,16 @@ header {
 }
 
 .search-area {
-    width: 25%;
-    height: 35px;
-    margin: 30px 25% 0;
     display: flex;
+    width: 25%;
+    height: 35%;
+    margin: 0 0 0 27%;
 }
 
 .search-area img {
-    height: 26px;
-    width: 26px;
-    margin: 4px 5px 0 0;
+    height: 75%;
+    width: 7.5%;
+    margin: 1.2% 2% 0 0;
 }
 
 .search-area form {
@@ -70,16 +69,26 @@ header {
 
 .buttons {
     display: flex;
-    margin: 1.7% 0 0 -2%;
+    align-items: center;
+    width: 15%;
+    height: 100%;
+    margin: 0 0 0 23%;
 }
 
 .img-link {
-    margin: 0 8px;
+    width: 33%;
+    margin: 0 3% 0 0;
+}
+
+.img-link a {
+    display: inline-block;
+    width: 80%;
+    height: 80%;
 }
 
 .img-link img {
-    width: 45px;
-    height: 45px;
+    width: 100%;
+    height: 100%;
 }
 
 .message-area {
