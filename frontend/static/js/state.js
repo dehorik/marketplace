@@ -1,11 +1,7 @@
 class State {
     constructor() {
-        const state_data = State.getStateData();
+        const state_data = JSON.parse(localStorage.getItem("state"));
         this.data = state_data ? state_data : {};
-    }
-
-    static getStateData() {
-        return JSON.parse(localStorage.getItem("state"));
     }
 
     static deleteFromStorage() {

@@ -4,10 +4,10 @@ const grid = document.querySelector(".grid");
 window.addEventListener("load", () => {
     State.deleteFromStorage();
     const state = new State();
-    state.set("last_id", null)
+    state.set("last_id", null);
 
-    window.addEventListener("scroll", check_position);
     get_products(15);
+    window.addEventListener("scroll", check_position);
 });
 
 
@@ -64,57 +64,59 @@ function append(product) {
 }
 
 function create_node(product) {
+    const product_uri = `/products/${product.product_id}`;
+
     const card = document.createElement("div");
     card.className = "product-card";
 
     const photo = document.createElement("div");
-    photo.className = "product-photo";
-    const link1 = document.createElement("a");
-    link1.href = `/products/${product.product_id}`;
+    const image_link = document.createElement("a");
     const image = document.createElement("img");
+    photo.className = "product-photo";
+    image_link.href = product_uri;
     image.src = product.photo_path;
     image.alt = "product-photo";
-    link1.append(image);
-    photo.append(link1);
+    image_link.append(image);
+    photo.append(image_link);
 
     const price = document.createElement("div");
     price.className = "product-price";
     price.innerHTML = `${product.price} $`;
 
     const name = document.createElement("div");
+    const text_link = document.createElement("a");
     name.className = "product-name";
-    const link2 = document.createElement("a");
-    link2.href = `/products/${product.product_id}`;
-    link2.innerHTML = product.name;
-    name.append(link2);
+    text_link.href = product_uri;
+    text_link.innerHTML = product.name;
+    name.append(text_link);
 
-    const rating_data = document.createElement("rating");
-    rating_data.className = "rating-data";
-    const product_rating = document.createElement("div");
-    product_rating.className = "product-rating";
-    const star = document.createElement("img");
-    star.src = product.rating >= 4 ? "/static/img/active_star.png/" : "/static/img/inactive_star.png/";
-    star.alt = "star";
+    const product_comments_summary = document.createElement("div");
+    const average_rating = document.createElement("div");
+    const star_image = document.createElement("img");
     const rating = document.createElement("span");
-    rating.innerHTML = product.rating !== Math.round(product.rating) ? product.rating : String(product.rating) + ".0";
-    product_rating.append(star);
-    product_rating.append(rating);
     const amount_comments = document.createElement("div");
-    amount_comments.className = "amount-comments";
-    const comment = document.createElement("img");
-    comment.src = "/static/img/comment.png";
-    comment.alt = "comment";
+    const comment_image = document.createElement("img");
     const amount = document.createElement("span");
+    product_comments_summary.className = "product-comments-summary";
+    average_rating.className = "average-rating";
+    star_image.src = product.rating >= 4 ? "/static/img/active_star.png/" : "/static/img/inactive_star.png/";
+    star_image.alt = "star";
+    rating.innerHTML = product.rating !== Math.round(product.rating) ? product.rating : `${product.rating}.0`;
+    amount_comments.className = "amount-comments";
+    comment_image.src = "/static/img/comment.png";
+    comment_image.alt = "comment";
     amount.innerHTML = product.amount_comments;
-    amount_comments.append(comment);
+    average_rating.append(star_image);
+    average_rating.append(rating);
+    amount_comments.append(comment_image);
     amount_comments.append(amount);
-    rating_data.append(product_rating);
-    rating_data.append(amount_comments);
+    product_comments_summary.append(average_rating);
+    product_comments_summary.append(amount_comments);
 
     card.append(photo);
     card.append(price);
     card.append(name);
-    card.append(rating_data);
+    card.append(product_comments_summary);
 
     return card;
 }
