@@ -35,7 +35,7 @@ class ProductCreationService:
             self,
             background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
-            name: Annotated[str, Form(min_length=2, max_length=20)],
+            name: Annotated[str, Form(min_length=2, max_length=18)],
             price: Annotated[int, Form(gt=0, le=100000)],
             description: Annotated[str, Form(min_length=2, max_length=300)],
             is_hidden: Annotated[bool, Form()],
@@ -161,9 +161,9 @@ class ProductUpdateService:
             background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             product_id: Annotated[int, Path(ge=1)],
-            name: Annotated[str | None, Form(min_length=2, max_length=30)] = None,
+            name: Annotated[str | None, Form(min_length=2, max_length=18)] = None,
             price: Annotated[int | None, Form(gt=0, le=100000)] = None,
-            descr: Annotated[str | None, Form(min_length=2, max_length=300)] = None,
+            descr: Annotated[str | None, Form(min_length=2, max_length=200)] = None,
             is_hidden: Annotated[bool | None, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
