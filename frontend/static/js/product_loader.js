@@ -53,7 +53,7 @@ function get_products(amount = 15) {
 
 function get_message() {
     const message_area = document.createElement("div");
-    message_area.className = "message-area";
+    message_area.className = "index-message";
     message_area.innerHTML = "Ничего не найдено!";
     grid.append(message_area);
 }
@@ -72,20 +72,20 @@ function create_node(product) {
     const photo = document.createElement("div");
     const image_link = document.createElement("a");
     const image = document.createElement("img");
-    photo.className = "product-catalog-photo";
+    photo.className = "product-catalog-card-photo";
     image_link.href = product_uri;
     image.src = product.photo_path;
-    image.alt = "product-photo";
+    image.alt = "photo";
     image_link.append(image);
     photo.append(image_link);
 
     const price = document.createElement("div");
-    price.className = "product-catalog-price";
+    price.className = "product-catalog-card-price";
     price.innerHTML = `${product.price} $`;
 
     const name = document.createElement("div");
     const text_link = document.createElement("a");
-    name.className = "product-catalog-name";
+    name.className = "product-catalog-card-name";
     text_link.href = product_uri;
     text_link.innerHTML = product.name;
     name.append(text_link);
@@ -97,12 +97,12 @@ function create_node(product) {
     const amount_comments = document.createElement("div");
     const comment_image = document.createElement("img");
     const amount = document.createElement("span");
-    product_comments_summary.className = "product-catalog-score";
-    average_rating.className = "product-catalog-rating";
+    product_comments_summary.className = "product-catalog-card-score";
+    average_rating.className = "product-catalog-card-rating";
     star_image.src = product.rating >= 4 ? "/static/img/active_star.png/" : "/static/img/inactive_star.png/";
     star_image.alt = "star";
     rating.innerHTML = product.rating !== Math.round(product.rating) ? product.rating : `${product.rating}.0`;
-    amount_comments.className = "product-catalog-amount-comments";
+    amount_comments.className = "product-catalog-card-amount-comments";
     comment_image.src = "/static/img/comment.png";
     comment_image.alt = "comment";
     amount.innerHTML = product.amount_comments;
