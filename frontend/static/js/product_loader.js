@@ -1,4 +1,4 @@
-const grid = document.querySelector(".grid");
+const grid = document.querySelector(".products-grid");
 
 
 window.addEventListener("load", () => {
@@ -36,7 +36,7 @@ function get_products(amount = 15) {
             if (products.length === 0) {
                 State.deleteFromStorage();
 
-                if (!grid.querySelector(".product-card")) {
+                if (!grid.querySelector(".product-catalog-card")) {
                     get_message();
                 }
 
@@ -67,12 +67,12 @@ function create_node(product) {
     const product_uri = `/products/${product.product_id}`;
 
     const card = document.createElement("div");
-    card.className = "product-card";
+    card.className = "product-catalog-card";
 
     const photo = document.createElement("div");
     const image_link = document.createElement("a");
     const image = document.createElement("img");
-    photo.className = "product-photo";
+    photo.className = "product-catalog-photo";
     image_link.href = product_uri;
     image.src = product.photo_path;
     image.alt = "product-photo";
@@ -80,12 +80,12 @@ function create_node(product) {
     photo.append(image_link);
 
     const price = document.createElement("div");
-    price.className = "product-price";
+    price.className = "product-catalog-price";
     price.innerHTML = `${product.price} $`;
 
     const name = document.createElement("div");
     const text_link = document.createElement("a");
-    name.className = "product-name";
+    name.className = "product-catalog-name";
     text_link.href = product_uri;
     text_link.innerHTML = product.name;
     name.append(text_link);
@@ -97,12 +97,12 @@ function create_node(product) {
     const amount_comments = document.createElement("div");
     const comment_image = document.createElement("img");
     const amount = document.createElement("span");
-    product_comments_summary.className = "product-comments-summary";
-    average_rating.className = "average-rating";
+    product_comments_summary.className = "product-catalog-score";
+    average_rating.className = "product-catalog-rating";
     star_image.src = product.rating >= 4 ? "/static/img/active_star.png/" : "/static/img/inactive_star.png/";
     star_image.alt = "star";
     rating.innerHTML = product.rating !== Math.round(product.rating) ? product.rating : `${product.rating}.0`;
-    amount_comments.className = "amount-comments";
+    amount_comments.className = "product-catalog-amount-comments";
     comment_image.src = "/static/img/comment.png";
     comment_image.alt = "comment";
     amount.innerHTML = product.amount_comments;

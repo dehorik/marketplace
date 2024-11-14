@@ -5,20 +5,18 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/product.css" rel="stylesheet">
+    <link href="../static/css/style.css" rel="stylesheet">
     <link href="../static/img/favicon.png" rel="icon" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
 </head>
 <body>
-<header>
-    <div class="header">
-        <div class="logo">
-            <img src="../static/img/logo.png" alt="logo">
-        </div>
+<header class="header-product">
+    <div class="logo-product">
+        <img src="../static/img/logo.png" alt="logo">
     </div>
 </header>
-<div class="catalog-link">
+<div class="catalog-link-arrow">
     <a href="/">
         <img src="../static/img/back.png" alt="catalog">
     </a>
@@ -26,7 +24,7 @@
 
 <div class="product-container">
     <div class="product-photo">
-        <img src="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcTK65B-9LhjTb5QcVY4YLT9u8pVWcXKLiRHuWlKRSuF_p5LXXPo0aTletviBVUzpj_H10nBzXJWEOGa7oZC1FgCtI0BjI72tIPG8tFRCu-BQ5epgbTno6Ei&usqp=CAE" alt="product-photo">
+        <img src="https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQ8B6s4nkkro9LrhL57YKQhY0naqT9igbtmUiq6cerwwariTvXeDHHSZBQ3MvmCxAx8U1gB14vroQeK7G5jdF4XhZIiEcGpXB47jAgF95_wCVg235FTJkjUeg&usqp=CAE" alt="product-photo">
     </div>
 
     <div class="product-text-data-container">
@@ -40,9 +38,9 @@
 
     <div class="purchase-data-container">
         <div class="product-price">699 $</div>
-        <div class="product-statistics-data-container">
+        <div class="product-statistics-container">
             <div class="amount-product-orders">Количество заказов: 52</div>
-            <div class="product-rating">
+            <div class="product-score">
                 <div>
                     <img src="../static/img/active_star.png" alt="star">
                     <span>4.9</span>
@@ -54,13 +52,13 @@
             </div>
         </div>
 
-        <div class="order-creation-buttons">
-            <div class="order-creation-page-link">
+        <div class="product-buttons">
+            <div class="order-creation-button">
                 <a href="#">
                     <span>Купить</span>
                 </a>
             </div>
-            <div class="cart-item-creation">
+            <div class="cart-item-creation-button">
                 <a href="#">
                     <span>В корзину</span>
                 </a>
