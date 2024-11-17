@@ -24,7 +24,7 @@ router = APIRouter(prefix='/products', tags=['prodcuts'])
 
 
 templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r'frontend\templates')
+    directory=os.path.join(ROOT_PATH, r'\frontend\templates')
 )
 
 
@@ -58,7 +58,7 @@ def get_product(
         product: Annotated[ExtendedProductModel, Depends(product_fetch_service)]
 ):
     return templates.TemplateResponse(
-        name='merchan.html',
+        name='product.html',
         request=request,
         context={
             "product": product

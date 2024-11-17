@@ -10,7 +10,6 @@ window.addEventListener("load", () => {
     window.addEventListener("scroll", check_position);
 });
 
-
 function get_products(amount = 15) {
     const state = new State();
 
@@ -74,7 +73,7 @@ function create_node(product) {
     const image = document.createElement("img");
     photo.className = "product-catalog-card-photo";
     image_link.href = product_uri;
-    image.src = product.photo_path;
+    image.src = `/${product.photo_path}`;
     image.alt = "photo";
     image_link.append(image);
     photo.append(image_link);

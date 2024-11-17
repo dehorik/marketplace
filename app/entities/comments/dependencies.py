@@ -37,7 +37,7 @@ class CommentCreationService:
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             product_id: Annotated[int, Query(ge=1)],
             rating: Annotated[int, Form(ge=1, le=5)],
-            text: Annotated[str | None, Form(min_length=2, max_length=100)] = None,
+            text: Annotated[str | None, Form(min_length=2, max_length=200)] = None,
             photo: Annotated[UploadFile | None, File()] = None
     ) -> CommentModel:
         if photo:
@@ -131,7 +131,7 @@ class CommentUpdateService:
             clear_text: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
             rating: Annotated[int | None, Form(ge=1, le=5)] = None,
-            text: Annotated[str | None, Form(min_length=2, max_length=100)] = None,
+            text: Annotated[str | None, Form(min_length=2, max_length=200)] = None,
             photo: Annotated[UploadFile | None, File()] = None
     ) -> CommentModel:
         """

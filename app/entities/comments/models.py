@@ -11,7 +11,7 @@ class CommentModel(BaseModel):
     product_id: int
     rating: int = Field(ge=1, le=5)
     creation_date: datetime
-    text: str | None = Field(default=None, min_length=2, max_length=100)
+    text: str | None = Field(default=None, min_length=2, max_length=200)
     photo_path: str | None = None
 
 
@@ -25,7 +25,7 @@ class CommentItemModel(BaseModel):
     user_photo_path: str | None = None
     rating: int = Field(ge=1, le=5)
     creation_date: datetime
-    text: str | None = Field(default=None, min_length=2, max_length=100)
+    text: str | None = Field(default=None, min_length=2, max_length=200)
     comment_photo_path: str | None = None
 
 
