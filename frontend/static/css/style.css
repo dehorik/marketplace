@@ -266,6 +266,7 @@ body {
     height: 80%;
     width: 80%;
     margin: 0 auto;
+    border-radius: 20px;
 }
 
 .product-text-data-container {

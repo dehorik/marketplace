@@ -7,7 +7,6 @@ window.addEventListener("load", () => {
     state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
     state.set("last_id", null);
 
-    get_comments(15);
     window.addEventListener("scroll", check_position);
 });
 
@@ -73,7 +72,7 @@ function create_node(comment) {
     const inactive_star = document.createElement("img");
     head.className = "comment-head";
     user_photo_container.className = "comment-user-photo";
-    user_photo.src = comment.user_photo_path ? comment.user_photo_path : "/static/img/default-avatar.png";
+    user_photo.src = comment.user_photo_path ? `/${comment.user_photo_path}` : "/static/img/default-avatar.png";
     user_photo.alt = "user";
     username.className = "comment-username";
     username.innerHTML = comment.username;

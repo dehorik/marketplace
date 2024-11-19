@@ -24,7 +24,7 @@ router = APIRouter(prefix='/products', tags=['prodcuts'])
 
 
 templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r'\frontend\templates')
+    directory=os.path.join(ROOT_PATH, r"frontend\templates")
 )
 
 

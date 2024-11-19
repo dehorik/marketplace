@@ -20,7 +20,7 @@ class ExtendedProductModel(BaseModel):
     product_id: int
     name: str = Field(min_length=2, max_length=18)
     price: int = Field(gt=0, le=100000)
-    description: str = Field(min_length=2, max_length=200)
+    description: str = Field(min_length=2, max_length=300)
     is_hidden: bool
     amount_orders: int
     photo_path: str
