@@ -393,12 +393,20 @@ body {
     background-color: rgba(226,85,76,0.94);
 }
 
-.cart-item-creation-button a {
-    background-color: rgba(94,120,226,0.94);
-}
-
 .order-creation-button a:hover{
     background-color: rgba(226,57,50,0.94);
+}
+
+.cart-items-link a {
+    background-color: rgba(60,191,54,0.94);
+}
+
+.cart-items-link a:hover {
+    background-color: rgba(60,217,56,0.94);
+}
+
+.cart-item-creation-button a {
+    background-color: rgba(94,120,226,0.94);
 }
 
 .cart-item-creation-button a:hover {
@@ -447,12 +455,57 @@ body {
     font-weight: initial;
 }
 
+
+
+.comment-buttons-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3%;
+    height: 300px;
+    width: 100%;
+    border-radius: 20px;
+    background-color: rgba(236,237,240,0.94)
+}
+
+.comment-buttons-container a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22%;
+    height: 50px;
+    text-decoration: none;
+    background-color: rgba(187,188,191,0.94);
+    border-radius: 20px;
+}
+
+.comment-buttons-container a:hover {
+    opacity: 0.65;
+}
+
+.comment-buttons-container a span {
+    display: inline-block;
+    color: white;
+    font-size: 16px;
+    font-weight: bolder;
+}
+
+.no-display {
+    display: none;
+}
+
 .comment {
     margin: 1% 0 1% 0;
-    padding: 1.5% 0 1.5% 0;
     height: auto;
     width: 100%;
     background-color: #FFFFFF;
+    border-radius: 20px;
+}
+
+.comment-data-container {
+    padding: 1.5% 0 1.5% 0;
+    height: auto;
+    width: 100%;
     border-radius: 20px;
 }
 
@@ -529,6 +582,9 @@ body {
 .footer-product {
     margin: 1.8% 0 0 0;
 }
+
+
+
 
 
 @media (min-width: 1380px) and (max-width: 1500px) {

@@ -1,5 +1,5 @@
 from typing import Annotated, Callable
-from fastapi import UploadFile, File, Form, Query, Path
+from fastapi import UploadFile, File, Form, Query, Path, Cookie
 from fastapi import BackgroundTasks, Depends, HTTPException, status
 from psycopg2.errors import RaiseException
 
@@ -132,9 +132,13 @@ class ProductFetchService:
         self.product_data_access_obj = product_dao
         self.converter = converter
 
-    def __call__(self, product_id: int) -> ExtendedProductModel:
+    def __call__(
+            self,
+            product_id: Annotated[int, Path(ge=1)],
+            user_id: Annotated[str | None, Cookie()] = None
+    ) -> ExtendedProductModel:
         try:
-            product = self.product_data_access_obj.read(product_id)
+            product = self.product_data_access_obj.read(product_id, user_id)
             product = self.converter.fetchone(product)
 
             return product

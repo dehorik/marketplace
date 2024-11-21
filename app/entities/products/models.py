@@ -22,6 +22,7 @@ class ExtendedProductModel(BaseModel):
     price: int = Field(gt=0, le=100000)
     description: str = Field(min_length=2, max_length=300)
     is_hidden: bool
+    is_in_cart: bool
     amount_orders: int
     photo_path: str
     rating: float | None = Field(ge=1, le=5, default=None)

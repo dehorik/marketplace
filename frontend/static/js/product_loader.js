@@ -53,7 +53,7 @@ function get_products(amount = 15) {
 function get_message() {
     const message_area = document.createElement("div");
     message_area.className = "index-message";
-    message_area.innerHTML = "Ничего не найдено!";
+    message_area.textContent = "Ничего не найдено!";
     grid.append(message_area);
 }
 
@@ -80,13 +80,13 @@ function create_node(product) {
 
     const price = document.createElement("div");
     price.className = "product-catalog-card-price";
-    price.innerHTML = `${product.price} $`;
+    price.textContent = `${product.price} $`;
 
     const name = document.createElement("div");
     const text_link = document.createElement("a");
     name.className = "product-catalog-card-name";
     text_link.href = product_uri;
-    text_link.innerHTML = product.name;
+    text_link.textContent = product.name;
     name.append(text_link);
 
     const product_comments_summary = document.createElement("div");
@@ -100,11 +100,11 @@ function create_node(product) {
     average_rating.className = "product-catalog-card-rating";
     star_image.src = product.rating >= 4 ? "/static/img/active_star.png/" : "/static/img/inactive_star.png/";
     star_image.alt = "star";
-    rating.innerHTML = product.rating !== Math.round(product.rating) ? product.rating : `${product.rating}.0`;
+    rating.textContent = product.rating !== Math.round(product.rating) ? product.rating : `${product.rating}.0`;
     amount_comments.className = "product-catalog-card-amount-comments";
     comment_image.src = "/static/img/comment.png";
     comment_image.alt = "comment";
-    amount.innerHTML = product.amount_comments;
+    amount.textContent = product.amount_comments;
     average_rating.append(star_image);
     average_rating.append(rating);
     amount_comments.append(comment_image);

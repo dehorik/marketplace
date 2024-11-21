@@ -4,6 +4,7 @@ const grid = document.querySelector(".comments-grid");
 window.addEventListener("load", () => {
     State.deleteFromStorage();
     const state = new State();
+    state.set("user_id", 2)
     state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
     state.set("last_id", null);
 
@@ -49,7 +50,7 @@ function get_comments(amount = 15) {
 function get_message() {
     const message_area = document.createElement("div");
     message_area.className = "comments-message";
-    message_area.innerHTML = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
+    message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
     grid.append(message_area);
 }
 
@@ -59,32 +60,34 @@ function append(comment) {
 }
 
 function create_node(comment) {
+    const state = new State();
+
     const node = document.createElement("div");
     node.className = "comment";
+    node.id = `comment${comment.comment_id}`;
 
+    const data_container = document.createElement("div");
+    data_container.className = "comment-data-container";
     const head = document.createElement("div");
     const user_photo_container = document.createElement("div");
     const user_photo = document.createElement("img");
     const username = document.createElement("div");
     const date = document.createElement("div");
     const stars = document.createElement("div");
-    const active_star = document.createElement("img");
-    const inactive_star = document.createElement("img");
     head.className = "comment-head";
     user_photo_container.className = "comment-user-photo";
     user_photo.src = comment.user_photo_path ? `/${comment.user_photo_path}` : "/static/img/default-avatar.png";
     user_photo.alt = "user";
     username.className = "comment-username";
-    username.innerHTML = comment.username;
+    username.textContent = comment.username;
     date.className = "comment-date";
-    date.innerHTML = comment.creation_date.split()[0].split("T")[0].split("-").reverse().join(".");
+    date.textContent = comment.creation_date.split()[0].split("T")[0].split("-").reverse().join(".");
     stars.className = "comment-stars";
 
     user_photo_container.append(user_photo);
 
     for (let i = 1; i < 6; i++) {
         const star_img = document.createElement("img");
-
 
         if (comment.rating >= i) {
             star_img.src = "/static/img/active_star.png";
@@ -99,13 +102,13 @@ function create_node(comment) {
     head.append(username);
     head.append(date);
     head.append(stars);
-    node.append(head);
+    data_container.append(head);
 
     if (comment.text) {
         const text = document.createElement("div");
         text.className = "comment-text";
-        text.innerHTML = comment.text;
-        node.append(text);
+        text.textContent = comment.text;
+        data_container.append(text);
     }
     if (comment.comment_photo_path) {
         const comment_photo_container = document.createElement("div");
@@ -114,7 +117,34 @@ function create_node(comment) {
         comment_photo.src = `/${comment.comment_photo_path}`;
         comment_photo.alt = "photo";
         comment_photo_container.append(comment_photo);
-        node.append(comment_photo_container);
+        data_container.append(comment_photo_container);
+    }
+
+    node.append(data_container);
+
+    if (Number(state.get("user_id")) === comment.user_id) {
+        const buttons_container = document.createElement("div");
+        buttons_container.classList.add("comment-buttons-container", "no-display");
+        const edit_comment_link = document.createElement("a");
+        const delete_comment_link = document.createElement("a");
+        const edit_comment_text = document.createElement("span");
+        const delete_comment_text = document.createElement("span");
+        edit_comment_text.textContent = "Изменить отзыв";
+        delete_comment_text.textContent = "Удалить отзыв";
+        edit_comment_link.append(edit_comment_text);
+        delete_comment_link.append(delete_comment_text);
+        buttons_container.append(edit_comment_link);
+        buttons_container.append(delete_comment_link);
+
+        node.append(buttons_container);
+
+        node.addEventListener("mouseenter", (event) => {
+            show_buttons(event.target);
+        });
+
+        node.addEventListener("mouseleave", (event) => {
+            hide_buttons(event.target);
+        });
     }
 
     return node;

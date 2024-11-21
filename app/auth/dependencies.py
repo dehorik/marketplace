@@ -58,6 +58,7 @@ class RegistrationService:
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
             set_refresh_cookie(response, refresh_token)
+            set_user_id_cookie(response, str(user.user_id))
             self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
@@ -108,6 +109,7 @@ class LoginService:
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
             set_refresh_cookie(response, refresh_token)
+            set_user_id_cookie(response, str(user.user_id))
             self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
@@ -182,7 +184,8 @@ class LogoutService:
             response: Response,
             refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
     ) -> None:
-        response.delete_cookie(config.COOKIE_KEY)
+        response.delete_cookie(config.REFRESH_COOKIE_KEY)
+        response.delete_cookie(config.USER_ID_COOKIE_KEY)
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
@@ -206,7 +209,8 @@ class TokenRefreshService:
             response: Response,
             refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
     ) -> AccessTokenModel:
-        response.delete_cookie(config.COOKIE_KEY)
+        response.delete_cookie(config.REFRESH_COOKIE_KEY)
+        response.delete_cookie(config.USER_ID_COOKIE_KEY)
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
@@ -214,6 +218,7 @@ class TokenRefreshService:
         refresh_token = self.refresh_token_encoder(payload)
         access_token = self.access_token_encoder(payload)
         set_refresh_cookie(response, refresh_token)
+        set_user_id_cookie(response, str(payload.sub))
         self.redis_client.append_token(payload.sub, refresh_token)
 
         return AccessTokenModel(access_token=access_token)
@@ -275,12 +280,23 @@ class AuthorizationService:
 
 
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    """устанавливаем refresh токен в cookie"""
+    """устанавливает refresh токен в cookie"""
 
     max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     response.set_cookie(
-        key=config.COOKIE_KEY,
+        key=config.REFRESH_COOKIE_KEY,
         value=refresh_token,
+        max_age=max_age,
+        httponly=True
+    )
+
+def set_user_id_cookie(response: Response, user_id: str) -> None:
+    """устанавливает куку с id пользователя"""
+
+    max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    response.set_cookie(
+        key=config.USER_ID_COOKIE_KEY,
+        value=user_id,
         max_age=max_age,
         httponly=True
     )

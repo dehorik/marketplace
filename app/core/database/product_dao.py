@@ -58,7 +58,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def read(self, product_id: int) -> tuple:
+    def read(self, product_id: int, user_id: int | None = None) -> tuple:
         self.__cursor.execute(
             """
                 SELECT 
@@ -67,6 +67,13 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     price, 
                     description,
                     is_hidden,
+                    (
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM cart_item
+                            WHERE product_id = %s AND user_id = %s
+                        )
+                    ) as is_in_cart,
                     amount_orders,
                     photo_path,
                     (
@@ -85,7 +92,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 FROM product
                 WHERE product_id = %s;
             """,
-            [product_id] * 3
+            [product_id, user_id, product_id, product_id, product_id]
         )
 
         return self.__cursor.fetchone()

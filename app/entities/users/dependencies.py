@@ -252,7 +252,8 @@ class UserDeletionService:
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)]
     ) -> UserModel:
         try:
-            response.delete_cookie(config.COOKIE_KEY)
+            response.delete_cookie(config.REFRESH_COOKIE_KEY)
+            response.delete_cookie(config.USER_ID_COOKIE_KEY)
             self.redis_client.delete_user(payload.sub)
 
             user = self.user_data_access_obj.delete(payload.sub)
