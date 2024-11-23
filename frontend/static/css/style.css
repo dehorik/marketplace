@@ -365,53 +365,57 @@ body {
 
 .product-buttons {
     display: flex;
-    height: 36%;
-    width: 90%;
-    margin: 0 auto;
+    align-items: center;
+    height: 26%;
+    width: 80%;
+    margin: 1% auto 0;
+    gap: 10%;
 }
 
 .product-buttons div {
     display: flex;
     justify-content: center;
-    height: 55%;
+    height: 80%;
     width: 100%;
-    margin: 3% 0 0 0;
 }
 
 .product-buttons div a {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 75%;
-    border-radius: 20px;
+    height: 100%;
+    width: 100%;
+    border-radius: 21px;
     text-decoration: none;
-    color: white;
-    font-size: 22px;
+    color: black;
+    font-size: 20px;
     font-weight: bolder;
 }
 
 .order-creation-button a{
-    background-color: rgba(226,85,76,0.94);
+    background-color: rgba(234,230,227,0.94);
 }
 
 .order-creation-button a:hover{
-    background-color: rgba(226,57,50,0.94);
-}
-
-.cart-items-link a {
-    background-color: rgba(60,191,54,0.94);
-}
-
-.cart-items-link a:hover {
-    background-color: rgba(60,217,56,0.94);
+    background-color: rgba(213,213,213,0.94);
 }
 
 .cart-item-creation-button a {
-    background-color: rgba(94,120,226,0.94);
+    background-color: white;
+    border: 2px solid rgba(234,230,227,0.94);
 }
 
 .cart-item-creation-button a:hover {
-    background-color: rgba(61,59,226,0.94);
+    background-color: rgba(251,251,251,0.94);
+}
+
+.cart-items-link a {
+    background-color: white;
+    border: 2px solid rgba(234,230,227,0.94);
+}
+
+.cart-items-link a:hover {
+    background-color: rgba(251,251,251,0.94);
 }
 
 .comments-container {

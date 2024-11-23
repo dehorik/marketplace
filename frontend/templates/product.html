@@ -41,17 +41,17 @@
         <div class="product-statistics-container">
             <div class="amount-product-orders">Количество заказов: {{ product.amount_orders }}</div>
             <div class="product-score">
-                <div>
+                <div class="product-rating">
                     {% if product.rating and product.rating >= 4 %}
                     <img src="/static/img/active_star.png" alt="star">
                     {% else %}
                     <img src="/static/img/inactive_star.png" alt="star">
                     {% endif %}
-                    <span>{{ product.rating or 0 }}</span>
+                    <span id="product-rating">{{ product.rating or 0.0 }}</span>
                 </div>
-                <div>
+                <div class="product-amount-comments">
                     <img src="/static/img/comment.png" alt="comment">
-                    <span>{{ product.amount_comments }}</span>
+                    <span id="product-amount-comments">{{ product.amount_comments }}</span>
                 </div>
             </div>
         </div>
@@ -59,18 +59,18 @@
         <div class="product-buttons">
             <div class="order-creation-button">
                 <a href="#">
-                    <span>Купить</span>
+                    <span>Купить сейчас</span>
                 </a>
             </div>
             {% if product.is_in_cart %}
             <div class="cart-items-link">
                 <a href="#">
-                    <span>В корзине</span>
+                    <span>Уже в корзине</span>
                 </a>
             </div>
             {% else %}
             <div class="cart-item-creation-button">
-                <a href="#">
+                <a onclick="create_cart_item(Number('{{ product.product_id }}'))">
                     <span>В корзину</span>
                 </a>
             </div>
@@ -123,6 +123,7 @@
 
 <script src="/static/js/state.js"></script>
 <script src="/static/js/comment_loader.js"></script>
-<script src="/static/js/comment-manager.js"></script>
+<script src="/static/js/comment_manager.js"></script>
+<script src="/static/js/cart_item_manager.js"></script>
 </body>
 </html>

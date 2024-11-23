@@ -126,7 +126,7 @@ function create_node(comment) {
 
     node.append(data_container);
 
-    if (1 === comment.user_id) {
+    if (2 === comment.user_id) {
         const buttons_container = document.createElement("div");
         buttons_container.classList.add("comment-buttons-container", "no-display");
         const edit_comment_link = document.createElement("a");
