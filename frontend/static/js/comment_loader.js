@@ -48,6 +48,10 @@ function get_comments(amount = 15) {
 }
 
 function get_message() {
+    if (grid.querySelector(".comments-message")) {
+        return;
+    }
+
     const message_area = document.createElement("div");
     message_area.className = "comments-message";
     message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
@@ -122,7 +126,7 @@ function create_node(comment) {
 
     node.append(data_container);
 
-    if (Number(state.get("user_id")) === comment.user_id) {
+    if (1 === comment.user_id) {
         const buttons_container = document.createElement("div");
         buttons_container.classList.add("comment-buttons-container", "no-display");
         const edit_comment_link = document.createElement("a");
@@ -135,6 +139,10 @@ function create_node(comment) {
         delete_comment_link.append(delete_comment_text);
         buttons_container.append(edit_comment_link);
         buttons_container.append(delete_comment_link);
+
+        delete_comment_link.addEventListener("click", () => {
+            delete_comment(node, comment.comment_id);
+        })
 
         node.append(buttons_container);
 
