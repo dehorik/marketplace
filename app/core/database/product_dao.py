@@ -78,14 +78,15 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     photo_path,
                     (
                         SELECT 
-                            ROUND(AVG(rating), 1) as rating
-                        FROM 
-                            product INNER JOIN comment 
-                            ON product.product_id = comment.product_id
-                        WHERE product.product_id = %s
+                            CASE
+                                WHEN COUNT(*) = 0 THEN 0.0
+                                ELSE ROUND(SUM(rating)::DECIMAL / COUNT(*), 1)
+                            END AS rating
+                        FROM comment 
+                        WHERE product_id = %s
                     ) AS rating,
                     (
-                        SELECT COUNT(comment_id)
+                        SELECT COUNT(*)
                         FROM comment 
                         WHERE product_id = %s
                     ) AS amount_comments

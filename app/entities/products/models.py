@@ -25,7 +25,7 @@ class ExtendedProductModel(BaseModel):
     is_in_cart: bool
     amount_orders: int
     photo_path: str
-    rating: float | None = Field(ge=1, le=5, default=None)
+    rating: float
     amount_comments: int
 
 

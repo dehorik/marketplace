@@ -127,5 +127,10 @@ function check_position() {
 
     if (documentHeight - (windowHeight + scrollPosition) <= 170) {
         get_products(15);
+        window.removeEventListener("scroll", check_position);
+
+        setTimeout(() => {
+            window.addEventListener("scroll", check_position);
+        }, 250);
     }
 }

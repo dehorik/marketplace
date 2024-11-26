@@ -1,39 +1,39 @@
 function show_buttons(comment) {
     const comment_data = comment.querySelector(".comment-data-container");
-    const buttons = comment.querySelector(".comment-buttons-container");
 
-    if (!comment_data) {
-        return;
+    if (comment_data) {
+        const height = comment.getBoundingClientRect().height;
+        const buttons = comment.querySelector(".comment-buttons-container");
+
+        comment_data.classList.add("no-display");
+        buttons.classList.remove("no-display");
+        buttons.style.height = `${height}px`;
     }
-
-    const height = comment_data.getBoundingClientRect().height;
-
-    comment_data.classList.add("no-display");
-    buttons.classList.remove("no-display");
-    buttons.style.height = `${height}px`;
 }
 
 function hide_buttons(comment) {
     const comment_data = comment.querySelector(".comment-data-container");
-    const buttons = comment.querySelector(".comment-buttons-container");
 
-    if (!comment_data) {
-        return;
+    if (comment_data) {
+        const buttons = comment.querySelector(".comment-buttons-container");
+
+        buttons.classList.add("no-display");
+        comment_data.classList.remove("no-display");
     }
-
-    buttons.classList.add("no-display");
-    comment_data.classList.remove("no-display");
 }
 
 function delete_comment(node, comment_id) {
-    const jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoyLCJpYXQiOjE3MzIzODIwODAsImV4cCI6MTczMjM4Mjk4MH0.hInYtSJYiujxej_FBpbWzFDncbqtzMHlGcY9wvs1VNz38m48n7NfDcyzm6426xne9Ly2DSL0Zj8RTcuIscTjgu73gNUYTKjGjjfjLgQ5lvoFIKLh2rPHAtqRqfI1Dq4GmhwrPq8ABoVpkH-gi5X77pK5ObpZLNkilsEALceRaAOlpWALnedCXXa7mRbdrsmaph9fgOD17rSk5RbDaGXUvZlGHulteTtJ8o8xv8pdX78FV8TCphQY8EL1X6WPHMRIvHXMZ24GqiMk82qooZtPqheePvsXQdlsUTCZZ5QO76oi4s38ibONN4KeSDibLhmHYNIZV10qg3jd2s5HuEMF6A";
+    node.removeEventListener("click", delete_comment);
+    node.removeEventListener("mouseenter", show_buttons);
+    node.removeEventListener("mouseleave", hide_buttons);
 
+    const jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoxLCJpYXQiOjE3MzI2MjI0NDIsImV4cCI6MTczMjcxMjQ0Mn0.AlHq8BCfX5lQypsEWMgGDJjIPG-a1Jr4doNI0vy8HPOOkES7Juiieo6CnOD5pwlV6ObEOlen4jHim5y6aAQPLp9v7bcF0ooRG_ZgB4ZjIM55ON7f18hZe2sb__zdpBgwRwB6ospRYRXkBarEIhlByNCapHyRETj2_Z7IrD9X09gmZ5rAooI3_v01g_RLFX1NBWB4akRgXqgWaeULqq7KrcIY5orq8-utjAjUU3zCxrYe3H6xJHO0EMkDJLlhvW83j-9XM4W7wlnJhOR0dLiMpWsRTwyKoXhgsbG5frTKokYvRibGedvHzTxbCat_SlQmK22zk6Vy7PaJr2vvLXhUTQ";
     axios.delete(`/comments/${comment_id}`, {
         headers: {
             "Authorization": `Bearer ${jwt}`
         }
     })
-        .then((response) => {
+        .then(() => {
             node.removeChild(node.firstChild);
             node.style.height = node.offsetHeight + "px";
             node.style.transition = "height 1.6s ease, margin 1.6s ease";
@@ -43,16 +43,21 @@ function delete_comment(node, comment_id) {
             }
 
             const amount_comments_node = document.getElementById("product-amount-comments");
-            const amount_comments = Number(amount_comments_node.textContent);
-            amount_comments_node.textContent = String(Number(amount_comments_node.textContent) - 1);
+            let amount_comments = Number(amount_comments_node.textContent) - 1;
+            amount_comments_node.textContent = String(amount_comments);
 
+            const product_rating_node = document.getElementById("product-rating");
             const star = document.querySelector(".product-rating img");
-            const rating_node = document.getElementById("product-rating");
-            const rating = Number(rating_node.textContent);
-            const new_rating = ((rating * amount_comments - response.data.rating) / (amount_comments - 1)).toFixed(1);
-            rating_node.textContent = !isNaN(new_rating) ? new_rating : 0.0;
+            let product_rating = 0;
 
-            if (Number(rating_node.textContent) >= 4) {
+            for (let node of document.querySelectorAll(".comment-stars")) {
+                product_rating += Number(node.getAttribute("data-rating"));
+            }
+
+            product_rating = (product_rating / amount_comments).toFixed(1);
+            product_rating_node.textContent = !isNaN(product_rating) ? String(product_rating) : '0.0';
+
+            if (product_rating >= 4) {
                 if (star.src !== "/static/img/active_star.png") {
                     star.src = "/static/img/active_star.png";
                 }
@@ -67,11 +72,10 @@ function delete_comment(node, comment_id) {
                 node.style.backgroundColor = "rgba(236,237,240,0.94)";
                 node.style.height = "0";
                 node.style.margin = "0";
-                node.style.overflow = "hidden";
             }, 10);
 
             setTimeout(() => {
                 grid.removeChild(node);
-            }, 1610);
-        });
+            }, 1600);
+        })
 }

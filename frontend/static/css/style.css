@@ -209,10 +209,6 @@ body {
     font-weight: bold;
 }
 
-.footer-index {
-
-}
-
 .header-product {
     display: flex;
     align-items: center;
@@ -493,21 +489,23 @@ body {
     font-weight: bolder;
 }
 
-.no-display {
-    display: none;
-}
-
 .comment {
     margin: 1% 0 1% 0;
     height: auto;
     width: 100%;
     background-color: #FFFFFF;
     border-radius: 20px;
+    overflow: hidden;
+    transition: height 1.6s ease, margin 1.6s ease;
 }
 
 .hidden-comment {
     height: 0;
     overflow: hidden;
+}
+
+.no-display {
+    display: none;
 }
 
 .comment-data-container {
