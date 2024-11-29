@@ -4,20 +4,17 @@ class State {
         this.data = state_data ? state_data : {};
     }
 
-    static deleteFromStorage() {
+    clearState() {
+        this.data = {};
         localStorage.removeItem("state");
     }
 
-    saveToStorage() {
-        localStorage.setItem("state", JSON.stringify(this.data));
-    }
-
     get(key) {
-        return this.data[key];
+        return JSON.parse(localStorage.getItem("state"))[key];
     }
 
     set(key, value) {
         this.data[key] = value;
-        this.saveToStorage();
+        localStorage.setItem("state", JSON.stringify(this.data));
     }
 }

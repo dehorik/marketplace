@@ -27,7 +27,7 @@ function delete_comment(node, comment_id) {
     node.removeEventListener("mouseenter", show_buttons);
     node.removeEventListener("mouseleave", hide_buttons);
 
-    const jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoxLCJpYXQiOjE3MzI2MjI0NDIsImV4cCI6MTczMjcxMjQ0Mn0.AlHq8BCfX5lQypsEWMgGDJjIPG-a1Jr4doNI0vy8HPOOkES7Juiieo6CnOD5pwlV6ObEOlen4jHim5y6aAQPLp9v7bcF0ooRG_ZgB4ZjIM55ON7f18hZe2sb__zdpBgwRwB6ospRYRXkBarEIhlByNCapHyRETj2_Z7IrD9X09gmZ5rAooI3_v01g_RLFX1NBWB4akRgXqgWaeULqq7KrcIY5orq8-utjAjUU3zCxrYe3H6xJHO0EMkDJLlhvW83j-9XM4W7wlnJhOR0dLiMpWsRTwyKoXhgsbG5frTKokYvRibGedvHzTxbCat_SlQmK22zk6Vy7PaJr2vvLXhUTQ";
+    const jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoyLCJpYXQiOjE3MzI4OTMyMzEsImV4cCI6MTczMjk4MzIzMX0.EfMbZ6bQuDvhJuSiLP0UTBnQDk4OLVEmgLppLCI99Cd8Ibtz_FFSZ1hkWYzFgup2UuaLyCCxNh7FPDBlaFwJUCQdNj9VsP-IBzox_Ty6zjkznOYJ04_UyiSoKMIN_IOENw5ZohGhWv9Zyx0ByfEYfzlTCObIF6Jw5NDTsHkF3QxRb_CNe44ctelgshucyWCtSdfivTzxw9vB5rzKizqocKGuS5hfvZmgwKXDI-tqiBlVo4o4Edvo21nIYW1HOS_iI5RivWhzdrvBPDKB_tG5RrqfmYOKjnkPBS5TKd4O1qlOkVXF17gZlwxOcHvsyGdOz3yh5hnlvq9uwvgt0HVJHA";
     axios.delete(`/comments/${comment_id}`, {
         headers: {
             "Authorization": `Bearer ${jwt}`
@@ -76,6 +76,10 @@ function delete_comment(node, comment_id) {
 
             setTimeout(() => {
                 grid.removeChild(node);
+
+                if (grid.querySelectorAll(".comment").length === 0) {
+                    get_message();
+                }
             }, 1600);
         })
 }

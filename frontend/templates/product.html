@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/style.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
     <link href="/static/img/favicon.png" rel="icon" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
@@ -82,7 +82,7 @@
 <div class="comments-container">
     <div class="comments-container-header">
         <a>Все отзывы</a>
-        <a href="#" class="comment-creation-link">Оставить отзыв</a>
+        <a href="/comments?product_id={{ product.product_id }}" class="comment-creation-link">Оставить отзыв</a>
     </div>
 
     <div class="comments-grid">

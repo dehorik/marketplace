@@ -13,8 +13,8 @@ form.addEventListener("submit", (event) => {
             grid.removeChild(grid.firstChild);
         }
 
-        State.deleteFromStorage();
         const state = new State();
+        state.clearState();
         state.set("name", input.value);
         state.set("last_id", null);
 

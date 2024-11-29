@@ -2,11 +2,11 @@ const grid = document.querySelector(".comments-grid");
 
 
 window.addEventListener("load", () => {
-    State.deleteFromStorage();
     const state = new State();
+    state.clearState();
     state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
     state.set("last_id", null);
-    state.set("user_id", 1); // для тестов
+    state.set("user_id", 2); // для тестов
 
     // слушатель на сетку отзывов будет подгружать новые отзывы,
     // если их количество в сетке уменьшается (их удаляют)
@@ -48,7 +48,7 @@ function get_comments(amount) {
             let comments = response.data.comments;
 
             if (comments.length === 0) {
-                State.deleteFromStorage();
+                state.clearState();
 
                 if (!grid.querySelector(".comment")) {
                     get_message();

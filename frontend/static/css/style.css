@@ -445,6 +445,7 @@ body {
     display: grid;
     grid-template-columns: repeat(1, 100%);
     margin: 1.5% 0 0 0;
+    min-height: 70.8px;
     height: auto;
     width: 55%;
 }
@@ -587,6 +588,151 @@ body {
 
 .footer-product {
     margin: 1.8% 0 0 0;
+}
+
+
+.comment-creation-form-container {
+    height: 80vh;
+    width: 30vw;
+    margin: 10vh auto 0;
+    background-color: #FFFFFF;
+    border-radius: 25px;
+}
+
+.comment-creation-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 12%;
+    font-size: 22px;
+    font-weight: bolder;
+}
+
+.comment-creation-rating {
+    display: flex;
+    align-items: center;
+    gap: 1%;
+    height: 10%;
+    width: 85%;
+    margin: 0 auto;
+}
+
+.comment-creation-rating a {
+    height: 73%;
+    width: 10.5%;
+}
+
+.comment-creation-rating a img{
+    height: 100%;
+    width: 100%;
+}
+
+.comment-creation-form-container form {
+    height: 68.5%;
+    width: 86%;
+    margin: 0 auto;
+}
+
+#comment-creation-text {
+    height: 71%;
+    width: 100%;
+    margin: 3% 0 0 0;
+    padding: 2% 2.5% 2% 2.5%;
+    font-size: 20px;
+    border: 1px solid grey;
+    border-radius: 20px;
+    resize: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#comment-creation-text:hover {
+    border: 1px solid black;
+}
+
+#comment-creation-text:focus {
+    outline: none;
+    border: 1px solid black;
+}
+
+.comment-creation-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 11%;
+    margin: 1% 0 0 0;
+}
+
+.comment-creation-photo input {
+    width: 66%;
+}
+
+.comment-creation-submit-button {
+    display: flex;
+    height: 11%;
+    margin: 2% 0 0 0;
+}
+
+.comment-creation-submit-button button {
+    height: 100%;
+    padding: 2%;
+    border-radius: 10px;
+    background-color: white;
+    border: 1px solid grey;
+    font-weight: bolder;
+}
+
+.comment-creation-submit-button button:hover {
+    background-color: rgba(248,248,248,0.94);
+}
+
+.comment-creation-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 8.5%;
+    margin: 1% 0 0 0;
+    font-size: 16px;
+    font-weight: bolder;
+}
+
+.comment-creation-response {
+    height: 30vh;
+    width: 25vw;
+    margin: 30vh auto 0;
+    background-color: #FFFFFF;
+    border-radius: 25px;
+}
+
+.comment-creation-response-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40%;
+    width: 100%;
+}
+
+.comment-creation-response-logo img {
+    height: 80%;
+    width: 35%;
+}
+
+.comment-creation-response-status {
+    width: 90%;
+    height: 30%;
+    margin: 0 auto;
+    font-weight: bolder;
+    font-size: 18px;
+    text-align: center;
+}
+
+.comment-creation-response-footer {
+    width: 90%;
+    height: 20%;
+    margin: 0 auto;
+    font-weight: bolder;
+    text-align: center;
+    font-size: 16px;
 }
 
 

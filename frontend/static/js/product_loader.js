@@ -2,8 +2,8 @@ const grid = document.querySelector(".products-grid");
 
 
 window.addEventListener("load", () => {
-    State.deleteFromStorage();
     const state = new State();
+    state.clearState();
     state.set("last_id", null);
 
     get_products(15);
@@ -33,7 +33,7 @@ function get_products(amount = 15) {
             let products = response.data.products;
 
             if (products.length === 0) {
-                State.deleteFromStorage();
+                state.clearState();
 
                 if (!grid.querySelector(".product-catalog-card")) {
                     get_message();
