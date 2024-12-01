@@ -12,7 +12,7 @@ from entities.comments.models import (
 from auth import AuthorizationService, TokenPayloadModel
 from core.database import CommentDataAccessObject, get_comment_dao
 from core.settings import config
-from utils import Converter, write_file, delete_file
+from utils import Converter, write_file, delete_file, exists
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -187,10 +187,11 @@ class CommentUpdateService:
                     comment.photo_path, photo.file.read()
                 )
             elif clear_photo:
-                background_tasks.add_task(
-                    self.file_deleter,
-                    os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
-                )
+                if exists(os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))): # такие проверки нужно везде!!!!!!!!!
+                    background_tasks.add_task(
+                        self.file_deleter,
+                        os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
+                    )
 
             return comment
         except (ValueError, RaiseException):

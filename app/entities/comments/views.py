@@ -1,6 +1,6 @@
 import os
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Path, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -32,15 +32,6 @@ def create_comment(
 ):
     return comment
 
-@router.get("/", response_class=HTMLResponse)
-def get_comment_creation_page(
-        request: Request, product_id: Annotated[int, Query(ge=1)]
-):
-    return templates.TemplateResponse(
-        name='comment_creation_page.html',
-        request=request,
-    )
-
 @router.get("/latest", response_model=CommentItemListModel)
 def load_comments(
         comments: Annotated[CommentItemListModel, Depends(comment_load_service)]
@@ -58,3 +49,27 @@ def delete_comment(
         comment: Annotated[CommentModel, Depends(comment_deletion_service)]
 ):
     return comment
+
+@router.get("/creation-form", response_class=HTMLResponse)
+def get_creation_form(
+        request: Request, product_id: Annotated[int, Query(ge=1)]
+):
+    return templates.TemplateResponse(
+        name='comment_form.html',
+        request=request,
+        context={
+            "template_type": "creation"
+        }
+    )
+
+@router.get("/{comment_id}/update-form", response_class=HTMLResponse)
+def get_update_form(
+        request: Request, comment_id: Annotated[int, Path(ge=1)]
+):
+    return templates.TemplateResponse(
+        name='comment_form.html',
+        request=request,
+        context={
+            "template_type": "editing"
+        }
+    )

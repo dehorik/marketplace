@@ -82,7 +82,7 @@
 <div class="comments-container">
     <div class="comments-container-header">
         <a>Все отзывы</a>
-        <a href="/comments?product_id={{ product.product_id }}" class="comment-creation-link">Оставить отзыв</a>
+        <a href="/comments/creation-form?product_id={{ product.product_id }}" class="comment-creation-link">Оставить отзыв</a>
     </div>
 
     <div class="comments-grid">
@@ -121,9 +121,9 @@
     </div>
 </footer>
 
-<script src="/static/js/state.js"></script>
-<script src="/static/js/comment_loader.js"></script>
-<script src="/static/js/comment_manager.js"></script>
-<script src="/static/js/cart_item_manager.js"></script>
+<script src="/static/js/entities/comments/states.js"></script>
+<script src="/static/js/entities/comments/load_comments.js"></script>
+<script src="/static/js/entities/comments/delete_comment.js"></script>
+<script src="/static/js/entities/orders/cart_item_manager.js"></script>
 </body>
 </html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/img/favicon.png" rel="icon" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>webstore</title>
+</head>
+<body>
+<div class="comment-form-container">
+    <div class="comment-form-title">
+        {% if template_type == "creation" %}
+        <span>Создание отзыва</span>
+        {% elif template_type == "editing" %}
+        <span>Редактирование отзыва</span>
+        {% endif %}
+    </div>
+
+    <div class="comment-form-rating-bar" data-rating="1">
+        <a>
+            <img src="/static/img/inactive_star.png" alt="star" data-value="1" data-state="0">
+        </a>
+        <a>
+            <img src="/static/img/inactive_star.png" alt="star" data-value="2" data-state="0">
+        </a>
+        <a>
+            <img src="/static/img/inactive_star.png" alt="star" data-value="3" data-state="0">
+        </a>
+        <a>
+            <img src="/static/img/inactive_star.png" alt="star" data-value="4" data-state="0">
+        </a>
+        <a>
+            <img src="/static/img/inactive_star.png" alt="star" data-value="5" data-state="0">
+        </a>
+    </div>
+
+    <form>
+        <label for="comment-form-text"></label>
+        <textarea id="comment-form-text" maxlength="205"></textarea>
+
+        <div class="comment-form-photo-container">
+            <div class="comment-form-photo">
+                <img src="/static/img/empty_photo.png" alt="photo">
+            </div>
+
+            <div class="comment-form-photo-buttons">
+                <div class="comment-form-upload-button">
+                    <span>Загрузить новое фото</span>
+                    <input type="file" accept=".jpg, .png">
+                </div>
+                <div class="comment-form-delete-button">
+                    <span>Удалить текущее фото</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="comment-form-submit-button-container">
+            {% if template_type == "creation" %}
+            <button type="submit">Создать отзыв</button>
+            {% elif template_type == "editing" %}
+            <button type="submit">Изменить отзыв</button>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="comment-form-error-message">
+        <span>&copy; WebStore 2024</span>
+    </div>
+</div>
+
+{% if template_type == "creation" %}
+<script src="/static/js/entities/comments/states.js"></script>
+<script src="/static/js/entities/comments/comment_form.js"></script>
+<script src="/static/js/entities/comments/create_comment.js"></script>
+{% elif template_type == "editing" %}
+<script src="/static/js/entities/comments/states.js"></script>
+<script src="/static/js/entities/comments/comment_form.js"></script>
+<script src="/static/js/entities/comments/update_comment.js"></script>
+{% endif %}
+</body>
+</html>

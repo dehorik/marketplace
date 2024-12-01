@@ -2,14 +2,10 @@ const grid = document.querySelector(".comments-grid");
 
 
 window.addEventListener("load", () => {
-    const state = new State();
-    state.clearState();
+    const state = new CommentsLoadingState();
     state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
     state.set("last_id", null);
-    state.set("user_id", 2); // для тестов
 
-    // слушатель на сетку отзывов будет подгружать новые отзывы,
-    // если их количество в сетке уменьшается (их удаляют)
     const observer = new MutationObserver((mutations) => {
         if (grid.querySelectorAll(".comment").length <= 10) {
             window.removeEventListener("scroll", check_position);
@@ -17,7 +13,7 @@ window.addEventListener("load", () => {
                 window.addEventListener("scroll", check_position);
             }, 250);
 
-            get_comments(15);
+            get_comments();
         }
     });
     observer.observe(grid, {
@@ -29,29 +25,34 @@ window.addEventListener("load", () => {
 });
 
 
-function get_comments(amount) {
-    const state = new State();
+function get_comments() {
+    const state = new CommentsLoadingState();
 
-    if (Object.keys(state.data).length === 0) {
+    if (state.is_empty()) {
         return;
     }
 
-    let url = "/comments/latest";
-    let params = {
-        product_id: state.get("product_id"),
-        amount: amount,
-        last_id: state.get("last_id")
-    };
-
-    axios.get(url, {params})
+    axios({
+        url: "/comments/latest",
+        method: "get",
+        params: {
+            product_id: state.get("product_id"),
+            amount: 15,
+            last_id: state.get("last_id")
+        }
+    })
         .then((response) => {
             let comments = response.data.comments;
 
             if (comments.length === 0) {
-                state.clearState();
+                state.clear();
 
-                if (!grid.querySelector(".comment")) {
-                    get_message();
+                if (!grid.querySelector(".comment") && !grid.querySelector(".comments-message")) {
+                    const message_area = document.createElement("div");
+                    message_area.className = "comments-message";
+                    message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
+
+                    grid.append(message_area);
                 }
             }
             else {
@@ -64,23 +65,12 @@ function get_comments(amount) {
         });
 }
 
-function get_message() {
-    if (!grid.querySelector(".comments-message")) {
-        const message_area = document.createElement("div");
-        message_area.className = "comments-message";
-        message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
-        grid.append(message_area);
-    }
-}
-
 function append(comment) {
-    comment = create_node(comment);
-    grid.append(comment);
+    const node = create_node(comment);
+    grid.append(node);
 }
 
 function create_node(comment) {
-    const state = new State();
-
     const node = document.createElement("div");
     node.className = "comment";
     node.setAttribute("data-comment-id", comment.comment_id);
@@ -157,35 +147,57 @@ function create_node(comment) {
 
     node.append(data_container);
 
-    if (Number(state.get("user_id")) === comment.user_id) {
+    if (comment.user_id === 2) {
         const buttons_container = document.createElement("div");
         buttons_container.classList.add("comment-buttons-container", "no-display");
 
-        const edit_comment_link = document.createElement("a");
-        const edit_comment_text = document.createElement("span");
-        edit_comment_text.textContent = "Изменить отзыв";
-        edit_comment_link.append(edit_comment_text);
+        const edit_button = document.createElement("a");
+        const edit_button_text = document.createElement("span");
+        edit_button.href = `/comments/${comment.comment_id}/update-form`;
+        edit_button_text.textContent = "Изменить отзыв";
+        edit_button.append(edit_button_text);
 
-        const delete_comment_link = document.createElement("a");
-        const delete_comment_text = document.createElement("span");
-        delete_comment_text.textContent = "Удалить отзыв";
-        delete_comment_link.append(delete_comment_text);
+        const delete_button = document.createElement("a");
+        const delete_button_text = document.createElement("span");
+        delete_button_text.textContent = "Удалить отзыв";
+        delete_button.append(delete_button_text);
 
-        buttons_container.append(edit_comment_link);
-        buttons_container.append(delete_comment_link);
+        buttons_container.append(edit_button);
+        buttons_container.append(delete_button);
 
-        delete_comment_link.addEventListener("click", (event) => {
+        edit_button.addEventListener("click", () => {
+            const state = new CommentEditingState();
+            state.set("comment", comment);
+        });
+
+        delete_button.addEventListener("click", (event) => {
             delete_comment(node, comment.comment_id);
         });
 
         node.append(buttons_container);
 
         node.addEventListener("mouseenter", (event) => {
-            show_buttons(event.target);
+            const comment_data_container = event.target.querySelector(".comment-data-container");
+
+            if (comment_data_container) {
+                const height = event.target.getBoundingClientRect().height;
+                const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+
+                comment_data_container.classList.add("no-display");
+                comment_buttons_container.classList.remove("no-display");
+                comment_buttons_container.style.height = `${height}px`;
+            }
         });
 
         node.addEventListener("mouseleave", (event) => {
-            hide_buttons(event.target);
+            const comment_data_container = event.target.querySelector(".comment-data-container");
+
+            if (comment_data_container) {
+                const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+
+                comment_buttons_container.classList.add("no-display");
+                comment_data_container.classList.remove("no-display");
+            }
         });
     }
 
@@ -203,6 +215,6 @@ function check_position() {
             window.addEventListener("scroll", check_position);
         }, 250);
 
-        get_comments(15);
+        get_comments();
     }
 }

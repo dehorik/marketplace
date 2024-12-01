@@ -2,41 +2,69 @@ const grid = document.querySelector(".products-grid");
 
 
 window.addEventListener("load", () => {
-    const state = new State();
-    state.clearState();
+    const form = document.getElementById("search-form");
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const input = document.getElementById("search-input");
+
+        if (input.value.length === 0) {
+            location.reload();
+        }
+        else {
+            while (grid.firstChild) {
+                grid.removeChild(grid.firstChild);
+            }
+
+            const state = new ProductSearchingState();
+            state.set("name", input.value);
+            state.set("last_id", null);
+
+            get_products();
+        }
+    });
+
+    const state = new ProductsLoadingState();
     state.set("last_id", null);
 
-    get_products(15);
+    get_products();
     window.addEventListener("scroll", check_position);
 });
 
-function get_products(amount = 15) {
-    const state = new State();
+function get_products() {
+    let state = new ProductsLoadingState();
 
-    if (Object.keys(state.data).length === 0) {
-        return;
+    if (state.is_empty()) {
+        state = new ProductSearchingState();
     }
 
-    let url = "/products/latest";
-    let params = {
-        amount: amount,
-        last_id: state.get("last_id")
+    let configuration = {
+        url: "/products/latest",
+        method: "get",
+        params: {
+            amount: 15,
+            last_id: state.get("last_id")
+        }
     };
 
-    if (state.get("name")) {
-        url = "/products/search";
-        params["name"] = state.get("name");
+    if (state.get("type") === "searching_product") {
+        configuration.url = "/products/search";
+        configuration.params.name = state.get("name");
+        configuration.params.last_id = state.get("last_id");
     }
 
-    axios.get(url, {params})
+    axios(configuration)
         .then((response) => {
             let products = response.data.products;
 
             if (products.length === 0) {
-                state.clearState();
+                state.clear();
 
                 if (!grid.querySelector(".product-catalog-card")) {
-                    get_message();
+                    const message_area = document.createElement("div");
+                    message_area.className = "index-message";
+                    message_area.textContent = "Ничего не найдено!";
+                    grid.append(message_area);
                 }
 
                 return;
@@ -48,13 +76,6 @@ function get_products(amount = 15) {
                 append(products[i]);
             }
         });
-}
-
-function get_message() {
-    const message_area = document.createElement("div");
-    message_area.className = "index-message";
-    message_area.textContent = "Ничего не найдено!";
-    grid.append(message_area);
 }
 
 function append(product) {
@@ -126,7 +147,7 @@ function check_position() {
     const scrollPosition = window.scrollY;
 
     if (documentHeight - (windowHeight + scrollPosition) <= 170) {
-        get_products(15);
+        get_products();
         window.removeEventListener("scroll", check_position);
 
         setTimeout(() => {

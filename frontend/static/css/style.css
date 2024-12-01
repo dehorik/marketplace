@@ -107,6 +107,7 @@ body {
     column-gap: 3%;
     row-gap: 38px;
     height: auto;
+    min-height: 460px;
     width: 96%;
     padding: 3.6% 4.7% 3.6% 4.7%;
     margin: 2% auto 2%;
@@ -497,12 +498,21 @@ body {
     background-color: #FFFFFF;
     border-radius: 20px;
     overflow: hidden;
+}
+
+.deleted-comment {
+    background-color: rgba(236,237,240,0.94);
     transition: height 1.6s ease, margin 1.6s ease;
 }
 
-.hidden-comment {
-    height: 0;
-    overflow: hidden;
+.comment-deletion-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    font-size: 19px;
+    font-weight: bolder;
 }
 
 .no-display {
@@ -599,7 +609,7 @@ body {
     border-radius: 25px;
 }
 
-.comment-creation-title {
+.comment-creation-form-title {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -608,7 +618,7 @@ body {
     font-weight: bolder;
 }
 
-.comment-creation-rating {
+.comment-creation-form-rating {
     display: flex;
     align-items: center;
     gap: 1%;
@@ -617,12 +627,12 @@ body {
     margin: 0 auto;
 }
 
-.comment-creation-rating a {
+.comment-creation-form-rating a {
     height: 73%;
     width: 10.5%;
 }
 
-.comment-creation-rating a img{
+.comment-creation-form-rating a img{
     height: 100%;
     width: 100%;
 }
@@ -633,7 +643,7 @@ body {
     margin: 0 auto;
 }
 
-#comment-creation-text {
+#comment-creation-form-text {
     height: 71%;
     width: 100%;
     margin: 3% 0 0 0;
@@ -646,16 +656,16 @@ body {
     text-overflow: ellipsis;
 }
 
-#comment-creation-text:hover {
+#comment-creation-form-text:hover {
     border: 1px solid black;
 }
 
-#comment-creation-text:focus {
+#comment-creation-form-text:focus {
     outline: none;
     border: 1px solid black;
 }
 
-.comment-creation-photo {
+.comment-creation-form-photo {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -663,17 +673,17 @@ body {
     margin: 1% 0 0 0;
 }
 
-.comment-creation-photo input {
+.comment-creation-form-photo input {
     width: 66%;
 }
 
-.comment-creation-submit-button {
+.comment-creation-request-button-container {
     display: flex;
     height: 11%;
     margin: 2% 0 0 0;
 }
 
-.comment-creation-submit-button button {
+.comment-creation-request-button-container button {
     height: 100%;
     padding: 2%;
     border-radius: 10px;
@@ -682,11 +692,11 @@ body {
     font-weight: bolder;
 }
 
-.comment-creation-submit-button button:hover {
+.comment-creation-request-button-container button:hover {
     background-color: rgba(248,248,248,0.94);
 }
 
-.comment-creation-message {
+.comment-creation-form-message {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -696,7 +706,7 @@ body {
     font-weight: bolder;
 }
 
-.comment-creation-response {
+.comment-operation-response {
     height: 30vh;
     width: 25vw;
     margin: 30vh auto 0;
@@ -704,7 +714,7 @@ body {
     border-radius: 25px;
 }
 
-.comment-creation-response-logo {
+.comment-operation-response-logo {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -712,12 +722,12 @@ body {
     width: 100%;
 }
 
-.comment-creation-response-logo img {
+.comment-operation-response-logo img {
     height: 80%;
     width: 35%;
 }
 
-.comment-creation-response-status {
+.comment-operation-response-text {
     width: 90%;
     height: 30%;
     margin: 0 auto;
@@ -726,7 +736,7 @@ body {
     text-align: center;
 }
 
-.comment-creation-response-footer {
+.comment-operation-response-footer {
     width: 90%;
     height: 20%;
     margin: 0 auto;
@@ -734,6 +744,153 @@ body {
     text-align: center;
     font-size: 16px;
 }
+
+
+.comment-form-container {
+    height: 80vh;
+    width: 45vw;
+    margin: 10vh auto;
+    background-color: #FFFFFF;
+    border-radius: 25px;
+}
+
+.comment-form-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 12%;
+    font-size: 22px;
+    font-weight: bolder;
+}
+
+.comment-form-rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7%;
+    height: 10%;
+    width: 90%;
+    margin: 0 auto;
+}
+
+.comment-form-rating-bar a {
+    height: 73%;
+    width: 6.5%;
+}
+
+.comment-form-rating-bar a img{
+    height: 100%;
+    width: 100%;
+}
+
+.comment-form-container form {
+    display: flex;
+    flex-wrap: wrap;
+    height: 69%;
+    width: 90%;
+    margin: 0 auto;
+}
+
+#comment-form-text {
+    height: 76%;
+    width: 65%;
+    margin: 3% 0 0 0;
+    padding: 2% 2.5% 2% 2.5%;
+    font-size: 20px;
+    border: 1px solid grey;
+    border-radius: 20px;
+    resize: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#comment-form-text:hover {
+    border: 1px solid black;
+}
+
+#comment-form-text:focus {
+    outline: none;
+    border: 1px solid black;
+}
+
+.comment-form-photo-container {
+    width: 35%;
+    height: 76%;
+    margin: 3% 0 0 0;
+}
+
+.comment-form-photo {
+    height: 65%;
+    width: 85%;
+    margin: 0 0 0 15%;
+    border: 1px solid grey;
+    border-radius: 20px;
+}
+
+.comment-form-photo img {
+    height: 100%;
+    width: 100%;
+    border-radius: 20px;
+}
+
+.comment-form-photo-buttons {
+    height: 29%;
+    width: 85%;
+    margin: 8% 0 0 15%;
+}
+
+.comment-form-photo-buttons div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40%;
+    border: 1px solid grey;
+    border-radius: 10px;
+    background-color: rgba(247,247,247,0.94);
+}
+
+.comment-form-photo-buttons div:hover {
+    background-color: rgba(236,236,236,0.94);
+}
+
+.comment-form-delete-button {
+    margin: 7% 0 0 0;
+}
+
+.comment-form-upload-button input{
+    display: none;
+}
+
+.comment-form-submit-button-container {
+    display: flex;
+    align-items: end;
+    width: 100%;
+    height: 19%;
+}
+
+.comment-form-submit-button-container button {
+    height: 60%;
+    border-radius: 10px;
+    padding: 1.3%;
+    background-color: white;
+    border: 1px solid grey;
+    font-weight: bolder;
+}
+
+.comment-form-submit-button-container button:hover {
+    background-color: rgba(248,248,248,0.94);
+}
+
+.comment-form-error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 9%;
+    width: 90%;
+    margin: 0 auto;
+    font-weight: bolder;
+}
+
+
 
 
 @media (min-width: 1380px) and (max-width: 1500px) {

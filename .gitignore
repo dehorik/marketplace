@@ -3,5 +3,4 @@ __pycache__/
 .venv/
 images/
 certificates/
-/app/data/
 .env
