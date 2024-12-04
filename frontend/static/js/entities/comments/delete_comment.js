@@ -8,12 +8,11 @@ function delete_comment(node, comment_id) {
         node.removeChild(node.firstChild);
     }
 
-    const jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoyLCJpYXQiOjE3MzMwNzE1NDYsImV4cCI6MTczMzE2MTU0Nn0.l4WW1Rh8QdZtVsHAiR_IVZalKk6H3YZlMY4N1ueIt6qZHW02wH-Whh8n4k1sZWqJQHZnUvDIsD-GgQtKxviFMLvXcCUgkFSYjLkQ02LhPxVQ68VFIvaqxLV9fJAzIqEJ4XvsNgRnfvgWLuUdHaPNLe5huXjJpI1jSfddMcZ9DwfsYQuCJi7548wbZHfGRZLRXJhmrSdAC5LqEOdQbSy1G46HGZHIx4uGc4cDTECfmU-YSzhq3bOTfyHh5izId-ZCrM_PV6Ka7Uc-6PwjYEkhhIzEEeMyZXToYoKn-5brxeqJOrJA2ZFEN1XwS7H0Nbswu6BOyb6u8MXFb5UNyLsu-Q";
     axios({
         url: `/comments/${comment_id}`,
         method: "delete",
         headers: {
-            "Authorization": `Bearer ${jwt}`
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
         }
     })
         .then(() => {

@@ -59,13 +59,13 @@ function get_comments() {
                 state.set("last_id", comments.slice(-1)[0].comment_id);
 
                 for (let i in comments) {
-                    append(comments[i]);
+                    append_comment(comments[i]);
                 }
             }
         });
 }
 
-function append(comment) {
+function append_comment(comment) {
     const node = create_node(comment);
     grid.append(node);
 }
@@ -153,7 +153,6 @@ function create_node(comment) {
 
         const edit_button = document.createElement("a");
         const edit_button_text = document.createElement("span");
-        edit_button.href = `/comments/${comment.comment_id}/update-form`;
         edit_button_text.textContent = "Изменить отзыв";
         edit_button.append(edit_button_text);
 
@@ -166,8 +165,27 @@ function create_node(comment) {
         buttons_container.append(delete_button);
 
         edit_button.addEventListener("click", () => {
-            const state = new CommentEditingState();
-            state.set("comment", comment);
+            for (let child of document.body.children) {
+                child.classList.add("no-display");
+            }
+
+            let comment_text_node = node.querySelector(".comment-text");
+            let comment_photo_node = node.querySelector(".comment-photo img");
+
+            comment = {
+                comment_id: comment.comment_id,
+                user_id: comment.user_id,
+                product_id: comment.product_id,
+                username: comment.username,
+                user_photo_path: comment.user_photo_path,
+                rating: node.querySelector(".comment-stars").getAttribute("data-rating"),
+                creation_date: comment.creation_date,
+                text: comment_text_node ? comment_text_node.textContent : null,
+                comment_photo_path: comment_photo_node ? comment_photo_node.src : null
+            };
+
+            const form = get_form(comment);
+            document.body.appendChild(form);
         });
 
         delete_button.addEventListener("click", (event) => {

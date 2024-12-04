@@ -35,7 +35,7 @@ class CommentCreationService:
             self,
             background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
-            product_id: Annotated[int, Query(ge=1)],
+            product_id: Annotated[int, Form(ge=1)],
             rating: Annotated[int, Form(ge=1, le=5)],
             text: Annotated[str | None, Form(min_length=2, max_length=200)] = None,
             photo: Annotated[UploadFile | None, File()] = None
