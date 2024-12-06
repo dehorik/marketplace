@@ -60,7 +60,8 @@ function create_comment(form) {
                     }
                 })
                     .then((response) => {
-                        append_comment(response.data.comments[0]);
+                        grid.prepend(create_node(response.data.comments[0]));
+                        recalculate_product_rating();
                         redirect_to_product();
                     });
             }, 2700);
@@ -87,7 +88,7 @@ function create_comment(form) {
             }
 
             else {
-                append_response("Отзыв не создан: возникли проблемы во время операции");
+                append_response("Отзыв не был создан: возникли проблемы во время операции");
                 setTimeout(redirect_to_product, 2700);
             }
         });

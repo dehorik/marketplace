@@ -236,3 +236,35 @@ function check_position() {
         get_comments();
     }
 }
+
+
+function recalculate_product_rating() {
+    const amount_comments_container = document.getElementById("product-amount-comments");
+    const rating_container = document.getElementById("product-rating");
+    const star_container = document.querySelector(".product-rating img");
+
+    let amount_comments = 0;
+    let total_rating = 0;
+    for (let comment of grid.querySelectorAll(".comment")) {
+        total_rating += Number(comment.querySelector(".comment-stars").getAttribute("data-rating"));
+        amount_comments += 1
+    }
+
+    amount_comments_container.textContent = String(amount_comments);
+
+    if (amount_comments !== 0) {
+        let rating = (total_rating / amount_comments).toFixed(1);
+        rating_container.textContent = String(rating);
+
+        if (rating >= 4) {
+            star_container.src = "/static/img/active_star.png";
+        }
+        else {
+            star_container.src = "/static/img/inactive_star.png";
+        }
+    }
+    else {
+        rating_container.textContent = "0.0";
+        star_container.src = "/static/img/inactive_star.png";
+    }
+}

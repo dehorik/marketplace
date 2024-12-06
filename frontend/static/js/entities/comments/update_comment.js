@@ -63,6 +63,8 @@ function update_comment(form, old_comment) {
                             }
                         }
 
+                        old_comment_rating_bar[0].parentNode.setAttribute("data-rating", response.data.rating);
+
                         if (response.data.text && old_comment_text) {
                             old_comment_text.textContent = response.data.text;
                         }
@@ -108,6 +110,7 @@ function update_comment(form, old_comment) {
                     }
                 }
 
+                recalculate_product_rating();
                 redirect_to_product();
             }, 2700);
         })
@@ -133,7 +136,7 @@ function update_comment(form, old_comment) {
             }
 
             else {
-                append_response("Отзыв не изменён: возникли проблемы во время операции");
+                append_response("Отзыв не был изменён: возникли проблемы во время операции");
                 setTimeout(redirect_to_product, 2700);
             }
         });
