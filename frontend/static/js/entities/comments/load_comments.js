@@ -185,7 +185,7 @@ function create_node(comment) {
             };
 
             const form = get_form(comment);
-            document.body.appendChild(form);
+            document.body.prepend(form);
         });
 
         delete_button.addEventListener("click", (event) => {
@@ -239,8 +239,8 @@ function check_position() {
 
 
 function recalculate_product_rating() {
-    const amount_comments_container = document.getElementById("product-amount-comments");
-    const rating_container = document.getElementById("product-rating");
+    const amount_comments_container = document.querySelector(".product_amount-comments span");
+    const rating_container = document.querySelector(".product-rating span");
     const star_container = document.querySelector(".product-rating img");
 
     let amount_comments = 0;

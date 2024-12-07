@@ -2,11 +2,23 @@ function get_form(comment=null) {
     const container = document.createElement("div");
     container.className = "comment-form-container";
 
+    const head = document.createElement("div");
+    head.className = "comment-form-head";
+
+    const cancel_button = document.createElement("div");
+    const cancel_button_img = document.createElement("img");
+    cancel_button.className = "comment-form-cancel-button";
+    cancel_button_img.src = "/static/img/back.png";
+    cancel_button.appendChild(cancel_button_img);
+
     const title = document.createElement("div");
     const title_text = document.createElement("span");
     title.className = "comment-form-title";
     title_text.textContent = comment ? "Редактирование отзыва" : "Создание отзыва";
     title.appendChild(title_text);
+
+    head.appendChild(cancel_button);
+    head.appendChild(title);
 
     const rating_stars_container = document.createElement("div");
     rating_stars_container.className = "comment-form-rating-stars-container";
@@ -146,10 +158,18 @@ function get_form(comment=null) {
     error_message.innerHTML = "&copy; WebStore 2024";
     error_message_container.appendChild(error_message);
 
-    container.appendChild(title);
+    container.appendChild(head);
     container.appendChild(rating_stars_container);
     container.appendChild(form);
     container.appendChild(error_message_container);
+
+    cancel_button_img.addEventListener("click", () => {
+        document.body.removeChild(container);
+
+        for (let node of document.body.children) {
+            node.classList.remove("no-display");
+        }
+    });
 
     textarea.addEventListener("input", (event) => {
         check_text(event.target);

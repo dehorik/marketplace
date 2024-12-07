@@ -6,7 +6,7 @@ window.addEventListener("load", () => {
         }
 
         const form = get_form();
-        document.body.appendChild(form);
+        document.body.prepend(form);
     });
 });
 
