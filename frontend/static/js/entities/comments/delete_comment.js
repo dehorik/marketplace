@@ -1,13 +1,4 @@
 function delete_comment(node, comment_id) {
-    node.removeEventListener("click", delete_comment);
-
-    node.style.height = node.offsetHeight + "px";
-    node.classList.add("deleted-comment");
-
-    while (node.firstChild) {
-        node.removeChild(node.firstChild);
-    }
-
     axios({
         url: `/comments/${comment_id}`,
         method: "delete",
@@ -16,6 +7,13 @@ function delete_comment(node, comment_id) {
         }
     })
         .then(() => {
+            node.style.height = node.offsetHeight + "px";
+            node.classList.add("deleted-comment");
+
+            while (node.firstChild) {
+                node.removeChild(node.firstChild);
+            }
+
             setTimeout(() => {
                 node.style.height = "0";
                 node.style.margin = "0";
@@ -38,8 +36,10 @@ function delete_comment(node, comment_id) {
             const deletion_error = document.createElement("div");
             const deletion_error_message = document.createElement("span");
             deletion_error.className = "comment-deletion-error";
+            deletion_error.style.height = node.offsetHeight + "px";
             deletion_error_message.textContent = "Ошибка удаления отзыва";
             deletion_error.append(deletion_error_message);
-            node.append(deletion_error);
+
+            node.querySelector(".comment-buttons-container").replaceWith(deletion_error);
         });
 }

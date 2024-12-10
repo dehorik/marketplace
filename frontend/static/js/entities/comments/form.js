@@ -117,6 +117,7 @@ function get_form(comment=null) {
     const photo_buttons = document.createElement("div");
     photo_buttons.className = "comment-form-photo-buttons";
 
+    const upload_button_container = document.createElement("div");
     const upload_button = document.createElement("div");
     const upload_button_text = document.createElement("span");
     const input_elem = document.createElement("input");
@@ -128,16 +129,19 @@ function get_form(comment=null) {
 
     upload_button.appendChild(upload_button_text);
     upload_button.appendChild(input_elem);
+    upload_button_container.appendChild(upload_button);
 
+    const delete_button_container = document.createElement("div");
     const delete_button = document.createElement("div");
     const delete_button_text = document.createElement("span");
     delete_button.className = "comment-form-delete-button";
     delete_button_text.textContent = "Удалить текущее фото";
 
     delete_button.appendChild(delete_button_text);
+    delete_button_container.appendChild(delete_button);
 
-    photo_buttons.appendChild(upload_button);
-    photo_buttons.appendChild(delete_button);
+    photo_buttons.appendChild(upload_button_container);
+    photo_buttons.appendChild(delete_button_container);
 
     form_photo.appendChild(photo_container);
     form_photo.appendChild(photo_buttons);
@@ -257,14 +261,14 @@ function check_rating() {
 
 function get_response(text) {
     return `
-        <div class="comment-operation-response">
-            <div class="comment-operation-response-logo">
+        <div class="comment-alert">
+            <div class="comment-alert-logo">
                 <img src="/static/img/logo.png" alt="logo">
             </div>
         
-            <div class="comment-operation-response-text ">${text}</div>
+            <div class="comment-alert-text">${text}</div>
         
-            <div class="comment-operation-response-footer">Вы будете автоматически перенаправлены</div>
+            <div class="comment-alert-footer">Вы будете автоматически перенаправлены</div>
         </div>
     `;
 }
@@ -278,7 +282,7 @@ function append_response(text) {
 }
 
 function redirect_to_product() {
-    const response = document.querySelector(".comment-operation-response");
+    const response = document.querySelector(".comment-alert");
     document.body.removeChild(response);
 
     for (let node of document.body.children) {

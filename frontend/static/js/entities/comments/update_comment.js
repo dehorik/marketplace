@@ -112,7 +112,7 @@ function update_comment(form, old_comment) {
 
                 recalculate_product_rating();
                 redirect_to_product();
-            }, 2700);
+            }, 2000);
         })
         .catch((response) => {
             if (response.status === 422 || response.status === 400) {
@@ -127,17 +127,17 @@ function update_comment(form, old_comment) {
 
             else if (response.status === 404) {
                 append_response("Отзыв не существует");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
 
             else if (response.status === 401 || response.status === 403) {
                 append_response("Отзыв не изменён: ошибка аутентификации");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
 
             else {
                 append_response("Отзыв не был изменён: возникли проблемы во время операции");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
         });
 }

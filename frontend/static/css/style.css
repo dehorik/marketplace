@@ -308,13 +308,13 @@ body {
     gap: 2.6%;
     margin: 0.5% auto 0;
     height: 10%;
-    width: 93.8%;
+    width: 95%;
     font-size: 20px;
 }
 
 .product-score div {
     display: flex;
-    width: 8%;
+    width: 10%;
     gap: 10%;
     align-items: center;
     justify-content: center;
@@ -322,7 +322,7 @@ body {
 
 .product-score div img {
     height: 80%;
-    width: 60%;
+    width: 48%;
 }
 
 .product_order-buttons {
@@ -476,6 +476,7 @@ body {
     width: 100%;
     font-size: 19px;
     font-weight: bolder;
+    background-color: rgba(236,237,240,0.94);
 }
 
 .no-display {
@@ -563,8 +564,7 @@ body {
     margin: 1.8% 0 0 0;
 }
 
-
-.comment-operation-response {
+.comment-alert {
     height: 30vh;
     width: 25vw;
     margin: 30vh auto 0;
@@ -572,7 +572,7 @@ body {
     border-radius: 25px;
 }
 
-.comment-operation-response-logo {
+.comment-alert-logo {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -580,12 +580,12 @@ body {
     width: 100%;
 }
 
-.comment-operation-response-logo img {
+.comment-alert-logo img {
     height: 80%;
     width: 35%;
 }
 
-.comment-operation-response-text {
+.comment-alert-text {
     width: 90%;
     height: 30%;
     margin: 0 auto;
@@ -594,7 +594,7 @@ body {
     text-align: center;
 }
 
-.comment-operation-response-footer {
+.comment-alert-footer {
     width: 90%;
     height: 20%;
     margin: 0 auto;
@@ -713,27 +713,31 @@ body {
 }
 
 .comment-form-photo-buttons {
-    height: 29%;
+    height: 35%;
     width: 85%;
-    margin: 8% 0 0 15%;
+    margin: 0 0 0 15%;
 }
 
 .comment-form-photo-buttons div {
     display: flex;
     justify-content: center;
+    align-items: end;
+    height: 50%;
+}
+
+.comment-form-photo-buttons div div{
+    display: flex;
+    justify-content: center;
     align-items: center;
-    height: 40%;
+    height: 80%;
+    width: 100%;
     border: 1px solid grey;
     border-radius: 10px;
     background-color: rgba(247,247,247,0.94);
 }
 
-.comment-form-photo-buttons div:hover {
+.comment-form-photo-buttons div div:hover {
     background-color: rgba(236,236,236,0.94);
-}
-
-.comment-form-delete-button {
-    margin: 7% 0 0 0;
 }
 
 .comment-form-upload-button input{

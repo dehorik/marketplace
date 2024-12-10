@@ -200,10 +200,18 @@ function create_node(comment) {
             if (comment_data_container) {
                 const height = event.target.getBoundingClientRect().height;
                 const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+                const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
 
                 comment_data_container.classList.add("no-display");
-                comment_buttons_container.classList.remove("no-display");
-                comment_buttons_container.style.height = `${height}px`;
+
+                if (comment_buttons_container) {
+                    comment_buttons_container.classList.remove("no-display");
+                    comment_buttons_container.style.height = `${height}px`;
+                }
+                else {
+                    comment_deletion_error.classList.remove("no-display");
+                    comment_deletion_error.style.height = `${height}px`;
+                }
             }
         });
 
@@ -212,8 +220,15 @@ function create_node(comment) {
 
             if (comment_data_container) {
                 const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+                const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
 
-                comment_buttons_container.classList.add("no-display");
+                if (comment_buttons_container) {
+                    comment_buttons_container.classList.add("no-display");
+                }
+                else {
+                    comment_deletion_error.classList.add("no-display");
+                }
+
                 comment_data_container.classList.remove("no-display");
             }
         });

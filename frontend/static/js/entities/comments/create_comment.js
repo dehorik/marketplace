@@ -64,7 +64,7 @@ function create_comment(form) {
                         recalculate_product_rating();
                         redirect_to_product();
                     });
-            }, 2700);
+            }, 2000);
         })
         .catch((error) => {
             if (error.status === 422) {
@@ -79,17 +79,17 @@ function create_comment(form) {
 
             else if (error.status === 404) {
                 append_response("Отзыв не создан: товар или пользователь не существует");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
 
             else if (error.status === 401 || error.status === 403) {
                 append_response("Отзыв не создан: ошибка аутентификации");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
 
             else {
                 append_response("Отзыв не был создан: возникли проблемы во время операции");
-                setTimeout(redirect_to_product, 2700);
+                setTimeout(redirect_to_product, 2000);
             }
         });
 }
