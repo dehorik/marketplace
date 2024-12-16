@@ -40,56 +40,49 @@ function create_comment(form) {
         data: data
     })
         .then((response) => {
-            append_response("Отзыв успешно создан!");
+            const comments_message = grid.querySelector(".comments-message");
 
-            setTimeout(() => {
-                const message_area = grid.querySelector(".comments-message");
+            if (comments_message) {
+                grid.removeChild(comments_message);
+            }
 
-                if (message_area) {
-                    grid.removeChild(message_area);
+            // временное решение!!!
+            axios({
+                url: "/comments/latest",
+                method: "get",
+                params: {
+                    product_id: response.data.product_id,
+                    amount: 1,
+                    last_id: response.data.comment_id + 1
                 }
-
-                // временное решение!!!
-                axios({
-                    url: "/comments/latest",
-                    method: "get",
-                    params: {
-                        product_id: response.data.product_id,
-                        amount: 1,
-                        last_id: response.data.comment_id + 1
-                    }
-                })
-                    .then((response) => {
-                        grid.prepend(create_node(response.data.comments[0]));
-                        recalculate_product_rating();
-                        redirect_to_product();
-                    });
-            }, 2000);
+            })
+                .then((response) => {
+                    grid.prepend(create_node(response.data.comments[0]));
+                    recalculate_product_rating();
+                    return_product();
+                });
         })
         .catch((error) => {
+            const message_area = document.querySelector(".comment-form-error-message span");
+
             if (error.status === 422) {
-                const message_area = document.querySelector(".comment-form-error-message span");
                 message_area.textContent = "Ошибка в введённых данных!";
             }
 
             else if (error.status === 415) {
-                const message_area = document.querySelector(".comment-form-error-message span");
                 message_area.textContent = "Невалидный файл!";
             }
 
             else if (error.status === 404) {
-                append_response("Отзыв не создан: товар или пользователь не существует");
-                setTimeout(redirect_to_product, 2000);
+                message_area.textContent = "Отзыв не создан: товар или пользователь не существуют";
             }
 
             else if (error.status === 401 || error.status === 403) {
-                append_response("Отзыв не создан: ошибка аутентификации");
-                setTimeout(redirect_to_product, 2000);
+                message_area.textContent = "Отзыв не создан: ошибка аутентификации";
             }
 
             else {
-                append_response("Отзыв не был создан: возникли проблемы во время операции");
-                setTimeout(redirect_to_product, 2000);
+                message_area.textContent = "Отзыв не был создан: возникли проблемы во время операции";
             }
         });
 }

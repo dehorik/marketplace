@@ -259,31 +259,9 @@ function check_rating() {
     return false;
 }
 
-function get_response(text) {
-    return `
-        <div class="comment-alert">
-            <div class="comment-alert-logo">
-                <img src="/static/img/logo.png" alt="logo">
-            </div>
-        
-            <div class="comment-alert-text">${text}</div>
-        
-            <div class="comment-alert-footer">Вы будете автоматически перенаправлены</div>
-        </div>
-    `;
-}
-
-function append_response(text) {
+function return_product() {
     const form = document.querySelector(".comment-form-container");
     document.body.removeChild(form);
-
-    const response = get_response(text);
-    document.body.insertAdjacentHTML("afterbegin", response);
-}
-
-function redirect_to_product() {
-    const response = document.querySelector(".comment-alert");
-    document.body.removeChild(response);
 
     for (let node of document.body.children) {
         node.classList.remove("no-display");

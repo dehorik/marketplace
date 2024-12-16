@@ -167,7 +167,7 @@ class ProductUpdateService:
             product_id: Annotated[int, Path(ge=1)],
             name: Annotated[str | None, Form(min_length=2, max_length=18)] = None,
             price: Annotated[int | None, Form(gt=0, le=100000)] = None,
-            descr: Annotated[str | None, Form(min_length=2, max_length=200)] = None,
+            descr: Annotated[str | None, Form(min_length=2, max_length=300)] = None,
             is_hidden: Annotated[bool | None, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
