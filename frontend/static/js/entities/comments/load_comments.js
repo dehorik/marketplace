@@ -3,6 +3,7 @@ const grid = document.querySelector(".comments-grid");
 
 window.addEventListener("load", () => {
     const state = new CommentsLoadingState();
+    state.clear();
     state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
     state.set("last_id", null);
 

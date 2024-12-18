@@ -43,7 +43,7 @@ class ProductSearchingState {
         }
         else {
             this.data = {
-                type: "loading_products"
+                type: "searching_product"
             };
         }
     }
@@ -59,7 +59,7 @@ class ProductSearchingState {
 
     clear() {
         this.data = {
-            type: "loading_products"
+            type: "searching_product"
         };
         localStorage.removeItem("state");
     }

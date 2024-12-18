@@ -11,8 +11,8 @@
 }
 
 html {
-    height: 713px;
-    width: 1520px;
+    min-height: 700px;
+    min-width: 1500px;
 }
 
 body {
@@ -109,7 +109,7 @@ footer {
 .index-message {
     position: absolute;
     text-align: center;
-    width: 96%;
+    width: 90%;
     margin: 2% 0 0 0;
     font-size: 22px;
     font-weight: bold;
@@ -121,7 +121,7 @@ footer {
     grid-template-columns: repeat(5, 16.8%);
     column-gap: 3.5%;
     height: auto;
-    min-height: 460px;
+    min-height: 495px;
     width: 96%;
     padding: 48px 3.8% 0 3.8%;
     margin: 2% auto 2%;

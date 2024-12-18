@@ -17,6 +17,7 @@ window.addEventListener("load", () => {
             }
 
             const state = new ProductSearchingState();
+            state.clear();
             state.set("name", input.value);
             state.set("last_id", null);
 
@@ -25,6 +26,7 @@ window.addEventListener("load", () => {
     });
 
     const state = new ProductsLoadingState();
+    state.clear();
     state.set("last_id", null);
 
     get_products();
