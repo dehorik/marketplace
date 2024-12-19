@@ -45,10 +45,22 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
                 cart_item.user_id,
                 cart_item.product_id,
                 product.name,
-                product.price
-            FROM 
-                cart_item INNER JOIN product
-                ON cart_item.product_id = product.product_id
+                product.price,
+                COALESCE(score.rating, 0),
+                COALESCE(score.amount_comments, 0),
+                product.photo_path
+            FROM cart_item 
+                INNER JOIN product USING(product_id)
+                LEFT JOIN (
+                    SELECT 
+                        product.product_id,
+                        ROUND(AVG(comment.rating), 1) as rating,
+                        COUNT(comment_id) as amount_comments
+                    FROM 
+                        product INNER JOIN comment 
+                        ON product.product_id = comment.product_id
+                    GROUP BY product.product_id
+                ) AS score USING(product_id)
         """
         params = []
 

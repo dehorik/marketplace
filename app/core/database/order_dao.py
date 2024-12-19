@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 from core.settings import config
@@ -155,7 +156,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             """
                 DELETE 
                 FROM orders
-                WHERE product_id IS NULL
+                WHERE product_id IS NULL OR user_id IS NULL
                 RETURNING *;
             """
         )

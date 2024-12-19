@@ -73,9 +73,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                             FROM cart_item
                             WHERE product_id = %s AND user_id = %s
                         )
-                    ) as is_in_cart,
-                    amount_orders,
-                    photo_path,
+                    ) AS is_in_cart,
                     (
                         SELECT 
                             CASE
@@ -89,7 +87,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                         SELECT COUNT(*)
                         FROM comment 
                         WHERE product_id = %s
-                    ) AS amount_comments
+                    ) AS amount_comments,
+                    amount_orders,
+                    photo_path
                 FROM product
                 WHERE product_id = %s;
             """,
@@ -106,18 +106,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             description: str | None = None,
             is_hidden: bool | None = None
     ) -> tuple:
-        fields = {
-            key: value
-            for key, value in {
-                "name": name,
-                "price": price,
-                "description": description,
-                "is_hidden": is_hidden
-            }.items()
-            if value is not None
-        }
-
-        if not fields:
+        if not any([name, price, description]) and is_hidden is None:
             self.__cursor.execute(
                 """
                     SELECT *
@@ -129,23 +118,35 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
             return self.__cursor.fetchone()
 
-        set_values = ""
-        for key, value in fields.items():
-            if type(value) is str:
-                set_values += f"{key} = '{value}', "
-            else:
-                set_values += f"{key} = {value}, "
-        else:
-            set_values = set_values[:-2]
+        query = """
+            UPDATE product 
+            SET   
+        """
+        params = []
 
-        self.__cursor.execute(
-            f"""
-                UPDATE product 
-                SET {set_values}                
-                WHERE product_id = {product_id}
-                RETURNING *;
-            """
-        )
+        if name:
+            query += "name = %s"
+            params.append(name)
+
+        if price:
+            query += ", price = %s"
+            params.append(price)
+
+        if description:
+            query += ", description = %s"
+            params.append(description)
+
+        if is_hidden is not None:
+            query += ", is_hidden = %s"
+            params.append(is_hidden)
+
+        query += """
+            WHERE product_id = %s
+            RETURNING *;
+        """
+        params.append(product_id)
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchone()
 
@@ -164,85 +165,95 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
     def get_latest_products(
             self,
-            amount: int = 9,
+            amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        condition = """
-            WHERE product.is_hidden != true
+        query = """
+            SELECT 
+                product.product_id, 
+                product.name, 
+                product.price, 
+                COALESCE(score.rating, 0),
+                COALESCE(score.amount_comments, 0),
+                product.photo_path
+            FROM 
+                product LEFT JOIN (
+                    SELECT 
+                        product.product_id,
+                        ROUND(AVG(comment.rating), 1) as rating,
+                        COUNT(comment_id) as amount_comments
+                    FROM 
+                        product INNER JOIN comment 
+                        ON product.product_id = comment.product_id
+                    GROUP BY product.product_id
+                ) AS score
+                ON product.product_id = score.product_id
         """
+        params = []
 
         if last_id:
-            condition += f"AND product.product_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT 
-                    product.product_id, 
-                    product.name, 
-                    product.price, 
-                    COALESCE(rating.rating, 0),
-                    COALESCE(rating.amount_comments, 0),
-                    product.photo_path
-                FROM 
-                    product LEFT JOIN (
-                        SELECT 
-                            product.product_id,
-                            ROUND(AVG(comment.rating), 1) as rating,
-                            COUNT(comment_id) as amount_comments
-                        FROM 
-                            product INNER JOIN comment 
-                            ON product.product_id = comment.product_id
-                        GROUP BY product.product_id
-                    ) AS rating
-                    ON product.product_id = rating.product_id
-                {condition}
+            query += """
+                WHERE product.is_hidden != true AND product.product_id < %s
                 ORDER BY product.product_id DESC
-                LIMIT {amount};
+                LIMIT %s;
             """
-        )
+            params.extend([last_id, amount])
+        else:
+            query += """
+                WHERE product.is_hidden != true
+                ORDER BY product.product_id DESC
+                LIMIT %s;
+            """
+            params.append(amount)
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchall()
 
     def search_product(
             self,
             name: str,
-            amount: int = 9,
+            amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        condition = f"""
-            WHERE LOWER(product.name) LIKE '%{name.lower()}%'
-            AND product.is_hidden != true
+        query = """
+            SELECT 
+                product.product_id, 
+                product.name, 
+                product.price, 
+                COALESCE(score.rating, 0),
+                COALESCE(score.amount_comments, 0),
+                product.photo_path
+            FROM 
+                product LEFT JOIN (
+                    SELECT 
+                        product.product_id,
+                        ROUND(AVG(comment.rating), 1) as rating,
+                        COUNT(comment_id) as amount_comments
+                    FROM 
+                        product INNER JOIN comment 
+                        ON product.product_id = comment.product_id
+                    GROUP BY product.product_id
+                ) AS score
+                ON product.product_id = score.product_id
         """
+        params = []
 
         if last_id:
-            condition += f"AND product.product_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT 
-                    product.product_id,
-                    product.name,
-                    product.price,
-                    COALESCE(rating.rating, 0),
-                    COALESCE(rating.amount_comments, 0),
-                    product.photo_path
-                FROM 
-                    product LEFT JOIN (
-                        SELECT 
-                            product.product_id,
-                            ROUND(AVG(comment.rating), 1) as rating,
-                            COUNT(comment_id) as amount_comments
-                        FROM 
-                            product INNER JOIN comment 
-                            ON product.product_id = comment.product_id
-                        GROUP BY product.product_id
-                    ) AS rating
-                    ON product.product_id = rating.product_id                
-                {condition}
-                ORDER BY product.product_id DESC
-                LIMIT {amount};
+            query += """
+                WHERE LOWER(product.name) LIKE %s
+                AND product.is_hidden != true AND product.product_id < %s
+                LIMIT %s;
             """
-        )
+            params.extend([f"%{name.replace("%", "")}%", last_id, amount])
+        else:
+            query += """
+                WHERE LOWER(product.name) LIKE %s AND product.is_hidden != true 
+                LIMIT %s;
+            """
+            params.extend([f"%{name.replace("%", "")}%", amount])
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchall()
 

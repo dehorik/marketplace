@@ -1,7 +1,6 @@
 from typing import Annotated, Callable
 from fastapi import UploadFile, File, Form, Query, Path, Cookie
 from fastapi import BackgroundTasks, Depends, HTTPException, status
-from psycopg2.errors import RaiseException
 
 from entities.products.models import (
     ProductModel,
@@ -33,11 +32,10 @@ class ProductCreationService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
-            name: Annotated[str, Form(min_length=2, max_length=18)],
+            name: Annotated[str, Form(min_length=5, max_length=20)],
             price: Annotated[int, Form(gt=0, le=100000)],
-            description: Annotated[str, Form(min_length=2, max_length=300)],
+            description: Annotated[str, Form(min_length=50, max_length=300)],
             is_hidden: Annotated[bool, Form()],
             photo: Annotated[UploadFile, File()]
     ) -> ProductModel:
@@ -48,17 +46,14 @@ class ProductCreationService:
             )
 
         product = self.product_data_access_obj.create(
-            name,
-            price,
-            description,
-            is_hidden
+            name=name,
+            price=price,
+            description=description,
+            is_hidden=is_hidden
         )
         product = self.converter.fetchone(product)
 
-        background_tasks.add_task(
-            self.file_writer,
-            product.photo_path, photo.file.read()
-        )
+        self.file_writer(product.photo_path, photo.file.read())
 
         return product
 
@@ -162,12 +157,11 @@ class ProductUpdateService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             product_id: Annotated[int, Path(ge=1)],
-            name: Annotated[str | None, Form(min_length=2, max_length=18)] = None,
-            price: Annotated[int | None, Form(gt=0, le=100000)] = None,
-            descr: Annotated[str | None, Form(min_length=2, max_length=300)] = None,
+            name: Annotated[str, Form(min_length=5, max_length=20)] = None,
+            price: Annotated[int, Form(gt=0, le=100000)] = None,
+            descr: Annotated[str, Form(min_length=50, max_length=300)] = None,
             is_hidden: Annotated[bool | None, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
@@ -189,10 +183,7 @@ class ProductUpdateService:
             product = self.converter.fetchone(product)
 
             if photo:
-                background_tasks.add_task(
-                    self.file_writer,
-                    product.photo_path, photo.file.read()
-                )
+                self.file_writer(product.photo_path, photo.file.read())
 
             return product
         except ValueError:
@@ -223,23 +214,16 @@ class ProductDeletionService:
             product = self.product_data_access_obj.delete(product_id)
             product = self.converter.fetchone(product)
 
-            background_tasks.add_task(
-                self.file_delter,
-                product.photo_path
-            )
             background_tasks.add_task(comments_removal_task)
             background_tasks.add_task(orders_removal_task)
+
+            self.file_delter(product.photo_path)
 
             return product
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='product not found'
-            )
-        except RaiseException:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="there are orders with this product"
             )
 
 

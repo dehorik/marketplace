@@ -1,14 +1,14 @@
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ProductModel(BaseModel):
     """Базовая схема товара"""
 
     product_id: int
-    name: str = Field(min_length=2, max_length=18)
-    price: int = Field(gt=0, le=100000)
-    description: str = Field(min_length=2, max_length=300)
+    name: str
+    price: int
+    description: str
     is_hidden: bool
     amount_orders: int
     photo_path: str
@@ -18,23 +18,24 @@ class ExtendedProductModel(BaseModel):
     """Расширенная схема товара с дополнительными полями"""
 
     product_id: int
-    name: str = Field(min_length=2, max_length=18)
-    price: int = Field(gt=0, le=100000)
-    description: str = Field(min_length=2, max_length=300)
+    name: str
+    price: int
+    description: str
     is_hidden: bool
     is_in_cart: bool
-    amount_orders: int
-    photo_path: str
     rating: float
     amount_comments: int
+    amount_orders: int
+    photo_path: str
+
 
 
 class ProductCardModel(BaseModel):
     """Схема карточки товара в каталоге"""
 
     product_id: int
-    name: str = Field(min_length=2, max_length=18)
-    price: int = Field(gt=0, le=100000)
+    name: str
+    price: int
     rating: float
     amount_comments: int
     photo_path: str
