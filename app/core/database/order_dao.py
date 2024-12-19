@@ -6,7 +6,7 @@ from core.settings import config
 
 
 class OrderDataAccessObject(InterfaceDataAccessObject):
-    """Класс для выполнения crud операций с заказами и товарами в корзине"""
+    """Класс для выполнения crud операций с заказами"""
 
     def __init__(self, session: Session):
         self.__session = session
@@ -174,67 +174,6 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 WHERE order_id = %s;
             """,
             [order_id]
-        )
-
-        return self.__cursor.fetchone()
-
-    def craete_cart_item(self, user_id: int, product_id: int) -> tuple:
-        self.__cursor.execute(
-            """
-                INSERT INTO cart_item (
-                    user_id,
-                    product_id
-                )
-                VALUES (%s, %s)
-                RETURNING *;
-            """,
-            [user_id, product_id]
-        )
-
-        return self.__cursor.fetchone()
-
-    def get_cart_items(
-            self,
-            user_id: int,
-            amount: int = 10,
-            last_id: int | None = None
-    ) -> list:
-        condition = f"""
-            WHERE cart_item.user_id = {user_id}
-            AND product.is_hidden = false
-        """
-
-        if last_id:
-            condition += f"AND cart_item.cart_item_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT
-                    cart_item.cart_item_id,
-                    cart_item.user_id,
-                    cart_item.product_id,
-                    product.name,
-                    product.price
-                FROM 
-                    cart_item INNER JOIN product
-                    ON cart_item.product_id = product.product_id
-                {condition}
-                ORDER BY cart_item.cart_item_id DESC
-                LIMIT {amount};
-            """
-        )
-
-        return self.__cursor.fetchall()
-
-    def delete_cart_item(self, cart_item_id: int, user_id: int) -> tuple:
-        self.__cursor.execute(
-            """
-                DELETE 
-                FROM cart_item
-                WHERE cart_item_id = %s AND user_id = %s
-                RETURNING *;   
-            """,
-            [cart_item_id, user_id]
         )
 
         return self.__cursor.fetchone()

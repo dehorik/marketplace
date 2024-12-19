@@ -9,7 +9,8 @@ from entities import (
     products_router,
     comments_router,
     users_router,
-    orders_router
+    orders_router,
+    cart_items_router
 )
 from auth import get_redis_client, auth_router
 from core.database import get_session
@@ -43,6 +44,7 @@ app.include_router(products_router)
 app.include_router(comments_router)
 app.include_router(users_router)
 app.include_router(orders_router)
+app.include_router(cart_items_router)
 
 
 templates = Jinja2Templates(
