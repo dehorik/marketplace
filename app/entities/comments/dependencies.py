@@ -1,7 +1,6 @@
 import os
 from typing import Annotated, Callable
-from fastapi import Form, UploadFile, File, Query, Path
-from fastapi import Depends, HTTPException, BackgroundTasks, status
+from fastapi import Depends, HTTPException, Form, UploadFile, File, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.comments.models import (
@@ -33,7 +32,6 @@ class CommentCreationService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             product_id: Annotated[int, Form(ge=1)],
             rating: Annotated[int, Form(ge=1, le=5)],
@@ -58,10 +56,7 @@ class CommentCreationService:
             comment = self.converter.fetchone(comment)
 
             if photo:
-                background_tasks.add_task(
-                    self.file_writer,
-                    comment.photo_path, photo.file.read()
-                )
+                self.file_writer(comment.photo_path, photo.file.read())
 
             return comment
         except RaiseException:
@@ -90,7 +85,7 @@ class CommentLoadService:
     def __call__(
             self,
             product_id: Annotated[int, Query(ge=1)],
-            amount: Annotated[int, Query(ge=0)] = 10,
+            amount: Annotated[int, Query(ge=0)] = 15,
             last_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CommentItemListModel:
         """
@@ -125,7 +120,6 @@ class CommentUpdateService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             comment_id: Annotated[int, Path(ge=1)],
             clear_text: Annotated[bool, Form()] = False,
@@ -164,17 +158,15 @@ class CommentUpdateService:
                 config.COMMENT_CONTENT_PATH,
                 str(comment_id)
             )
-        elif clear_photo:
-            photo_path = "null"
         else:
             photo_path = None
-
-        text = "null" if clear_text else text
 
         try:
             comment = self.comment_data_access_obj.update(
                 comment_id=comment_id,
                 user_id=payload.sub,
+                clear_text=clear_text,
+                clear_photo=clear_photo,
                 rating=rating,
                 text=text,
                 photo_path=photo_path
@@ -182,16 +174,15 @@ class CommentUpdateService:
             comment = self.converter.fetchone(comment)
 
             if photo:
-                background_tasks.add_task(
-                    self.file_writer,
-                    comment.photo_path, photo.file.read()
-                )
+                self.file_writer(comment.photo_path, photo.file.read())
             elif clear_photo:
-                if exists(os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))): # такие проверки нужно везде!!!!!!!!!
-                    background_tasks.add_task(
-                        self.file_deleter,
-                        os.path.join(config.COMMENT_CONTENT_PATH, str(comment_id))
-                    )
+                photo_path = os.path.join(
+                    config.COMMENT_CONTENT_PATH,
+                    str(comment_id)
+                )
+
+                if exists(photo_path):
+                    self.file_deleter(photo_path)
 
             return comment
         except (ValueError, RaiseException):
@@ -214,7 +205,6 @@ class CommentDeletionService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             comment_id: Annotated[int, Path(ge=1)]
     ) -> CommentModel:
@@ -223,10 +213,7 @@ class CommentDeletionService:
             comment = self.converter.fetchone(comment)
 
             if comment.photo_path:
-                background_tasks.add_task(
-                    self.file_deleter,
-                    comment.photo_path
-                )
+                self.file_deleter(comment.photo_path)
 
             return comment
         except ValueError:

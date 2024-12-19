@@ -39,30 +39,35 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
             amount: int = 10,
             last_id: int | None = None
     ) -> list:
-        condition = f"""
-            WHERE cart_item.user_id = {user_id}
-            AND product.is_hidden = false
+        query = """
+            SELECT
+                cart_item.cart_item_id,
+                cart_item.user_id,
+                cart_item.product_id,
+                product.name,
+                product.price
+            FROM 
+                cart_item INNER JOIN product
+                ON cart_item.product_id = product.product_id
         """
+        params = []
 
         if last_id:
-            condition += f"AND cart_item.cart_item_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT
-                    cart_item.cart_item_id,
-                    cart_item.user_id,
-                    cart_item.product_id,
-                    product.name,
-                    product.price
-                FROM 
-                    cart_item INNER JOIN product
-                    ON cart_item.product_id = product.product_id
-                {condition}
+            query += """
+                WHERE cart_item.user_id = %s AND product.is_hidden = false AND cart_item.cart_item_id < %s
                 ORDER BY cart_item.cart_item_id DESC
-                LIMIT {amount};
+                LIMIT %s;
             """
-        )
+            params.extend([user_id, last_id, amount])
+        else:
+            query += """
+                WHERE cart_item.user_id = %s AND product.is_hidden = false 
+                ORDER BY cart_item.cart_item_id DESC
+                LIMIT %s;
+            """
+            params.extend([user_id, amount])
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchall()
 

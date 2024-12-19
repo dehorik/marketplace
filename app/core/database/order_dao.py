@@ -79,34 +79,40 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             amount: int = 10,
             last_id: int | None = None
     ) -> list:
-        condition = f"""
-            WHERE orders.user_id = {user_id}
+        query = """
+            SELECT 
+                orders.order_id,
+                orders.user_id,
+                orders.product_id,
+                orders.product_name,
+                orders.product_price,
+                product.is_hidden,
+                orders.date_start,
+                orders.date_end,
+                orders.delivery_address,
+                orders.photo_path
+            FROM 
+                product INNER JOIN orders
+                ON product.product_id = orders.product_id
         """
+        params = []
 
         if last_id:
-            condition += f"AND orders.order_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT 
-                    orders.order_id,
-                    orders.user_id,
-                    orders.product_id,
-                    orders.product_name,
-                    orders.product_price,
-                    product.is_hidden,
-                    orders.date_start,
-                    orders.date_end,
-                    orders.delivery_address,
-                    orders.photo_path
-                FROM 
-                    product INNER JOIN orders
-                    ON product.product_id = orders.product_id
-                {condition}
+            query += """
+                WHERE orders.user_id = %s AND orders.order_id < %s
                 ORDER BY orders.order_id DESC
-                LIMIT {amount};
+                LIMIT %s;
             """
-        )
+            params.extend([user_id, last_id, amount])
+        else:
+            query += """
+                WHERE orders.user_id = %s 
+                ORDER BY orders.order_id DESC
+                LIMIT %s;
+            """
+            params.extend([user_id, amount])
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchall()
 

@@ -1,5 +1,4 @@
 import os
-
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 from core.settings import config
@@ -66,36 +65,42 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
     def read(
             self,
             product_id: int,
-            amount: int = 10,
+            amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        condition = f"""
-            WHERE product.product_id = {product_id}
+        query = f"""
+            SELECT 
+                comment.comment_id, 
+                users.user_id,
+                product.product_id, 
+                users.username,
+                users.photo_path,
+                comment.rating,
+                comment.creation_date,
+                comment.text,
+                comment.photo_path   
+            FROM users 
+                INNER JOIN comment USING(user_id)
+                INNER JOIN product USING(product_id)
         """
+        params = []
 
         if last_id:
-            condition += f"AND comment.comment_id < {last_id}"
-
-        self.__cursor.execute(
-            f"""
-                SELECT 
-                    comment.comment_id, 
-                    users.user_id,
-                    product.product_id, 
-                    users.username,
-                    users.photo_path,
-                    comment.rating,
-                    comment.creation_date,
-                    comment.text,
-                    comment.photo_path   
-                FROM users 
-                    INNER JOIN comment USING(user_id)
-                    INNER JOIN product USING(product_id)
-                {condition}
+            query += """
+                WHERE product.product_id = %s AND comment.comment_id < %s
                 ORDER BY comment.comment_id DESC
-                LIMIT {amount};
+                LIMIT %s;
             """
-        )
+            params.extend([product_id, last_id, amount])
+        else:
+            query += """
+                WHERE product.product_id = %s
+                ORDER BY comment.comment_id DESC
+                LIMIT %s;
+            """
+            params.extend([product_id, amount])
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchall()
 
@@ -103,51 +108,41 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             self,
             comment_id: int,
             user_id: int,
+            clear_text: bool = False,
+            clear_photo: bool = False,
             rating: int | None = None,
             text: str | None = None,
             photo_path: str | None = None
     ) -> tuple:
-        if not any([rating, text, photo_path]):
-            self.__cursor.execute(
-                """
-                    SELECT *
-                    FROM comment
-                    WHERE comment_id = %s AND user_id = %s;
-                """,
-                [comment_id, user_id]
-            )
+        query = """
+            UPDATE comment 
+            SET creation_date = NOW()
+        """
+        params = []
 
-            return self.__cursor.fetchone()
+        if rating:
+            query += ", rating = %s"
+            params.append(rating)
 
-        fields = {
-            key: value
-            for key, value in {
-                "rating": rating,
-                "text": text,
-                "photo_path": photo_path
-            }.items()
-            if value is not None
-        }
+        if clear_text:
+            query += ", text = NULL"
+        elif text:
+            query += ", text = %s"
+            params.append(text)
 
-        set_values = ""
-        for key, value in fields.items():
-            if type(value) is str and value.lower() == "null":
-                set_values += f"{key} = NULL, "
-            elif type(value) is str:
-                set_values += f"{key} = '{value}', "
-            else:
-                set_values += f"{key} = {value}, "
-        else:
-            set_values += "creation_date = NOW()"
+        if clear_photo:
+            query += ", photo_path = NULL"
+        elif photo_path:
+            query += ", photo_path = %s"
+            params.append(photo_path)
 
-        self.__cursor.execute(
-            f"""
-                UPDATE comment 
-                SET {set_values}            
-                WHERE comment_id = {comment_id} AND user_id = {user_id}
-                RETURNING *;
-            """
-        )
+        query += """
+            WHERE comment_id = %s AND user_id = %s
+            RETURNING *;
+        """
+        params.extend([comment_id, user_id])
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchone()
 
@@ -173,7 +168,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """
                 DELETE
                 FROM comment
-                WHERE product_id IS NULL
+                WHERE product_id IS NULL or user_id IS NULL
                 RETURNING *;
             """,
         )

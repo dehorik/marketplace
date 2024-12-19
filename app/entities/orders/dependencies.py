@@ -64,10 +64,7 @@ class OrderCreationService:
                 config.PRODUCT_CONTENT_PATH,
                 str(data.product_id)
             )
-            background_tasks.add_task(
-                self.file_copier,
-                product_photo_path, order.photo_path
-            )
+            self.file_copier(product_photo_path, order.photo_path)
 
             background_tasks.add_task(
                 order_creation_notification_task,
@@ -77,7 +74,7 @@ class OrderCreationService:
             return order
         except RaiseException:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="product not found"
             )
         except ForeignKeyViolation:
@@ -170,7 +167,6 @@ class OrderDeletionService:
 
     def __call__(
             self,
-            background_tasks: BackgroundTasks,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
             order_id: Annotated[int, Path(ge=1)]
     ) -> OrderModel:
@@ -178,10 +174,7 @@ class OrderDeletionService:
             order = self.order_data_access_obj.delete(order_id, payload.sub)
             order = self.converter.fetchone(order)
 
-            background_tasks.add_task(
-                self.file_deleter,
-                order.photo_path
-            )
+            self.file_deleter(order.photo_path)
 
             return order
         except ValueError:
