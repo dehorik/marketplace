@@ -173,6 +173,29 @@ def create_triggers(sql_cursor: cursor) -> None:
                 RETURN NEW; 
                 END; 
             $increase_amount_orders$ LANGUAGE plpgsql;
+            
+            CREATE FUNCTION check_cart_item_data()
+            RETURNS TRIGGER AS $check_cart_item_data$ 
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM cart_item    
+                        WHERE cart_item.user_id = NEW.user_id AND cart_item.product_id = NEW.product_id 
+                    ) 
+                    THEN RAISE EXCEPTION 'such cart item alredy exists';
+                    END IF;
+                    
+                    IF NOT EXISTS (
+                        SELECT product_id
+                        FROM product
+                        WHERE product_id = NEW.product_id AND is_hidden = false
+                    )
+                    THEN
+                        RAISE EXCEPTION 'product is hidden or does not exist';
+                    END IF;
+                RETURN NEW;
+                END;
+            $check_cart_item_data$ language plpgsql;          
         
         
             CREATE TRIGGER user_creation
@@ -188,23 +211,28 @@ def create_triggers(sql_cursor: cursor) -> None:
         
             CREATE TRIGGER user_deletion
             BEFORE DELETE ON users
-            FOR EACH ROW EXECUTE FUNCTION check_superusers();
+            FOR EACH ROW 
+            EXECUTE FUNCTION check_superusers();
             
-            CREATE TRIGGER verify_upsert
+            CREATE TRIGGER verify_upsert_on_comment
             BEFORE INSERT OR UPDATE ON comment
-            FOR EACH ROW EXECUTE FUNCTION check_product();    
+            FOR EACH ROW 
+            EXECUTE FUNCTION check_product();    
             
             CREATE TRIGGER order_creation
             BEFORE INSERT ON orders
-            FOR EACH ROW EXECUTE FUNCTION check_product(); 
+            FOR EACH ROW 
+            EXECUTE FUNCTION check_product(); 
             
-            CREATE TRIGGER new_order
+            CREATE TRIGGER new_order_handler
             AFTER INSERT ON orders
-            FOR EACH ROW EXECUTE FUNCTION increase_amount_orders();
+            FOR EACH ROW 
+            EXECUTE FUNCTION increase_amount_orders();
             
             CREATE TRIGGER cart_item_creation
             BEFORE INSERT ON cart_item
-            FOR EACH ROW EXECUTE FUNCTION check_product(); 
+            FOR EACH ROW 
+            EXECUTE FUNCTION check_cart_item_data(); 
         """
     )
 

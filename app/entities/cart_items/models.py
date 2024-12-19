@@ -20,8 +20,8 @@ class CartItemCardModel(BaseModel):
     cart_item_id: int
     user_id: int
     product_id: int
-    product_name: str = Field(min_length=2, max_length=20)
-    product_price: int = Field(gt=0, le=100000)
+    product_name: str
+    product_price: int
 
 
 class CartItemCardListModel(BaseModel):

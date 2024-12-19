@@ -106,18 +106,6 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             description: str | None = None,
             is_hidden: bool | None = None
     ) -> tuple:
-        if not any([name, price, description, is_hidden]):
-            self.__cursor.execute(
-                """
-                    SELECT *
-                    FROM product 
-                    WHERE product_id = %s;
-                """,
-                [product_id]
-            )
-
-            return self.__cursor.fetchone()
-
         fields = {
             key: value
             for key, value in {
@@ -128,6 +116,18 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             }.items()
             if value is not None
         }
+
+        if not fields:
+            self.__cursor.execute(
+                """
+                    SELECT *
+                    FROM product 
+                    WHERE product_id = %s;
+                """,
+                [product_id]
+            )
+
+            return self.__cursor.fetchone()
 
         set_values = ""
         for key, value in fields.items():
