@@ -2,29 +2,30 @@ import os
 from pydantic import EmailStr
 from typing import Annotated, Callable
 from jwt import InvalidTokenError
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File, Form, Query
 from fastapi import BackgroundTasks, HTTPException, Depends,  Response, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.users.models import (
     UserModel,
     EmailVerificationRequest,
-    ChangeRoleRequest,
-    AdminModel,
-    AdminListModel,
+    SetRoleRequest,
+    UserItemModel,
+    UserItemListModel
 )
 from auth import (
-    RefreshTokenValidationService,
     AuthorizationService,
     TokenPayloadModel,
     RedisClient,
     JWTDecoder,
+    NonExistentUserError,
     get_redis_client,
     get_jwt_decoder
 )
 from core.tasks import (
     email_verification_task,
     comments_removal_task,
+    orders_removal_task,
     EmailTokenPayloadModel
 )
 from core.database import UserDataAccessObject, get_user_dao
@@ -32,14 +33,12 @@ from core.settings import config
 from utils import Converter, write_file, delete_file
 
 
-refresh_token_validation_service = RefreshTokenValidationService()
-
 user_dependency = AuthorizationService(min_role_id=1)
 admin_dependency = AuthorizationService(min_role_id=2)
 superuser_dependency = AuthorizationService(min_role_id=3)
 
 
-class UserFetchService:
+class FetchUserService:
     def __init__(
             self,
             user_dao: UserDataAccessObject = get_user_dao(),
@@ -104,32 +103,23 @@ class UserUpdateService:
                 config.USER_CONTENT_PATH,
                 str(payload.sub)
             )
-        elif clear_photo:
-            photo_path = "null"
         else:
             photo_path = None
-
-        set_email = "null" if clear_email else None
 
         try:
             user = self.user_data_access_obj.update(
                 user_id=payload.sub,
+                clear_email=clear_email,
+                clear_photo=clear_photo,
                 username=username,
-                email=set_email,
                 photo_path=photo_path
             )
             user = self.converter.fetchone(user)
 
             if photo:
-                background_tasks.add_task(
-                    self.file_writer,
-                    user.photo_path, photo.file.read()
-                )
+                self.file_writer(user.photo_path, photo.file.read())
             elif clear_photo:
-                background_tasks.add_task(
-                    self.file_deleter,
-                    os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
-                )
+                self.file_deleter(os.path.join(config.USER_CONTENT_PATH, str(payload.sub)))
 
             if email:
                 background_tasks.add_task(
@@ -166,6 +156,10 @@ class EmailVerificationService:
     def __call__(self, data: EmailVerificationRequest) -> UserModel:
         try:
             payload = self.jwt_decoder(data.token)
+
+            if not payload.get("email"):
+                raise InvalidTokenError
+
             payload = EmailTokenPayloadModel(**payload)
 
             user = self.user_data_access_obj.update(
@@ -201,11 +195,11 @@ class RoleManagementService:
     def __call__(
             self,
             payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)],
-            data: ChangeRoleRequest
+            data: SetRoleRequest
     ) -> UserModel:
         if payload.sub == data.user_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="you cannot change your role"
             )
 
@@ -248,24 +242,21 @@ class UserDeletionService:
             self,
             response: Response,
             background_tasks: BackgroundTasks,
-            refresh_token: Annotated[str, Depends(refresh_token_validation_service)],
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)]
     ) -> UserModel:
         try:
+            self.redis_client.delete_user(payload.sub)
             response.delete_cookie(config.REFRESH_COOKIE_KEY)
             response.delete_cookie(config.USER_ID_COOKIE_KEY)
-            self.redis_client.delete_user(payload.sub)
 
             user = self.user_data_access_obj.delete(payload.sub)
             user = self.converter.fetchone(user)
 
-            if user.photo_path:
-                background_tasks.add_task(
-                    self.file_deleter,
-                    user.photo_path
-                )
-
             background_tasks.add_task(comments_removal_task)
+            background_tasks.add_task(orders_removal_task)
+
+            if user.photo_path:
+                self.file_deleter(user.photo_path)
 
             return user
         except ValueError:
@@ -278,39 +269,40 @@ class UserDeletionService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="at least one superuser is required"
             )
-        except ForeignKeyViolation:
+        except NonExistentUserError:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="active orders prevent account deletion"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="not authenticated"
             )
 
 
-class FetchAdminsService:
+class FetchUsersService:
     def __init__(
             self,
             user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(AdminModel)
+            converter: Converter = Converter(UserItemModel)
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
 
     def __call__(
             self,
-            payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)]
-    ) -> AdminListModel:
-        admins = self.user_data_access_obj.get_admins()
-        admins = self.converter.fetchmany(admins)
+            payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)],
+            min_role_id: Annotated[int, Query(ge=1)] = 2
+    ) -> UserItemListModel:
+        users = self.user_data_access_obj.get_users(min_role_id=min_role_id)
+        users = self.converter.fetchmany(users)
 
-        return AdminListModel(admins=admins)
+        return UserItemListModel(users=users)
 
 
 def check_file(file: UploadFile) -> bool:
     return file.content_type.split('/')[0] == 'image'
 
 
-user_fetch_service = UserFetchService()
+fetch_user_service = FetchUserService()
 user_update_service = UserUpdateService()
 email_verification_service = EmailVerificationService()
 role_management_service = RoleManagementService()
 user_deletion_service = UserDeletionService()
-fetch_admins_service = FetchAdminsService()
+fetch_users_service = FetchUsersService()

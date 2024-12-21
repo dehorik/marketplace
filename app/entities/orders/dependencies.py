@@ -84,7 +84,7 @@ class OrderCreationService:
             )
 
 
-class OrderLoadService:
+class FetchOrdersService:
     def __init__(
             self,
             order_dao: OrderDataAccessObject = get_order_dao(),
@@ -185,6 +185,6 @@ class OrderDeletionService:
 
 
 order_creation_service = OrderCreationService()
-order_load_service = OrderLoadService()
+fetch_orders_service = FetchOrdersService()
 order_update_service = OrderUpdateService()
 order_deletion_service = OrderDeletionService()

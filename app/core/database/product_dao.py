@@ -125,22 +125,22 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         params = []
 
         if name:
-            query += "name = %s"
+            query += " name = %s, "
             params.append(name)
 
         if price:
-            query += ", price = %s"
+            query += " price = %s, "
             params.append(price)
 
         if description:
-            query += ", description = %s"
+            query += " description = %s, "
             params.append(description)
 
         if is_hidden is not None:
-            query += ", is_hidden = %s"
+            query += " is_hidden = %s, "
             params.append(is_hidden)
 
-        query += """
+        query = query[:-2] + """
             WHERE product_id = %s
             RETURNING *;
         """

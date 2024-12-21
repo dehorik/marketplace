@@ -54,7 +54,7 @@ class CartItemCreationService:
             )
 
 
-class CartItemLoadService:
+class FetchCartItemsService:
     """Загрузка карточек товаров в корзине"""
 
     def __init__(
@@ -87,7 +87,7 @@ class CartItemLoadService:
         return CartItemCardListModel(cart_items=cart_items)
 
 
-class CartItemRemovalService:
+class CartItemDeletionService:
     """Удаление товара из корзины"""
 
     def __init__(
@@ -119,5 +119,5 @@ class CartItemRemovalService:
 
 
 cart_item_creation_service = CartItemCreationService()
-cart_item_load_service = CartItemLoadService()
-cart_item_removal_service = CartItemRemovalService()
+fetch_cart_items_service = FetchCartItemsService()
+cart_item_deletion_service = CartItemDeletionService()

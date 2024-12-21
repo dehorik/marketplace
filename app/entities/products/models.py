@@ -29,7 +29,6 @@ class ExtendedProductModel(BaseModel):
     photo_path: str
 
 
-
 class ProductCardModel(BaseModel):
     """Схема карточки товара в каталоге"""
 

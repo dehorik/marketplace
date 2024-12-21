@@ -92,7 +92,7 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
-                ON DELETE RESTRICT
+                ON DELETE SET NULL
             );
         """
     )
@@ -214,8 +214,8 @@ def create_triggers(sql_cursor: cursor) -> None:
             FOR EACH ROW 
             EXECUTE FUNCTION check_superusers();
             
-            CREATE TRIGGER verify_upsert_on_comment
-            BEFORE INSERT OR UPDATE ON comment
+            CREATE TRIGGER comment_creation
+            BEFORE INSERT ON comment
             FOR EACH ROW 
             EXECUTE FUNCTION check_product();    
             
@@ -247,7 +247,7 @@ def create_roles(sql_cursor: cursor, role_names: List[List[str]]) -> None:
         role_names
     )
 
-def create_owner_account(sql_cursor: cursor) -> None:
+def create_superuser_account(sql_cursor: cursor) -> None:
     password_hash = get_password_hash(config.SUPERUSER_PASSWORD)
 
     sql_cursor.execute(
@@ -292,7 +292,7 @@ def init_database() -> None:
             ["суперпользователь"]
         ]
     )
-    create_owner_account(sql_cursor)
+    create_superuser_account(sql_cursor)
 
     connection.commit()
     sql_cursor.close()

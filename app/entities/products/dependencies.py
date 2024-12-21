@@ -35,7 +35,7 @@ class ProductCreationService:
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             name: Annotated[str, Form(min_length=5, max_length=20)],
             price: Annotated[int, Form(gt=0, le=100000)],
-            description: Annotated[str, Form(min_length=50, max_length=300)],
+            description: Annotated[str, Form(min_length=150, max_length=300)],
             is_hidden: Annotated[bool, Form()],
             photo: Annotated[UploadFile, File()]
     ) -> ProductModel:
@@ -58,7 +58,7 @@ class ProductCreationService:
         return product
 
 
-class CatalogLoadService:
+class FetchProductsService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
@@ -118,7 +118,7 @@ class ProductSearchService:
         return ProductCardListModel(products=products)
 
 
-class ProductFetchService:
+class FetchProductService:
     def __init__(
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
@@ -161,7 +161,7 @@ class ProductUpdateService:
             product_id: Annotated[int, Path(ge=1)],
             name: Annotated[str, Form(min_length=5, max_length=20)] = None,
             price: Annotated[int, Form(gt=0, le=100000)] = None,
-            descr: Annotated[str, Form(min_length=50, max_length=300)] = None,
+            descr: Annotated[str, Form(min_length=150, max_length=300)] = None,
             is_hidden: Annotated[bool | None, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
@@ -232,8 +232,8 @@ def check_file(file: UploadFile) -> bool:
 
 
 product_creation_service = ProductCreationService()
-product_fetch_service = ProductFetchService()
+fetch_product_service = FetchProductService()
 product_update_service = ProductUpdateService()
 product_deletion_service = ProductDeletionService()
-catalog_load_service = CatalogLoadService()
+fetch_products_service = FetchProductsService()
 product_search_service = ProductSearchService()

@@ -63,12 +63,14 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     def update(
             self,
             user_id: int,
+            clear_email: bool = False,
+            clear_photo: bool = False,
             role_id: int | None = None,
             username: str | None = None,
             email: str | None = None,
             photo_path: str | None = None
     ) -> tuple:
-        if not any([role_id, username, email, photo_path]):
+        if not any([clear_email, clear_photo, role_id, username, email, photo_path]):
             self.__cursor.execute(
                 """
                     SELECT 
@@ -86,42 +88,45 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
             return self.__cursor.fetchone()
 
-        fields = {
-            key: value
-            for key, value in {
-                "role_id": role_id,
-                "username": username,
-                "email": email,
-                "photo_path": photo_path
-            }.items()
-            if value is not None
-        }
+        query = """
+            UPDATE users
+            SET 
+        """
+        params = []
 
-        set_values = ""
-        for key, value in fields.items():
-            if type(value) is str and value.lower() == "null":
-                set_values += f"{key} = NULL, "
-            elif type(value) is str:
-                set_values += f"{key} = '{value}', "
-            else:
-                set_values += f"{key} = {value}, "
-        else:
-            set_values = set_values[:-2]
+        if role_id:
+            query += " role_id = %s, "
+            params.append(role_id)
 
-        self.__cursor.execute(
-            f"""
-                UPDATE users
-                SET {set_values}
-                WHERE user_id = {user_id}
-                RETURNING 
-                    user_id,
-                    role_id, 
-                    username,
-                    email,
-                    registration_date,
-                    photo_path;
-            """
-        )
+        if username:
+            query += " username = %s, "
+            params.append(username)
+
+        if clear_email:
+            query += " email = NULL, "
+        elif email:
+            query += " email = %s, "
+            params.append(email)
+
+        if clear_photo:
+            query += " photo_path = NULL, "
+        elif photo_path:
+            query += " photo_path = %s, "
+            params.append(photo_path)
+
+        query = query[:-2] + """
+            WHERE user_id = %s
+            RETURNING 
+                user_id,
+                role_id, 
+                username,
+                email,
+                registration_date,
+                photo_path;
+        """
+        params.append(user_id)
+
+        self.__cursor.execute(query, params)
 
         return self.__cursor.fetchone()
 
@@ -144,31 +149,6 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
         return self.__cursor.fetchone()
 
-    def get_admins(self, role_id: int = 1) -> list:
-        """
-        :param role_id: параметр, указывающий, от какой роли
-               будут отбираться аккаунты (не включительно)
-        """
-
-        self.__cursor.execute(
-            """
-                SELECT
-                    users.user_id,
-                    role.role_id,
-                    role.role_name,
-                    users.username,
-                    users.photo_path
-                FROM 
-                    users INNER JOIN role
-                    ON users.role_id = role.role_id
-                WHERE role.role_id > %s
-                ORDER BY role.role_id DESC, users.username ASC;
-            """,
-            [role_id]
-        )
-
-        return self.__cursor.fetchall()
-
     def get_user_by_username(self, username: str) -> tuple:
         # извлекается хеш пароля!
 
@@ -189,6 +169,31 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         )
 
         return self.__cursor.fetchone()
+
+    def get_users(self, min_role_id: int = 2) -> list:
+        """
+        :param min_role_id: параметр, указывающий, от какой роли
+               будут отбираться аккаунты (включительно)
+        """
+
+        self.__cursor.execute(
+            """
+                SELECT
+                    users.user_id,
+                    role.role_id,
+                    role.role_name,
+                    users.username,
+                    users.photo_path
+                FROM 
+                    users INNER JOIN role
+                    ON users.role_id = role.role_id
+                WHERE role.role_id >= %s
+                ORDER BY role.role_id DESC;
+            """,
+            [min_role_id]
+        )
+
+        return self.__cursor.fetchall()
 
 
 def get_user_dao() -> UserDataAccessObject:

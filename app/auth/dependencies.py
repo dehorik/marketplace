@@ -57,9 +57,9 @@ class RegistrationService:
 
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
+            self.redis_client.append_token(user.user_id, refresh_token)
             set_refresh_cookie(response, refresh_token)
             set_user_id_cookie(response, str(user.user_id))
-            self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
                 user=user,
@@ -108,15 +108,13 @@ class LoginService:
 
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
+            self.redis_client.append_token(user.user_id, refresh_token)
             set_refresh_cookie(response, refresh_token)
             set_user_id_cookie(response, str(user.user_id))
-            self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
                 user=user,
-                token=AccessTokenModel(
-                    access_token=access_token
-                )
+                token=AccessTokenModel(access_token=access_token)
             )
         except (ValueError, IndexError, TypeError):
             raise HTTPException(
@@ -183,12 +181,16 @@ class LogoutService:
             self,
             response: Response,
             refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
-    ) -> None:
-        response.delete_cookie(config.REFRESH_COOKIE_KEY)
-        response.delete_cookie(config.USER_ID_COOKIE_KEY)
+    ) -> dict:
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
+        response.delete_cookie(config.REFRESH_COOKIE_KEY)
+        response.delete_cookie(config.USER_ID_COOKIE_KEY)
+
+        return {
+            "message": "successful logout"
+        }
 
 
 class TokenRefreshService:
@@ -209,11 +211,11 @@ class TokenRefreshService:
             response: Response,
             refresh_token: Annotated[str, Depends(refresh_token_validation_service)]
     ) -> AccessTokenModel:
-        response.delete_cookie(config.REFRESH_COOKIE_KEY)
-        response.delete_cookie(config.USER_ID_COOKIE_KEY)
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
         self.redis_client.delete_token(payload.sub, refresh_token)
+        response.delete_cookie(config.REFRESH_COOKIE_KEY)
+        response.delete_cookie(config.USER_ID_COOKIE_KEY)
 
         refresh_token = self.refresh_token_encoder(payload)
         access_token = self.access_token_encoder(payload)
@@ -262,21 +264,25 @@ class AuthorizationService:
 
     def __call__(
             self,
-            payload: Annotated[
-                TokenPayloadModel, Depends(access_token_validation_service)
-            ]
+            payload: Annotated[TokenPayloadModel, Depends(access_token_validation_service)]
     ) -> TokenPayloadModel:
-        if self.__min_role_id > 1:
-            user = self.user_data_access_obj.read(payload.sub)
-            user = self.converter.fetchone(user)
+        try:
+            if self.__min_role_id > 1:
+                user = self.user_data_access_obj.read(payload.sub)
+                user = self.converter.fetchone(user)
 
-            if not self.__min_role_id <= user.role_id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail='you do not have such rights'
-                )
+                if not self.__min_role_id <= user.role_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail='forbidden'
+                    )
 
-        return payload
+            return payload
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="not authenticated"
+            )
 
 
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:

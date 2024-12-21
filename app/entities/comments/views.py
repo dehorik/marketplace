@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from entities.comments.dependencies import (
     comment_creation_service,
-    comment_load_service,
+    fetch_comments_service,
     comment_update_service,
     comment_deletion_service
 )
@@ -32,8 +32,8 @@ def create_comment(
     return comment
 
 @router.get("/latest", response_model=CommentItemListModel)
-def load_comments(
-        comments: Annotated[CommentItemListModel, Depends(comment_load_service)]
+def get_comments(
+        comments: Annotated[CommentItemListModel, Depends(fetch_comments_service)]
 ):
     return comments
 

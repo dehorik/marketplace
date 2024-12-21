@@ -5,14 +5,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 from entities.users.dependencies import (
-    user_fetch_service,
+    fetch_user_service,
     user_update_service,
     email_verification_service,
     role_management_service,
     user_deletion_service,
-    fetch_admins_service
+    fetch_users_service
 )
-from entities.users.models import UserModel, AdminListModel
+from entities.users.models import UserModel, UserItemListModel
 from core.settings import ROOT_PATH
 
 
@@ -29,7 +29,7 @@ def get_user_page():
     pass
 
 @router.get("/me", response_model=UserModel)
-def get_user(user: Annotated[UserModel, Depends(user_fetch_service)]):
+def get_user(user: Annotated[UserModel, Depends(fetch_user_service)]):
     return user
 
 @router.patch("/me", response_model=UserModel)
@@ -52,15 +52,15 @@ def verify_email(
     return user
 
 @router.patch("/role", response_model=UserModel)
-def manage_role(user: Annotated[UserModel, Depends(role_management_service)]):
+def set_role(user: Annotated[UserModel, Depends(role_management_service)]):
     return user
 
 @router.delete("/me", response_model=UserModel)
 def delete_user(user: Annotated[UserModel, Depends(user_deletion_service)]):
     return user
 
-@router.get("/admins", response_model=AdminListModel)
-def get_admins(
-        admins: Annotated[AdminListModel, Depends(fetch_admins_service)]
+@router.get("/", response_model=UserItemListModel)
+def get_users(
+        users: Annotated[UserItemListModel, Depends(fetch_users_service)]
 ):
-    return admins
+    return users

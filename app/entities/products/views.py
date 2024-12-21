@@ -6,10 +6,10 @@ from fastapi.templating import Jinja2Templates
 
 from entities.products.dependencies import (
     product_creation_service,
-    product_fetch_service,
+    fetch_product_service,
     product_update_service,
     product_deletion_service,
-    catalog_load_service,
+    fetch_products_service,
     product_search_service
 )
 from entities.products.models import (
@@ -40,8 +40,8 @@ def create_product(
 
 
 @router.get("/latest", response_model=ProductCardListModel)
-def load_catalog(
-        products: Annotated[ProductCardListModel, Depends(catalog_load_service)]
+def get_latest_products(
+        products: Annotated[ProductCardListModel, Depends(fetch_products_service)]
 ):
     return products
 
@@ -55,7 +55,7 @@ def search_product(
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,
-        product: Annotated[ExtendedProductModel, Depends(product_fetch_service)]
+        product: Annotated[ExtendedProductModel, Depends(fetch_product_service)]
 ):
     return templates.TemplateResponse(
         name='product.html',

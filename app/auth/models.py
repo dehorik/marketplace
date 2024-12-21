@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 class UserModel(BaseModel):
@@ -7,10 +7,10 @@ class UserModel(BaseModel):
 
     user_id: int
     role_id: int
-    username: str = Field(min_length=6, max_length=16)
-    email: EmailStr | None = None
+    username: str
+    email: EmailStr | None
     registration_date: datetime
-    photo_path: str | None = None
+    photo_path: str | None
 
 
 class AccessTokenModel(BaseModel):

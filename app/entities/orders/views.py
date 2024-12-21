@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 
 from entities.orders.dependencies import (
     order_creation_service,
-    order_load_service,
+    fetch_orders_service,
     order_update_service,
     order_deletion_service
 )
@@ -24,8 +24,8 @@ def create_order(
     return order
 
 @router.get("/latest", response_model=OrderCardListModel)
-def load_orders(
-        orders: Annotated[OrderCardListModel, Depends(order_load_service)]
+def get_orders(
+        orders: Annotated[OrderCardListModel, Depends(fetch_orders_service)]
 ):
     return orders
 

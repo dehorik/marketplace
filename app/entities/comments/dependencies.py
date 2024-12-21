@@ -71,8 +71,8 @@ class CommentCreationService:
             )
 
 
-class CommentLoadService:
-    """Подгрузка отзывов под товаром"""
+class FetchCommentsService:
+    """Получение отзывов под товаром"""
 
     def __init__(
             self,
@@ -228,6 +228,6 @@ def check_file(file: UploadFile) -> bool:
 
 
 comment_creation_service = CommentCreationService()
-comment_load_service = CommentLoadService()
+fetch_comments_service = FetchCommentsService()
 comment_update_service = CommentUpdateService()
 comment_deletion_service = CommentDeletionService()
