@@ -18,11 +18,6 @@ class InterfaceDataAccessObject(ABC):
         pass
 
     @abstractmethod
-    def commit(self):
-        # вызывать этот метод для внесения изменений в базу данных
-        pass
-
-    @abstractmethod
     def create(self, *args, **kwargs):
         pass
 

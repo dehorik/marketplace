@@ -17,9 +17,6 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     def close(self) -> None:
         self.__cursor.close()
 
-    def commit(self) -> None:
-        self.__session.commit()
-
     def create(
             self,
             username: str,

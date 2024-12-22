@@ -1,7 +1,5 @@
-import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
-from fastapi.templating import Jinja2Templates
 
 from entities.comments.dependencies import (
     comment_creation_service,
@@ -10,15 +8,9 @@ from entities.comments.dependencies import (
     comment_deletion_service
 )
 from entities.comments.models import CommentModel, CommentItemListModel
-from core.settings import ROOT_PATH
 
 
 router = APIRouter(prefix='/comments', tags=['comments'])
-
-
-templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r"frontend\templates")
-)
 
 
 @router.post(

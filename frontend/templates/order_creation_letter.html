@@ -12,7 +12,7 @@
         .container {
             width: 100%;
             max-width: 600px;
-            margin: 20px auto;
+            margin: 0 auto;
             background-color: #ffffff;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -21,7 +21,7 @@
         }
 
         .header {
-            background-color: #4CAF50;
+            background-color: rgba(30,120,255,0.94);
             color: #ffffff;
             padding: 20px;
             text-align: center;
@@ -44,7 +44,7 @@
         }
 
         .footer {
-            background-color: #4CAF50;
+            background-color: rgba(30,120,255,0.94);
             color: #ffffff;
             text-align: center;
             padding: 10px;
@@ -59,7 +59,7 @@
     </div>
     <div class="content">
         <p>Здравствуйте, <b>{{order.username}}</b>.</p>
-        <p>Спасибо вам за заказ на маркетплейсе <b>ItemHub</b>! Мы постараемся доставить заказ как можно скорее.</p>
+        <p>Спасибо вам за заказ на маркетплейсе <b>WebStore</b>! Мы постараемся доставить заказ как можно скорее.</p>
         <p><b>Данные заказа:</b></p>
         <div class="order-details">
             <p><b>Наименование товара:</b> {{order.product_name}}</p>
@@ -68,10 +68,10 @@
             <p><b>Дата доставки:</b> {{order.date_end}}</p>
             <p><b>Адрес доставки:</b> {{order.delivery_address}}</p>
         </div>
-        <p>Спасибо за выбор <b>ItemHub!</b></p>
+        <p>Спасибо за выбор <b>WebStore!</b></p>
     </div>
     <div class="footer">
-        <p style="color: #ffffff">&copy; {{year}} ItemHub. Все права защищены.</p>
+        <p style="color: #ffffff">&copy; {{year}} WebStore. Все права защищены.</p>
     </div>
 </div>
 </body>

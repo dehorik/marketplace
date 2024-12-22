@@ -99,10 +99,7 @@ class UserUpdateService:
                     detail='invalid file type'
                 )
 
-            photo_path = os.path.join(
-                config.USER_CONTENT_PATH,
-                str(payload.sub)
-            )
+            photo_path = os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
         else:
             photo_path = None
 

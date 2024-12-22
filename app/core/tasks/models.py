@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import BaseModel, EmailStr
 
 
@@ -13,8 +13,8 @@ class OrderNotificationModel(BaseModel):
     order_id: int
     product_name: str
     product_price: int
-    date_start: datetime | str
-    date_end: datetime | str
+    date_start: date | str
+    date_end: date | str
     delivery_address: str
     username: str
     email: str | None

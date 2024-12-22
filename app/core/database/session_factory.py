@@ -14,8 +14,7 @@ class Session(Singleton):
             user: str,
             password: str,
             host: str,
-            port: int,
-            autocommit: bool = True
+            port: int
     ):
         if self.__dict__:
             return
@@ -27,15 +26,7 @@ class Session(Singleton):
             host=host,
             port=port
         )
-        self.__connection.autocommit = autocommit
-
-    @property
-    def autocommit(self) -> bool:
-        return self.__connection.autocommit
-
-    @autocommit.setter
-    def autocommit(self, value: bool) -> None:
-        self.__connection.autocommit = value
+        self.__connection.autocommit = True
 
     def __del__(self):
         try:
@@ -46,11 +37,6 @@ class Session(Singleton):
     def close(self) -> None:
         # закрытие подключения к базе данных (сессии)
         self.__connection.close()
-
-    def commit(self) -> None:
-        # запись в базу данных
-        if not self.autocommit:
-            self.__connection.commit()
 
     def get_cursor(self) -> cursor:
         # фабрика курсоров
