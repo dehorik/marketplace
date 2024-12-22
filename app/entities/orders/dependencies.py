@@ -1,7 +1,7 @@
 import os
 from random import randint
 from typing import Annotated, Callable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, BackgroundTasks, Depends, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
@@ -45,16 +45,12 @@ class OrderCreationService:
             data: OrderCreationRequest
     ) -> OrderModel:
         try:
-            now = datetime.now(UTC)
-            delta = timedelta(
-                days=randint(0, 3),
-                hours=randint(0, 24),
-                minutes=randint(0, 60)
-            )
-            date_end = now + delta
+            date_start = datetime.now(timezone.utc).date()
+            date_end = date_start + timedelta(days=randint(1, 2))
             order = self.order_data_access_obj.create(
                 payload.sub,
                 data.product_id,
+                date_start,
                 date_end,
                 data.delivery_address
             )
@@ -126,13 +122,8 @@ class OrderUpdateService:
             data: OrderUpdateRequest
     ) -> OrderModel:
         try:
-            now = datetime.now(UTC)
-            delta = timedelta(
-                days=randint(0, 3),
-                hours=randint(0, 24),
-                minutes=randint(0, 60)
-            )
-            date_end = now + delta
+            now = datetime.now(timezone.utc).date()
+            date_end = now + timedelta(days=randint(2, 3))
             order = self.order_data_access_obj.update(
                 order_id,
                 payload.sub,

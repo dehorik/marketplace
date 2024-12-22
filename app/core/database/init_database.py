@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, timezone
 from psycopg2 import connect
 from psycopg2.extensions import cursor as cursor
 
@@ -25,7 +26,7 @@ def create_users_table(sql_cursor: cursor) -> None:
                 username VARCHAR(255),
                 hashed_password VARCHAR(255),
                 email VARCHAR(255) DEFAULT NULL,
-                registration_date TIMESTAMP WITH TIME ZONE,
+                registration_date DATE,
                 photo_path VARCHAR(255) DEFAULT NULL,
                 
                 FOREIGN KEY (role_id) 
@@ -57,7 +58,7 @@ def create_comment_table(sql_cursor: cursor) -> None:
                 user_id INT,
                 product_id INT,
                 rating INT,
-                creation_date TIMESTAMP WITH TIME ZONE,
+                creation_date DATE,
                 text VARCHAR(255) DEFAULT NULL,
                 photo_path VARCHAR(255) DEFAULT NULL,
             
@@ -81,8 +82,8 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 product_id INT,
                 product_name VARCHAR(255),
                 product_price INT,
-                date_start TIMESTAMP WITH TIME ZONE,
-                date_end TIMESTAMP WITH TIME ZONE,
+                date_start DATE,
+                date_end DATE,
                 delivery_address VARCHAR(255),
                 photo_path VARCHAR(255),
                 
@@ -259,10 +260,14 @@ def create_superuser_account(sql_cursor: cursor) -> None:
                 registration_date
             )    
             VALUES (
-                (SELECT MAX(role_id) FROM role), %s, %s, NOW()
+                (SELECT MAX(role_id) FROM role), %s, %s, %s
             );
         """,
-        [config.SUPERUSER_USERNAME, password_hash]
+        [
+            config.SUPERUSER_USERNAME,
+            password_hash,
+            datetime.now(timezone.utc).date()
+        ]
     )
 
 

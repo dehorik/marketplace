@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from typing import Annotated, Callable
 from fastapi import Depends, HTTPException, Form, UploadFile, File, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
@@ -50,6 +51,7 @@ class CommentCreationService:
                 user_id=payload.sub,
                 product_id=product_id,
                 rating=rating,
+                current_date=datetime.now(timezone.utc).date(),
                 text=text,
                 has_photo=bool(photo)
             )
@@ -165,6 +167,7 @@ class CommentUpdateService:
             comment = self.comment_data_access_obj.update(
                 comment_id=comment_id,
                 user_id=payload.sub,
+                current_date=datetime.now(timezone.utc).date(),
                 clear_text=clear_text,
                 clear_photo=clear_photo,
                 rating=rating,

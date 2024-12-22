@@ -1,3 +1,5 @@
+from datetime import date
+
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 
@@ -18,7 +20,12 @@ class UserDataAccessObject(InterfaceDataAccessObject):
     def commit(self) -> None:
         self.__session.commit()
 
-    def create(self, username: str, hashed_password: str) -> tuple:
+    def create(
+            self,
+            username: str,
+            hashed_password: str,
+            current_date: date
+    ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO users (
@@ -28,7 +35,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     registration_date
                 )
                 VALUES
-                    (1, %s, %s, NOW())
+                    (1, %s, %s, %s)
                 RETURNING 
                     user_id,
                     role_id, 
@@ -37,7 +44,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     registration_date,
                     photo_path;
             """,
-            [username, hashed_password]
+            [username, hashed_password, current_date]
         )
 
         return self.__cursor.fetchone()

@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
@@ -26,6 +27,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             user_id: int,
             product_id: int,
             rating: int,
+            current_date: date,
             text: str | None = None,
             has_photo: bool = False
     ) -> tuple:
@@ -38,10 +40,10 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                     creation_date,
                     text
                 )
-                VALUES (%s, %s, %s, NOW(), %s)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING *;
             """,
-            [user_id, product_id, rating, text]
+            [user_id, product_id, rating, current_date, text]
         )
 
         if has_photo:
@@ -109,6 +111,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             self,
             comment_id: int,
             user_id: int,
+            current_date: date,
             clear_text: bool = False,
             clear_photo: bool = False,
             rating: int | None = None,
@@ -117,9 +120,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
     ) -> tuple:
         query = """
             UPDATE comment 
-            SET creation_date = NOW()
+            SET creation_date = %s
         """
-        params = []
+        params = [current_date]
 
         if rating:
             query += ", rating = %s"

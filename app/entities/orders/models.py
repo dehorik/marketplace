@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import date
 from pydantic import BaseModel, Field
 
 
@@ -20,8 +20,8 @@ class OrderModel(BaseModel):
     product_id: int
     product_name: str
     product_price: int
-    date_start: datetime
-    date_end: datetime
+    date_start: date
+    date_end: date
     delivery_address: str
     photo_path: str
 
@@ -33,8 +33,8 @@ class OrderCardModel(BaseModel):
     product_name: str
     product_price: int
     product_is_hidden: bool
-    date_start: datetime
-    date_end: datetime
+    date_start: date
+    date_end: date
     delivery_address: str
     photo_path: str
 

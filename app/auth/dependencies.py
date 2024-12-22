@@ -1,4 +1,5 @@
 from typing import Annotated
+from datetime import datetime, timezone
 from jwt.exceptions import InvalidTokenError
 from fastapi import HTTPException, Depends, Response, Cookie, Form, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -51,7 +52,8 @@ class RegistrationService:
         try:
             user = self.user_data_access_obj.create(
                 username,
-                get_password_hash(password)
+                get_password_hash(password),
+                datetime.now(timezone.utc).date()
             )
             user = self.converter.fetchone(user)
 

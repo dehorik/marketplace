@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import date
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
@@ -26,7 +26,8 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             self,
             user_id: int,
             product_id: int,
-            date_end: datetime,
+            date_start: date,
+            date_end: date,
             delivery_address: str
     ) -> tuple:
         self.__cursor.execute(
@@ -44,8 +45,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     %s, %s, 
                     (SELECT name FROM product WHERE product_id = %s),
                     (SELECT price FROM product WHERE product_id = %s),
-                    NOW(),
-                    %s, %s 
+                    %s, %s, %s 
                 )
                 RETURNING order_id;
             """,
@@ -54,6 +54,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 product_id,
                 product_id,
                 product_id,
+                date_start,
                 date_end,
                 delivery_address,
             ]
@@ -121,7 +122,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             self,
             order_id: int,
             user_id: int,
-            date_end: datetime,
+            date_end: date,
             delivery_address: str
     ) -> tuple:
         self.__cursor.execute(

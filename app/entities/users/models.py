@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import date
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -19,7 +19,7 @@ class UserModel(BaseModel):
     role_id: int
     username: str
     email: EmailStr | None
-    registration_date: datetime
+    registration_date: date
     photo_path: str | None
 
 

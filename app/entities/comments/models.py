@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import date
 from pydantic import BaseModel
 
 
@@ -10,7 +10,7 @@ class CommentModel(BaseModel):
     user_id: int
     product_id: int
     rating: int
-    creation_date: datetime
+    creation_date: date
     text: str | None
     photo_path: str | None
 
@@ -24,7 +24,7 @@ class CommentItemModel(BaseModel):
     username: str
     user_photo_path: str | None
     rating: int
-    creation_date: datetime
+    creation_date: date
     text: str | None
     comment_photo_path: str | None
 

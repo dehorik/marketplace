@@ -102,7 +102,7 @@ function create_node(comment) {
 
     const date = document.createElement("div");
     date.className = "comment-date";
-    date.textContent = comment.creation_date.split()[0].split("T")[0].split("-").reverse().join(".");
+    date.textContent = comment.creation_date.split("-").reverse().join(".");
 
     const stars = document.createElement("div");
     stars.className = "comment-stars";
