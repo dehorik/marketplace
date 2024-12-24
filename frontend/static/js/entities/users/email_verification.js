@@ -1,24 +1,24 @@
-window.onload = function () {
+window.addEventListener("load", () => {
     const token = new URLSearchParams(window.location.search).get('token');
-    const message_title = document.getElementById('message-title');
-    const message_text = document.getElementById('message-text');
+    const status = document.querySelector(".email-verification_status span");
 
-    axios.patch('/users/email-verification', {
-            token: token
-        }
-    )
-        .then((response) => {
-            message_title.textContent = "Почта подтверждена!";
-            message_text.textContent = "Спасибо за подтверждение вашей почты. Теперь вы можете пользоваться всеми функциями маркетплейса.";
+    if (!token) {
+        status.textContent = "Невалидный адрес!";
+    }
+    else {
+        axios({
+            url: "/users/email-verification",
+            method: "patch",
+            data: {
+                token: token
+            }
         })
-        .catch((error) => {
-            message_title.textContent = "Почта не подтверждена!";
-
-            if (error.response.status === 404) {
-                message_text.textContent = "Похоже, ваша учётная запись была удалена из нашего сервиса =(";
-            }
-            else {
-                message_text.textContent = "Возникли неполадки во время подтверждения почты. Вероятно, письмо было просрочено. Повторите попытку привязки почты.";
-            }
-        });
-};
+            .then((response) => {
+                status.innerHTML = `Почта <b>${response.data.email}</b> была успешно привязана к аккаунту <b>${response.data.username}</b>. Вы можете покинуть эту страницу и продолжить покупки.`;
+            })
+            .catch(() => {
+                status.textContent = "Ваша почта не была привязана к аккаунту. Вероятно, срок действия письма истёк.";
+                status.style.textAlign = "center";
+            });
+    }
+});

@@ -1,23 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/style.css" rel="stylesheet" onload="this.onload=null; this.rel='stylesheet'">
+    <link href="/static/css/style.css" rel="stylesheet">
     <link href="/static/img/favicon.png" rel="icon" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
 </head>
 <body>
 <div class="email-verification_container">
-    <div class="email-verification_logo">
-        <img src="../static/img/logo.png" alt="logo">
-    </div>
-    <div class="email-verification_status">
-        <span>Ваша почта подтверждена. Вы можете покинуть эту страницу.</span>
+    <div class="email-verification_data">
+        <div class="email-verification_logo">
+            <img src="../static/img/logo.png" alt="logo">
+        </div>
+        <div class="email-verification_status">
+            <span>Проверяем почту...</span>
+        </div>
+        <div class="email-verification_return-button">
+            <a href="/">На главную</a>
+        </div>
     </div>
 </div>
+
+<script src="/static/js/entities/users/email_verification.js"></script>
 </body>
 </html>
