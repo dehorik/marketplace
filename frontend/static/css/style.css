@@ -10,9 +10,10 @@
     vertical-align: baseline;
 }
 
-html, body {
-    height: 100%;
-    width: 100%;
+
+html {
+    min-height: 729px;
+    min-width: 1536px;
 }
 
 body {
@@ -31,8 +32,9 @@ footer {
     font-weight: bold;
 }
 
+
 .header-index {
-    height: 100px;
+    height: 7.3%;
     width: 100%;
     background-color: #FFFFFF;
 }
@@ -45,7 +47,7 @@ footer {
 }
 
 .main-logo-index {
-    height: 70px;
+    height: 75%;
     width: 220px;
     margin: 0 0 0 24px;
 }
@@ -109,7 +111,7 @@ footer {
 .index-message {
     position: absolute;
     text-align: center;
-    width: 90%;
+    min-width: 1357px;
     margin: 2% 0 0 0;
     font-size: 22px;
     font-weight: bold;
@@ -215,6 +217,7 @@ footer {
     margin: 0 0 0 5%;
     font-size: 16px;
 }
+
 
 .product_header {
     width: 100%;
@@ -572,7 +575,7 @@ footer {
 .comment-form-container {
     height: 552px;
     width: 690px;
-    margin: 80px auto 0;
+    margin: 88px auto 0;
     background-color: #FFFFFF;
     border-radius: 25px;
 }
@@ -741,8 +744,8 @@ footer {
 
 
 .email-verification_container {
-    height: 100%;
-    width: 100%;
+    height: 729px;
+    width: 1536px;
     display: flex;
     justify-content: center;
     align-items: center;

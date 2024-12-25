@@ -79,7 +79,7 @@ function update_comment(form, old_comment) {
                     }
 
                     if (response.data.photo_path && old_comment_photo) {
-                        old_comment.src = `/${response.data.photo_path}`;
+                        old_comment_photo.src = `/${response.data.photo_path}?reload=${Date.now()}`;
                     }
 
                     else if (response.data.photo_path && !old_comment_photo) {
