@@ -142,7 +142,6 @@ class CommentUpdateService:
         которых нужно удалить. Одновременная передача значения true во флаг и
         отправка данных для соответствующего поля приведет к ошибке.
         """
-
         if clear_text and text or clear_photo and photo:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

@@ -16,76 +16,79 @@ window.addEventListener("load", () => {
                 grid.removeChild(grid.firstChild);
             }
 
-            const state = new ProductSearchingState();
+            const state = new State();
             state.clear();
             state.set("name", input.value);
             state.set("last_id", null);
 
-            get_products();
+            getProducts();
         }
     });
 
-    const state = new ProductsLoadingState();
+    const state = new State();
     state.clear();
     state.set("last_id", null);
 
-    get_products();
-    window.addEventListener("scroll", check_position);
+    getProducts();
+
+    setTimeout(() => {
+        window.addEventListener("scroll", checkPosition);
+    }, 500);
 });
 
-function get_products() {
-    let state = new ProductsLoadingState();
 
-    if (state.is_empty()) {
-        state = new ProductSearchingState();
-    }
+function appendProductsNotFoundMessage() {
+    const message_area = document.createElement("div");
+    message_area.className = "index-message";
+    message_area.textContent = "Ничего не найдено!";
+    grid.append(message_area);
+}
 
-    let configuration = {
-        url: "/products/latest",
-        method: "get",
-        params: {
-            amount: 15,
-            last_id: state.get("last_id")
+function getProducts() {
+    let state = new State();
+
+    if (!state.isEmpty()) {
+        let configuration = {
+            url: "/products/latest",
+            method: "get",
+            params: {
+                amount: 30,
+                last_id: state.get("last_id")
+            }
+        };
+
+        if (state.get("name")) {
+            configuration.url = "/products/search";
+            configuration.params.name = state.get("name");
         }
-    };
 
-    if (state.get("type") === "searching_product") {
-        configuration.url = "/products/search";
-        configuration.params.name = state.get("name");
-        configuration.params.last_id = state.get("last_id");
-    }
+        axios(configuration)
+            .then((response) => {
+                let products = response.data.products;
 
-    axios(configuration)
-        .then((response) => {
-            let products = response.data.products;
+                if (products.length === 0) {
+                    state.clear();
 
-            if (products.length === 0) {
-                state.clear();
-
-                if (!grid.querySelector(".product-catalog-card")) {
-                    const message_area = document.createElement("div");
-                    message_area.className = "index-message";
-                    message_area.textContent = "Ничего не найдено!";
-                    grid.append(message_area);
+                    if (!grid.querySelector(".product-catalog-card")) {
+                        appendProductsNotFoundMessage();
+                    }
                 }
+                else {
+                    state.set("last_id", products.slice(-1)[0].product_id);
 
-                return;
-            }
-
-            state.set("last_id", products.slice(-1)[0].product_id);
-
-            for (let i in products) {
-                append(products[i]);
-            }
-        });
+                    for (let i in products) {
+                        appendProduct(products[i]);
+                    }
+                }
+            });
+    }
 }
 
-function append(product) {
-    product = create_node(product);
-    grid.append(product);
+function appendProduct(product) {
+    grid.append(createNode(product));
 }
 
-function create_node(product) {
+function createNode(product) {
     const product_uri = `/products/${product.product_id}`;
 
     const card = document.createElement("div");
@@ -143,17 +146,17 @@ function create_node(product) {
     return card;
 }
 
-function check_position() {
+function checkPosition() {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     const scrollPosition = window.scrollY;
 
-    if (documentHeight - (windowHeight + scrollPosition) <= 170) {
-        get_products();
-        window.removeEventListener("scroll", check_position);
-
+    if (documentHeight - (windowHeight + scrollPosition) <= 300) {
+        window.removeEventListener("scroll", checkPosition);
         setTimeout(() => {
-            window.addEventListener("scroll", check_position);
-        }, 250);
+            window.addEventListener("scroll", checkPosition);
+        }, 200);
+
+        getProducts();
     }
 }

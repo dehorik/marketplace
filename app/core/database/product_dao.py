@@ -240,12 +240,14 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             query += """
                 WHERE LOWER(product.name) LIKE %s
                 AND product.is_hidden != true AND product.product_id < %s
+                ORDER BY product.product_id DESC
                 LIMIT %s;
             """
             params.extend([f"%{name.replace("%", "")}%", last_id, amount])
         else:
             query += """
-                WHERE LOWER(product.name) LIKE %s AND product.is_hidden != true 
+                WHERE LOWER(product.name) LIKE %s AND product.is_hidden != true
+                ORDER BY product.product_id DESC 
                 LIMIT %s;
             """
             params.extend([f"%{name.replace("%", "")}%", amount])

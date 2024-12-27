@@ -1,10 +1,10 @@
-function update_comment(form, old_comment) {
+function updateComment(form, old_comment) {
     const comment_id = old_comment.comment_id;
 
     const rating = document.querySelector(".comment-form-rating-stars-container").getAttribute("data-rating");
     const text = form.querySelector("#comment-form-text").value;
     const file = form.querySelector(".comment-form-upload-button input").files[0];
-    const photo_status = form.querySelector(".comment-form-photo img").getAttribute("data-photo-type");
+    const photo_type = form.querySelector(".comment-form-photo img").getAttribute("data-photo-type");
 
     const data = new FormData();
 
@@ -15,7 +15,7 @@ function update_comment(form, old_comment) {
         data.append("clear_text", "false");
     }
 
-    if (photo_status === "default" && old_comment.comment_photo_path) {
+    if (photo_type === "default" && old_comment.comment_photo_path) {
         data.append("clear_photo", "true");
     }
     else {
@@ -107,8 +107,8 @@ function update_comment(form, old_comment) {
                 }
             }
 
-            recalculate_product_rating();
-            return_product();
+            recalculateProductRating();
+            removeForm();
         })
         .catch((response) => {
             const message_area = document.querySelector(".comment-form-error-message span");

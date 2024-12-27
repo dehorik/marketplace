@@ -1,4 +1,32 @@
-function get_form(comment=null) {
+function appendForm(node=null, comment_data=null) {
+    for (let child of document.body.children) {
+        child.classList.add("no-display");
+    }
+
+    if (node && comment_data) {
+        const comment_text_node = node.querySelector(".comment-text");
+        const comment_photo_node = node.querySelector(".comment-photo img");
+
+        let comment = {
+            comment_id: comment_data.comment_id,
+            user_id: comment_data.user_id,
+            product_id: comment_data.product_id,
+            username: comment_data.username,
+            user_photo_path: comment_data.user_photo_path,
+            rating: node.querySelector(".comment-stars").getAttribute("data-rating"),
+            creation_date: node.querySelector(".comment-data-container").textContent,
+            text: comment_text_node ? comment_text_node.textContent : null,
+            comment_photo_path: comment_photo_node ? comment_photo_node.src : null
+        };
+
+        document.body.prepend(getFormNode(comment));
+    }
+    else {
+        document.body.prepend(getFormNode());
+    }
+}
+
+function getFormNode(comment = null) {
     const container = document.createElement("div");
     container.className = "comment-form-container";
 
@@ -50,24 +78,7 @@ function get_form(comment=null) {
         }
 
         star.addEventListener("click", (event) => {
-            const rating_bar = document.querySelectorAll(".comment-form-rating-stars-container a img");
-            const rating = Number(event.target.getAttribute("data-value"));
-            rating_stars_container.setAttribute("data-rating", String(rating));
-
-            if (rating < 5) {
-                for (let i = 4; i >= rating; i--) {
-                    if (rating_bar[i].getAttribute("data-state") === "1") {
-                        rating_bar[i].src = "/static/img/inactive_star.png";
-                        rating_bar[i].setAttribute("data-state", "0");
-                    }
-                }
-            }
-            for (let i = 0; i < rating; i++) {
-                if (rating_bar[i].getAttribute("data-state") === "0") {
-                    rating_bar[i].src = "/static/img/active_star.png";
-                    rating_bar[i].setAttribute("data-state", "1");
-                }
-            }
+            makeStarsActive(event);
         });
 
         star.setAttribute("data-value", String(i));
@@ -123,6 +134,7 @@ function get_form(comment=null) {
     const input_elem = document.createElement("input");
     upload_button.className = "comment-form-upload-button";
     upload_button_text.textContent = "Загрузить новое фото";
+    input_elem.id = "input-comment-photo";
     input_elem.type = "file";
     input_elem.accept = ".jpg, .png";
     input_elem.className = "no-display";
@@ -168,15 +180,11 @@ function get_form(comment=null) {
     container.appendChild(error_message_container);
 
     cancel_button_img.addEventListener("click", () => {
-        document.body.removeChild(container);
-
-        for (let node of document.body.children) {
-            node.classList.remove("no-display");
-        }
+        removeForm();
     });
 
     textarea.addEventListener("input", (event) => {
-        check_text(event.target);
+        checkCommentText(event.target);
     });
 
     upload_button.addEventListener("click", () => {
@@ -184,31 +192,19 @@ function get_form(comment=null) {
     });
 
     input_elem.addEventListener("change", (event) => {
-        const file = event.target.files[0];
-
-        if (file) {
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-                photo.src = event.target.result;
-                photo.setAttribute("data-photo-type", "uploaded");
-            };
-            reader.readAsDataURL(file);
-        }
+        uploadFile(event);
     });
 
     delete_button.addEventListener("click", () => {
-        input_elem.value = null;
-        photo.src = "/static/img/empty_photo.png";
-        photo.setAttribute("data-photo-type", "default");
+        deleteFile();
     });
 
     if (comment) {
         form.addEventListener("submit", (event) => {
             event.preventDefault();
 
-            if (check_text(textarea) && check_rating()) {
-                update_comment(event.target, comment);
+            if (checkCommentText(textarea) && checkCommentRating()) {
+                updateComment(event.target, comment);
             }
         });
     }
@@ -216,8 +212,8 @@ function get_form(comment=null) {
         form.addEventListener("submit", (event) => {
             event.preventDefault();
 
-            if (check_text(textarea) && check_rating()) {
-                create_comment(event.target);
+            if (checkCommentText(textarea) && checkCommentRating()) {
+                createComment(event.target);
             }
         });
     }
@@ -225,7 +221,51 @@ function get_form(comment=null) {
     return container;
 }
 
-function check_text(textarea) {
+function makeStarsActive(event) {
+    const rating_bar = document.querySelectorAll(".comment-form-rating-stars-container a img");
+    const rating = Number(event.target.getAttribute("data-value"));
+    event.target.parentNode.parentNode.setAttribute("data-rating", String(rating));
+
+    if (rating < 5) {
+        for (let i = 4; i >= rating; i--) {
+            if (rating_bar[i].getAttribute("data-state") === "1") {
+                rating_bar[i].src = "/static/img/inactive_star.png";
+                rating_bar[i].setAttribute("data-state", "0");
+            }
+        }
+    }
+    for (let i = 0; i < rating; i++) {
+        if (rating_bar[i].getAttribute("data-state") === "0") {
+            rating_bar[i].src = "/static/img/active_star.png";
+            rating_bar[i].setAttribute("data-state", "1");
+        }
+    }
+}
+
+function uploadFile(event) {
+    const photo = document.querySelector(".comment-form-photo img");
+    const file = event.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            photo.src = event.target.result;
+            photo.setAttribute("data-photo-type", "uploaded");
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function deleteFile() {
+    const photo = document.querySelector(".comment-form-photo img");
+    photo.src = "/static/img/empty_photo.png";
+    photo.setAttribute("data-photo-type", "default");
+
+    document.getElementById("input-comment-photo").value = null;
+}
+
+function checkCommentText(textarea) {
     const message_area = document.querySelector(".comment-form-error-message span");
 
     if (textarea.value.length > 200) {
@@ -242,7 +282,7 @@ function check_text(textarea) {
     }
 }
 
-function check_rating() {
+function checkCommentRating() {
     const rating_bar = document.querySelectorAll(".comment-form-rating-stars-container a img");
     const rating = Number(rating_bar[0].parentNode.parentNode.getAttribute("data-rating"));
 
@@ -259,7 +299,7 @@ function check_rating() {
     return false;
 }
 
-function return_product() {
+function removeForm() {
     const form = document.querySelector(".comment-form-container");
     document.body.removeChild(form);
 

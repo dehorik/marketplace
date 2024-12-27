@@ -1,17 +1,4 @@
-window.addEventListener("load", () => {
-    const comment_creation_button = document.querySelector(".comment-creation-link");
-    comment_creation_button.addEventListener("click", () => {
-        for (let node of document.body.children) {
-            node.classList.add("no-display");
-        }
-
-        const form = get_form();
-        document.body.prepend(form);
-    });
-});
-
-
-function create_comment(form) {
+function createComment(form) {
     const product_id = window.location.pathname.split("/").slice(-1)[0];
 
     const rating = document.querySelector(".comment-form-rating-stars-container").getAttribute("data-rating");
@@ -46,20 +33,33 @@ function create_comment(form) {
                 grid.removeChild(comments_message);
             }
 
-            // временное решение!!!
+            let created_comment_data = response.data;
+
             axios({
-                url: "/comments/latest",
+                url: "/users/me",
                 method: "get",
-                params: {
-                    product_id: response.data.product_id,
-                    amount: 1,
-                    last_id: response.data.comment_id + 1
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
                 }
             })
                 .then((response) => {
-                    grid.prepend(create_node(response.data.comments[0]));
-                    recalculate_product_rating();
-                    return_product();
+                    let user_data = response.data;
+
+                    let comment = {
+                        comment_id: created_comment_data.comment_id,
+                        user_id: user_data.user_id,
+                        product_id: created_comment_data.product_id,
+                        username: user_data.username,
+                        user_photo_path: user_data.photo_path,
+                        rating: created_comment_data.rating,
+                        creation_date: created_comment_data.creation_date,
+                        text: created_comment_data.text,
+                        comment_photo_path: created_comment_data.photo_path
+                    }
+
+                    grid.prepend(createNode(comment));
+                    recalculateProductRating();
+                    removeForm();
                 });
         })
         .catch((error) => {

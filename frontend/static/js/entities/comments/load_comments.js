@@ -1,77 +1,52 @@
-const grid = document.querySelector(".comments-grid");
+function appendCommentsNotFoundMessage() {
+    if (!grid.querySelector(".comments-message")) {
+        const message_area = document.createElement("div");
+        message_area.className = "comments-message";
+        message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
 
-
-window.addEventListener("load", () => {
-    const state = new CommentsLoadingState();
-    state.clear();
-    state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
-    state.set("last_id", null);
-
-    const observer = new MutationObserver((mutations) => {
-        if (grid.querySelectorAll(".comment").length <= 10) {
-            window.removeEventListener("scroll", check_position);
-            setTimeout(() => {
-                window.addEventListener("scroll", check_position);
-            }, 250);
-
-            get_comments();
-        }
-    });
-    observer.observe(grid, {
-        childList: true,
-        subtree: true
-    });
-
-    window.addEventListener("scroll", check_position);
-});
-
-
-function get_comments() {
-    const state = new CommentsLoadingState();
-
-    if (state.is_empty()) {
-        return;
+        grid.append(message_area);
     }
-
-    axios({
-        url: "/comments/latest",
-        method: "get",
-        params: {
-            product_id: state.get("product_id"),
-            amount: 15,
-            last_id: state.get("last_id")
-        }
-    })
-        .then((response) => {
-            let comments = response.data.comments;
-
-            if (comments.length === 0) {
-                state.clear();
-
-                if (!grid.querySelector(".comment") && !grid.querySelector(".comments-message")) {
-                    const message_area = document.createElement("div");
-                    message_area.className = "comments-message";
-                    message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
-
-                    grid.append(message_area);
-                }
-            }
-            else {
-                state.set("last_id", comments.slice(-1)[0].comment_id);
-
-                for (let i in comments) {
-                    append_comment(comments[i]);
-                }
-            }
-        });
 }
 
-function append_comment(comment) {
-    const node = create_node(comment);
-    grid.append(node);
+function getComments() {
+    const state = new State();
+
+    if (!state.isEmpty()) {
+        axios({
+            url: "/comments/latest",
+            method: "get",
+            params: {
+                product_id: state.get("product_id"),
+                amount: 30,
+                last_id: state.get("last_id")
+            }
+        })
+            .then((response) => {
+                let comments = response.data.comments;
+
+                if (comments.length === 0) {
+                    state.clear();
+
+                    if (!grid.querySelector(".comment")) {
+                        appendCommentsNotFoundMessage();
+                    }
+                }
+                else {
+                    state.set("last_id", comments.slice(-1)[0].comment_id);
+
+                    for (let i in comments) {
+                        appendComment(comments[i]);
+                    }
+                }
+            });
+    }
 }
 
-function create_node(comment) {
+function appendComment(comment) {
+    grid.append(createNode(comment));
+}
+
+function createNode(comment) {
     const node = document.createElement("div");
     node.className = "comment";
     node.setAttribute("data-comment-id", comment.comment_id);
@@ -148,7 +123,7 @@ function create_node(comment) {
 
     node.append(data_container);
 
-    if (comment.user_id === 2) {
+    if (comment.user_id === 1) {
         const buttons_container = document.createElement("div");
         buttons_container.classList.add("comment-buttons-container", "no-display");
 
@@ -165,122 +140,78 @@ function create_node(comment) {
         buttons_container.append(edit_button);
         buttons_container.append(delete_button);
 
-        edit_button.addEventListener("click", () => {
-            for (let child of document.body.children) {
-                child.classList.add("no-display");
-            }
-
-            let comment_text_node = node.querySelector(".comment-text");
-            let comment_photo_node = node.querySelector(".comment-photo img");
-
-            comment = {
-                comment_id: comment.comment_id,
-                user_id: comment.user_id,
-                product_id: comment.product_id,
-                username: comment.username,
-                user_photo_path: comment.user_photo_path,
-                rating: node.querySelector(".comment-stars").getAttribute("data-rating"),
-                creation_date: comment.creation_date,
-                text: comment_text_node ? comment_text_node.textContent : null,
-                comment_photo_path: comment_photo_node ? comment_photo_node.src : null
-            };
-
-            const form = get_form(comment);
-            document.body.prepend(form);
-        });
-
-        delete_button.addEventListener("click", (event) => {
-            delete_comment(node, comment.comment_id);
-        });
-
         node.append(buttons_container);
 
+        edit_button.addEventListener("click", () => {
+            appendForm(node, comment);
+        });
+
+        delete_button.addEventListener("click", () => {
+            deleteComment(node);
+        });
+
         node.addEventListener("mouseenter", (event) => {
-            const comment_data_container = event.target.querySelector(".comment-data-container");
-
-            if (comment_data_container) {
-                const height = event.target.getBoundingClientRect().height;
-                const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
-                const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
-
-                comment_data_container.classList.add("no-display");
-
-                if (comment_buttons_container) {
-                    comment_buttons_container.classList.remove("no-display");
-                    comment_buttons_container.style.height = `${height}px`;
-                }
-                else {
-                    comment_deletion_error.classList.remove("no-display");
-                    comment_deletion_error.style.height = `${height}px`;
-                }
-            }
+            showCommentButtons(event);
         });
 
         node.addEventListener("mouseleave", (event) => {
-            const comment_data_container = event.target.querySelector(".comment-data-container");
-
-            if (comment_data_container) {
-                const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
-                const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
-
-                if (comment_buttons_container) {
-                    comment_buttons_container.classList.add("no-display");
-                }
-                else {
-                    comment_deletion_error.classList.add("no-display");
-                }
-
-                comment_data_container.classList.remove("no-display");
-            }
+            hideCommentButtons(event);
         });
     }
 
     return node;
 }
 
-function check_position() {
+function showCommentButtons(event) {
+    const comment_data_container = event.target.querySelector(".comment-data-container");
+
+    if (comment_data_container) {
+        const height = event.target.getBoundingClientRect().height;
+        const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+        const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
+
+        comment_data_container.classList.add("no-display");
+
+        if (comment_buttons_container) {
+            comment_buttons_container.classList.remove("no-display");
+            comment_buttons_container.style.height = `${height}px`;
+        }
+        else {
+            comment_deletion_error.classList.remove("no-display");
+            comment_deletion_error.style.height = `${height}px`;
+        }
+    }
+}
+
+function hideCommentButtons(event) {
+    const comment_data_container = event.target.querySelector(".comment-data-container");
+
+    if (comment_data_container) {
+        const comment_buttons_container = event.target.querySelector(".comment-buttons-container");
+        const comment_deletion_error = event.target.querySelector(".comment-deletion-error");
+
+        if (comment_buttons_container) {
+            comment_buttons_container.classList.add("no-display");
+        }
+        else {
+            comment_deletion_error.classList.add("no-display");
+        }
+
+        comment_data_container.classList.remove("no-display");
+    }
+}
+
+function checkPosition() {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     const scrollPosition = window.scrollY;
 
-    if (documentHeight - (windowHeight + scrollPosition) <= 150) {
-        window.removeEventListener("scroll", check_position);
+    if (documentHeight - (windowHeight + scrollPosition) <= 220) {
+        window.removeEventListener("scroll", checkPosition);
         setTimeout(() => {
-            window.addEventListener("scroll", check_position);
+            window.addEventListener("scroll", checkPosition);
         }, 250);
 
-        get_comments();
-    }
-}
-
-
-function recalculate_product_rating() {
-    const amount_comments_container = document.querySelector(".product_amount-comments span");
-    const rating_container = document.querySelector(".product-rating span");
-    const star_container = document.querySelector(".product-rating img");
-
-    let amount_comments = 0;
-    let total_rating = 0;
-    for (let comment of grid.querySelectorAll(".comment")) {
-        total_rating += Number(comment.querySelector(".comment-stars").getAttribute("data-rating"));
-        amount_comments += 1
-    }
-
-    amount_comments_container.textContent = String(amount_comments);
-
-    if (amount_comments !== 0) {
-        let rating = (total_rating / amount_comments).toFixed(1);
-        rating_container.textContent = String(rating);
-
-        if (rating >= 4) {
-            star_container.src = "/static/img/active_star.png";
-        }
-        else {
-            star_container.src = "/static/img/inactive_star.png";
-        }
-    }
-    else {
-        rating_container.textContent = "0.0";
-        star_container.src = "/static/img/inactive_star.png";
+        getComments();
     }
 }
