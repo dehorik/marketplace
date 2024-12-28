@@ -799,3 +799,135 @@ footer {
 .email-verification_return-button a:hover {
     color: dimgray;
 }
+
+
+.auth-form_container {
+    height: 400px;
+    width: 30%;
+    margin: 165px auto 0;
+    background-color: white;
+    border-radius: 20px;
+}
+
+.auth-form_title {
+    width: 100%;
+    height: 16%;
+    display: flex;
+    align-items: center;
+}
+
+.auth-form_return-button {
+    width: 10%;
+    height: 100%;
+    margin: 0 0 0 3%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-form_return-button a {
+    height: 50%;
+    width: 82%;
+}
+
+.auth-form_return-button a img {
+    height: 100%;
+    width: 100%;
+}
+
+.auth-form_title_text {
+    width: 74%;
+    height: 100%;
+    margin: 0 13% 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 24px;
+}
+
+.auth-form_container form {
+    height: 68%;
+    width: 100%;
+    margin: 2% 0 0 0;
+}
+
+.auth-form_credentials-container {
+    display: flex;
+    align-items: center;
+    height: 16%;
+    width: 86%;
+    margin: 3% auto 0;
+}
+
+.auth-form_credentials-container input {
+    height: 100%;
+    width: 60%;
+    border-radius: 10px;
+    border: 1px solid dimgray;
+    font-size: 16px;
+    padding: 2%;
+}
+
+.auth-form_credentials-container div {
+    width: 38%;
+    margin: 0 0 0 2%;
+    color: red;
+    font-size: 16px;
+}
+
+.auth-form_submit-button {
+    height: 17%;
+    width: 86%;
+    margin: 4% auto 0;
+    display: flex;
+    align-items: center;
+}
+
+.auth-form_submit-button button {
+    width: 32%;
+    height: 100%;
+    border-radius: 10px;
+    background-color: rgba(36,116,255,0.94);
+    color: white;
+    font-size: 14px;
+}
+
+.auth-form_submit-button button:hover {
+    background-color: rgba(36,82,255,0.94);
+}
+
+.auth-form_form-type-changer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 18%;
+    width: 86%;
+    margin: 7% auto 0;
+    font-size: 16px;
+}
+
+.auth-form_form-type-changer_button {
+    display: flex;
+    align-items: center;
+    height: 90%;
+    margin: 0 0 0 4%;
+    padding: 2%;
+    border: 1px solid dimgray;
+    border-radius: 10px;
+    background-color: rgba(249,249,249,0.94);
+}
+
+.auth-form_form-type-changer_button:hover {
+    background-color: rgba(238,238,238,0.94);
+}
+
+.auth-form_footer {
+    height: 12%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 20px;
+}

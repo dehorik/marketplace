@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="/static/css/style.css" rel="stylesheet" onload="this.onload=null; this.rel='stylesheet'">
+    <link href="/static/img/favicon.png" rel="icon" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>webstore</title>
+</head>
+<body>
+<div class="auth-form_container" data-form-type="login">
+    <div class="auth-form_title">
+        <div class="auth-form_return-button">
+            <a href="/">
+                <img src="/static/img/back.png" alt="back">
+            </a>
+        </div>
+
+        <div class="auth-form_title_text">
+            <span>Вход в аккаунт</span>
+        </div>
+    </div>
+
+    <form>
+        <div class="auth-form_credentials-container">
+            <label for="auth-form_username"></label>
+            <input type="text" id="auth-form_username" placeholder="Введите имя пользователя" maxlength="50">
+            <div class="auth-form_username-error">
+                <span></span>
+            </div>
+        </div>
+        <div class="auth-form_credentials-container">
+            <label for="auth-form_password"></label>
+            <input type="password" id="auth-form_password" placeholder="Введите пароль" maxlength="50">
+            <div class="auth-form_password-error">
+                <span></span>
+            </div>
+        </div>
+
+        <div class="auth-form_submit-button">
+            <button type="submit">Войти в аккаунт</button>
+        </div>
+
+        <div class="auth-form_form-type-changer">
+            <div class="auth-form_form-type-changer_title">
+                <span>Ещё нет аккаунта?</span>
+            </div>
+            <div class="auth-form_form-type-changer_button">
+                <span>Регистрация</span>
+            </div>
+        </div>
+    </form>
+
+    <div class="auth-form_footer">
+        <span>Webstore</span>
+    </div>
+</div>
+
+<script src="/static/js/auth/form.js"></script>
+<script src="/static/js/auth/login.js"></script>
+<script src="/static/js/auth/registration.js"></script>
+</body>
+</html>
