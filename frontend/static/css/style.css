@@ -134,7 +134,7 @@ footer {
 }
 
 .product-catalog-card {
-    height: 360px;
+    height: 340px;
     width: 100%;
     margin: 0 0 48px 0;
     border: 1px solid grey;
@@ -164,23 +164,25 @@ footer {
 }
 
 .product-catalog-card-price {
-    margin: 5% 0 0 6%;
+    height: 8%;
+    margin: 5% auto 0;
+    width: 89%;
     font-size: 22px;
     font-weight: bold;
 }
 
 .product-catalog-card-name {
     height: 8%;
-    width: 87%;
-    margin: 4% 0 0 6%;
+    width: 89%;
+    margin: 4% auto 0;
     font-size: 18px;
 }
 
 .product-catalog-card-name a {
     display: inline-block;
-    width: 100%;
     white-space: nowrap;
     overflow: hidden;
+    max-width: 100%;
     text-overflow: ellipsis;
     text-decoration: none;
     color: black;
@@ -190,22 +192,17 @@ footer {
     color: rgba(52,82,226,0.94);
 }
 
-.product-catalog-card-score img {
-    height: 78%;
-    width: 24%;
-}
-
-.product-catalog-rating img{
-    height: 70%;
-    margin: 0 0 2% 0;
-}
-
 .product-catalog-card-score {
     display: flex;
     align-items: center;
-    height: 9%;
+    height: 13%;
     width: 89%;
-    margin: 2% auto 0 ;
+    margin: 0 auto;
+}
+
+.product-catalog-card-score img {
+    height: 69%;
+    width: 30%;
 }
 
 .product-catalog-card-score div {
@@ -313,7 +310,7 @@ footer {
     display: flex;
     margin: 0.5% auto 0;
     height: 10%;
-    width: 94.5%;
+    width: 94%;
     font-size: 20px;
 }
 
@@ -336,7 +333,7 @@ footer {
     justify-content: start;
     gap: 3%;
     margin: 0 auto;
-    width: 94.5%;
+    width: 94%;
     height: 20%;
 }
 

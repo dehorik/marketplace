@@ -33,7 +33,7 @@ class ProductCreationService:
     def __call__(
             self,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
-            name: Annotated[str, Form(min_length=5, max_length=20)],
+            name: Annotated[str, Form(min_length=5, max_length=30)],
             price: Annotated[int, Form(gt=0, le=100000)],
             description: Annotated[str, Form(min_length=150, max_length=300)],
             is_hidden: Annotated[bool, Form()],
@@ -159,7 +159,7 @@ class ProductUpdateService:
             self,
             payload: Annotated[TokenPayloadModel, Depends(admin_dependency)],
             product_id: Annotated[int, Path(ge=1)],
-            name: Annotated[str, Form(min_length=5, max_length=20)] = None,
+            name: Annotated[str, Form(min_length=5, max_length=30)] = None,
             price: Annotated[int, Form(gt=0, le=100000)] = None,
             descr: Annotated[str, Form(min_length=150, max_length=300)] = None,
             is_hidden: Annotated[bool | None, Form()] = None,
