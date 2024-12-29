@@ -1,24 +1,16 @@
 const container = document.querySelector(".auth-form_container");
-const form = document.querySelector(".auth-form_container form");
 const username = document.getElementById("auth-form_username");
 const password = document.getElementById("auth-form_password");
 const username_error = document.querySelector(".auth-form_username-error span");
 const password_error = document.querySelector(".auth-form_password-error span");
-const footer = document.querySelector(".auth-form_footer span");
+const global_error_message = document.querySelector(".auth-form_error-message span");
 
 
 window.addEventListener("load", () => {
     const form_type_changer = container.querySelector(".auth-form_form-type-changer_button");
+    const form = container.querySelector("form");
 
     form_type_changer.addEventListener("click", changeFormType);
-
-    username.addEventListener("input", () => {
-        checkCredentials(6, 16, username.value, username_error);
-    })
-
-    password.addEventListener("input", () => {
-        checkCredentials(8, 18, password.value, password_error);
-    })
 
     form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -32,7 +24,15 @@ window.addEventListener("load", () => {
         else if (container.getAttribute("data-form-type") === "reg") {
             registration(username.value, password.value);
         }
-    })
+    });
+
+    username.addEventListener("input", () => {
+        checkCredentials(6, 16, username.value, username_error);
+    });
+
+    password.addEventListener("input", () => {
+        checkCredentials(8, 18, password.value, password_error);
+    });
 });
 
 
@@ -65,11 +65,11 @@ function changeFormType() {
     username_error.textContent = null;
     password_error.textContent = null;
 
-    footer.textContent = "Webstore";
+    global_error_message.textContent = null;
 }
 
 function checkCredentials(ge, le, value, error_node) {
-    footer.textContent = "Webstore";
+    global_error_message.textContent = null;
 
     if (value.length === 0) {
         error_node.textContent = null;

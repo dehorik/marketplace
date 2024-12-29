@@ -63,26 +63,26 @@ function createComment(form) {
                 });
         })
         .catch((error) => {
-            const message_area = document.querySelector(".comment-form-error-message span");
+            const error_text = document.querySelector(".comment-form-error-message span");
 
             if (error.status === 422) {
-                message_area.textContent = "Ошибка в введённых данных!";
+                error_text.textContent = "Ошибка в введённых данных";
             }
 
             else if (error.status === 415) {
-                message_area.textContent = "Невалидный файл!";
+                error_text.textContent = "Невалидный файл";
             }
 
             else if (error.status === 404) {
-                message_area.textContent = "Отзыв не создан: товар или пользователь не существуют";
+                error_text.textContent = "Товар или пользователь не существуют";
             }
 
             else if (error.status === 401 || error.status === 403) {
-                message_area.textContent = "Отзыв не создан: ошибка аутентификации";
+                error_text.textContent = "Ошибка аутентификации";
             }
 
             else {
-                message_area.textContent = "Отзыв не был создан: возникли проблемы во время операции";
+                error_text.textContent = "Ошибка создания отзыва";
             }
         });
 }

@@ -14,11 +14,10 @@ function login(username, password) {
         })
         .catch((response) => {
             if (response.status === 401) {
-                username_error.textContent = "Пользователь не найден";
+                global_error_message.textContent = "Неверное имя пользователя или пароль!";
             }
             else {
-                username_error.textContent = "Ошибка входа в аккаунт";
-                password_error.textContent = "Ошибка входа в аккаунт";
+                global_error_message.textContent = "Ошибка аутентификации";
             }
         });
 }

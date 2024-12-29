@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <form>
+    <form autocomplete="off">
         <div class="auth-form_credentials-container">
             <label for="auth-form_username"></label>
             <input type="text" id="auth-form_username" placeholder="Введите имя пользователя" maxlength="50">
@@ -42,6 +42,10 @@
 
         <div class="auth-form_submit-button">
             <button type="submit">Войти в аккаунт</button>
+        </div>
+
+        <div class="auth-form_error-message">
+            <span></span>
         </div>
 
         <div class="auth-form_form-type-changer">

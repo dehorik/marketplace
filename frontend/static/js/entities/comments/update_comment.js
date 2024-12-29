@@ -111,26 +111,26 @@ function updateComment(form, old_comment) {
             removeForm();
         })
         .catch((response) => {
-            const message_area = document.querySelector(".comment-form-error-message span");
+            const error_text = document.querySelector(".comment-form-error-message span");
 
             if (response.status === 422 || response.status === 400) {
-                message_area.textContent = "Ошибка в введённых данных!";
+                error_text.textContent = "Ошибка в введённых данных";
             }
 
             else if (response.status === 415) {
-                message_area.textContent = "Невалидный файл!";
+                error_text.textContent = "Невалидный файл";
             }
 
             else if (response.status === 404) {
-                message_area.textContent = "Отзыв не существует";
+                error_text.textContent = "Отзыв не существует";
             }
 
             else if (response.status === 401 || response.status === 403) {
-                message_area.textContent = "Отзыв не изменён: ошибка аутентификации";
+                error_text.textContent = "Ошибка аутентификации";
             }
 
             else {
-                message_area.textContent = "Отзыв не был изменён: возникли проблемы во время операции";
+                error_text.textContent = "Ошибка редактирования отзыва";
             }
         });
 }

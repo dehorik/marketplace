@@ -48,7 +48,7 @@ def refresh(
 ):
     return access_token
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/form", response_class=HTMLResponse)
 def get_auth_form(request: Request):
     return templates.TemplateResponse(
         name="auth_form.html",

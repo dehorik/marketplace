@@ -89,6 +89,7 @@ function getFormNode(comment = null) {
     }
 
     const form = document.createElement("form");
+    form.autocomplete = "off";
 
     const label = document.createElement("label");
     const textarea = document.createElement("textarea");
@@ -168,16 +169,22 @@ function getFormNode(comment = null) {
     submit_button_container.appendChild(submit_button);
     form.appendChild(submit_button_container);
 
-    const error_message_container = document.createElement("div");
-    const error_message = document.createElement("span");
-    error_message_container.className = "comment-form-error-message";
-    error_message.innerHTML = "&copy; WebStore 2024";
-    error_message_container.appendChild(error_message);
+    const error_container = document.createElement("div");
+    const error_text = document.createElement("span");
+    error_container.className = "comment-form-error-message";
+    error_container.appendChild(error_text);
+    form.appendChild(error_container);
+
+    const footer = document.createElement("div");
+    const footer_text = document.createElement("span");
+    footer.className = "comment-form-footer";
+    footer_text.innerHTML = "&copy; WebStore 2024";
+    footer.appendChild(footer_text);
 
     container.appendChild(head);
     container.appendChild(rating_stars_container);
     container.appendChild(form);
-    container.appendChild(error_message_container);
+    container.appendChild(footer);
 
     cancel_button_img.addEventListener("click", () => {
         removeForm();
@@ -266,18 +273,16 @@ function deleteFile() {
 }
 
 function checkCommentText(textarea) {
-    const message_area = document.querySelector(".comment-form-error-message span");
+    const error_text = document.querySelector(".comment-form-error-message span");
 
     if (textarea.value.length > 200) {
-        message_area.textContent = "Текст слишком длинный!";
-        return false;
+        error_text.textContent = "Текст слишком длинный!";
     }
     else if (textarea.value.length < 2 && textarea.value.length !== 0) {
-        message_area.textContent = "Текст слишком короткий!";
-        return false;
+        error_text.textContent = "Текст слишком короткий!";
     }
     else {
-        message_area.innerHTML = "&copy; WebStore 2024";
+        error_text.textContent = null;
         return true;
     }
 }

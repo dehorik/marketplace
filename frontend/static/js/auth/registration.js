@@ -14,11 +14,10 @@ function registration(username, password) {
         })
         .catch((response) => {
             if (response.status === 409) {
-                username_error.textContent = "Имя пользователя уже занято";
+                global_error_message.textContent = "Имя пользователя уже занято!";
             }
             else {
-                username_error.textContent = "Ошибка регистрации";
-                password_error.textContent = "Ошибка регистрации";
+                global_error_message.textContent = "Ошибка аутентификации";
             }
         });
 }
