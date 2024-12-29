@@ -47,6 +47,8 @@ function appendComment(comment) {
 }
 
 function createNode(comment) {
+    const token = getToken();
+
     const node = document.createElement("div");
     node.className = "comment";
     node.setAttribute("data-comment-id", comment.comment_id);
@@ -123,7 +125,7 @@ function createNode(comment) {
 
     node.append(data_container);
 
-    if (comment.user_id === 1) {
+    if (token && comment.user_id === decodeToken(token).sub) {
         const buttons_container = document.createElement("div");
         buttons_container.classList.add("comment-buttons-container", "no-display");
 

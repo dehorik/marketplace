@@ -16,8 +16,8 @@ window.addEventListener("load", () => {
             .then((response) => {
                 status.innerHTML = `Почта <b>${response.data.email}</b> была успешно привязана к аккаунту <b>${response.data.username}</b>. Вы можете покинуть эту страницу и продолжить покупки.`;
             })
-            .catch((response) => {
-                if (response.status === 404) {
+            .catch((error) => {
+                if (error.status === 404) {
                     status.textContent = "Ваша почта не была привязана к аккаунту, так как ваш аккаунт, вероятно, не существует.";
                     status.style.textAlign = "center";
                 }

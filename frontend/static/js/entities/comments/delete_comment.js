@@ -1,43 +1,45 @@
 function deleteComment(node) {
-    axios({
-        url: `/comments/${node.getAttribute("data-comment-id")}`,
-        method: "delete",
-        headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-    })
-        .then(() => {
-            node.style.height = node.offsetHeight + "px";
-            node.classList.add("deleted-comment");
-
-            while (node.firstChild) {
-                node.removeChild(node.firstChild);
+    getVerifiedToken().then((token) => {
+        axios({
+            url: `/comments/${node.getAttribute("data-comment-id")}`,
+            method: "delete",
+            headers: {
+                "Authorization": `Bearer ${token}`
             }
-
-            setTimeout(() => {
-                node.style.height = "0";
-                node.style.margin = "0";
-            }, 10);
-
-            setTimeout(() => {
-                grid.removeChild(node);
-                recalculateProductRating();
-
-                if (grid.querySelectorAll(".comment").length === 0) {
-                    appendCommentsNotFoundMessage();
-                }
-            }, 1600);
         })
-        .catch(() => {
-            const deletion_error = document.createElement("div");
-            const deletion_error_message = document.createElement("span");
-            deletion_error.className = "comment-deletion-error";
-            deletion_error.style.height = node.offsetHeight + "px";
-            deletion_error_message.textContent = "Ошибка удаления отзыва";
-            deletion_error.append(deletion_error_message);
+            .then(() => {
+                node.style.height = node.offsetHeight + "px";
+                node.classList.add("deleted-comment");
 
-            node.querySelector(".comment-buttons-container").replaceWith(deletion_error);
-        });
+                while (node.firstChild) {
+                    node.removeChild(node.firstChild);
+                }
+
+                setTimeout(() => {
+                    node.style.height = "0";
+                    node.style.margin = "0";
+                }, 10);
+
+                setTimeout(() => {
+                    grid.removeChild(node);
+                    recalculateProductRating();
+
+                    if (grid.querySelectorAll(".comment").length === 0) {
+                        appendCommentsNotFoundMessage();
+                    }
+                }, 1610);
+            })
+            .catch(() => {
+                const deletion_error = document.createElement("div");
+                const deletion_error_message = document.createElement("span");
+                deletion_error.className = "comment-deletion-error";
+                deletion_error.style.height = node.offsetHeight + "px";
+                deletion_error_message.textContent = "Ошибка удаления отзыва";
+                deletion_error.append(deletion_error_message);
+
+                node.querySelector(".comment-buttons-container").replaceWith(deletion_error);
+            });
+    });
 }
 
 function recalculateProductRating() {
@@ -49,7 +51,7 @@ function recalculateProductRating() {
     let total_rating = 0;
     for (let comment of grid.querySelectorAll(".comment")) {
         total_rating += Number(comment.querySelector(".comment-stars").getAttribute("data-rating"));
-        amount_comments += 1
+        amount_comments += 1;
     }
 
     amount_comments_container.textContent = String(amount_comments);

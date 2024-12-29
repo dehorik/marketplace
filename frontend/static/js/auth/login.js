@@ -10,10 +10,12 @@ function login(username, password) {
         data: data
     })
         .then((response) => {
-            console.log(response.data);
+            setToken(response.data.token.access_token);
+
+            window.location.href = "/";
         })
-        .catch((response) => {
-            if (response.status === 401) {
+        .catch((error) => {
+            if (error.status === 401) {
                 global_error_message.textContent = "Неверное имя пользователя или пароль!";
             }
             else {

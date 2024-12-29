@@ -1,9 +1,11 @@
 function createCartItem(product_id) {
+    const token = getVerifiedToken();
+
     axios({
         url: "/orders/cart",
         method: "post",
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
+            "Authorization": `Bearer ${token}`
         },
         data: {
             "product_id": product_id

@@ -28,11 +28,7 @@ templates = Jinja2Templates(
 )
 
 
-@router.post(
-    "/",
-    response_model=ProductModel,
-    status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=ProductModel, status_code=status.HTTP_201_CREATED)
 def create_product(
         product: Annotated[ProductModel, Depends(product_creation_service)]
 ):

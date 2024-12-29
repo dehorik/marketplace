@@ -59,7 +59,7 @@ def set_role(user: Annotated[UserModel, Depends(role_management_service)]):
 def delete_user(user: Annotated[UserModel, Depends(user_deletion_service)]):
     return user
 
-@router.get("/", response_model=UserItemListModel)
+@router.get("", response_model=UserItemListModel)
 def get_users(
         users: Annotated[UserItemListModel, Depends(fetch_users_service)]
 ):

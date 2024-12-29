@@ -13,11 +13,7 @@ from entities.orders.models import OrderModel, OrderCardListModel
 router = APIRouter(prefix='/orders', tags=['orders'])
 
 
-@router.post(
-    "/",
-    response_model=OrderModel,
-    status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=OrderModel, status_code=status.HTTP_201_CREATED)
 def create_order(
         order: Annotated[OrderModel, Depends(order_creation_service)]
 ):

@@ -94,18 +94,18 @@ footer {
     width: 250px;
 }
 
-.image-link-index {
+.button-index {
     width: 74px;
     margin: 0 3% 0 0;
 }
 
-.image-link-index a {
+.button-index a {
     display: inline-block;
     height: 80%;
     width: 80%;
 }
 
-.image-link-index img {
+.button-index img {
     height: 100%;
     width: 100%;
 }

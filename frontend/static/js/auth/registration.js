@@ -10,10 +10,12 @@ function registration(username, password) {
         data: data
     })
         .then((response) => {
-            console.log(response.data);
+            setToken(response.data.token.access_token);
+
+            window.location.href = "/";
         })
-        .catch((response) => {
-            if (response.status === 409) {
+        .catch((error) => {
+            if (error.status === 409) {
                 global_error_message.textContent = "Имя пользователя уже занято!";
             }
             else {

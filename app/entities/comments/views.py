@@ -13,11 +13,7 @@ from entities.comments.models import CommentModel, CommentItemListModel
 router = APIRouter(prefix='/comments', tags=['comments'])
 
 
-@router.post(
-    "/",
-    response_model=CommentModel,
-    status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=CommentModel, status_code=status.HTTP_201_CREATED)
 def create_comment(
         comment: Annotated[CommentModel, Depends(comment_creation_service)]
 ):
