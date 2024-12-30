@@ -14,6 +14,7 @@ async function getVerifiedToken() {
     }
     else {
         await refresh();
+
         return getToken();
     }
 }
