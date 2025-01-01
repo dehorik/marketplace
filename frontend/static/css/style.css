@@ -20,7 +20,6 @@ body {
     font-family: Arial, sans-serif;
     font-style: revert;
     background-color: #F5F7FA;
-    overflow-x: hidden;
 }
 
 footer {
@@ -953,4 +952,168 @@ footer {
     justify-content: center;
     font-weight: bolder;
     font-size: 20px;
+}
+
+
+.user-page_header {
+    width: 100%;
+    height: 100px;
+    background-color: #FFFFFF;
+}
+
+.user-page_header-logo {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0 1.6%;
+    width: 9.4%;
+    height: 100%;
+}
+
+.user-page_header-logo img {
+    height: 70%;
+    width: 100%;
+}
+
+.user-page_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 559px;
+    width: 100%;
+}
+
+.user-page {
+    display: flex;
+    flex-wrap: wrap;
+    height: 90%;
+    width: 96.5%;
+    background-color: white;
+    border-radius: 20px;
+}
+
+.user-page_data {
+    display: flex;
+    align-items: center;
+    width: 60%;
+    height: 50%;
+}
+
+.user-page_user-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90%;
+    width: 24%;
+    margin: 0 0 0 2%;
+}
+
+.user-page_user-photo img {
+    height: 95%;
+    width: 100%;
+    border-radius: 50%;
+}
+
+.user-page_text-data-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 72%;
+    height: 50%;
+    margin: 0 0 0 2%;
+}
+
+.user-page_text-data-container div {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.user-page_text-data-container div span {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-page_username {
+    font-size: 27px;
+    font-weight: bolder;
+}
+
+.user-page_email {
+    font-size: 18px;
+    font-weight: bolder;
+}
+
+.user-page_registration-date {
+    font-size: 18px;
+}
+
+.user-page_data-management {
+    height: 50%;
+    width: 40%;
+}
+
+.user-page_data-management div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 16%;
+    width: 38%;
+    margin: 0.5% 0 0 57.5%;
+}
+
+div.user-page_data-editing-btn {
+    margin: 10% 0 0 57.5%;
+}
+
+.user-page_data-management div a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90%;
+    width: 84%;
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid dimgray;
+    border-radius: 10px;
+    padding: 3%;
+}
+
+.user-page_data-management div a:hover {
+    cursor: pointer;
+    background-color: #ededed
+}
+
+.user-page_navbar {
+    height: 50%;
+    width: 100%;
+}
+
+.user-page_navbar div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 15%;
+    width: 14.5%;
+    margin: 0.6% 0 0 1.2%;
+}
+
+.user-page_navbar div a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    height: 100%;
+    border: 1px solid grey;
+    border-radius: 10px;
+    color: black;
+    font-weight: bolder;
+    text-decoration: none;
+}
+
+.user-page_navbar div a:hover {
+    cursor: pointer;
+    background-color: #ededed
 }
