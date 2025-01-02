@@ -11,8 +11,7 @@ function registration(username, password) {
     })
         .then((response) => {
             setToken(response.data.token.access_token);
-
-            window.location.href = "/";
+            window.location.href = "/users/me/home";
         })
         .catch((error) => {
             if (error.status === 409) {

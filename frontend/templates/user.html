@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../static/css/style.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
     <link href="/static/img/favicon.png" rel="icon" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <title>webstore</title>
@@ -13,7 +13,7 @@
 <body>
 <header class="user-page_header">
     <div class="user-page_header-logo">
-        <img src="../static/img/logo.png" alt="logo">
+        <img src="/static/img/logo.png" alt="logo">
     </div>
 </header>
 
@@ -21,18 +21,18 @@
     <div class="user-page">
         <div class="user-page_data">
             <div class="user-page_user-photo">
-                <img src="../static/img/default-avatar.png" alt="user">
+                <img src="/static/img/default-avatar.png" alt="user">
             </div>
 
             <div class="user-page_text-data-container">
                 <div class="user-page_username">
-                    <span>Егор Ципцин</span>
+                    <span></span>
                 </div>
                 <div class="user-page_email">
-                    <span>tsiptsin.egor@gmail.com</span>
+                    <span></span>
                 </div>
                 <div class="user-page_registration-date">
-                    <span>Дата регистрации: 01.01.2025</span>
+                    <span></span>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
 
         <div class="user-page_navbar">
             <div>
-                <a>
+                <a href="/">
                     <span>Каталог</span>
                 </a>
             </div>
@@ -71,11 +71,6 @@
                     <span>Мои заказы</span>
                 </a>
             </div>
-            <div>
-                <a>
-                    <span>Панель управления</span>
-                </a>
-            </div>
         </div>
     </div>
 </div>
@@ -83,5 +78,10 @@
 <footer>
     <span>&copy; WebStore 2024</span>
 </footer>
+
+<script src="/static/js/auth/jwt.js"></script>
+<script src="/static/js/auth/refreshTokens.js"></script>
+<script src="/static/js/auth/logout.js"></script>
+<script src="/static/js/entities/users/init.js"></script>
 </body>
 </html>

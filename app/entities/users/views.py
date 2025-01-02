@@ -25,8 +25,11 @@ templates = Jinja2Templates(
 
 
 @router.get("/me/home", response_class=HTMLResponse)
-def get_user_page():
-    pass
+def get_user_page(request: Request):
+    return templates.TemplateResponse(
+        name='user.html',
+        request=request
+    )
 
 @router.get("/me", response_model=UserModel)
 def get_user(user: Annotated[UserModel, Depends(fetch_user_service)]):
