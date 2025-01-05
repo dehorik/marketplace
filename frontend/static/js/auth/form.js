@@ -26,12 +26,12 @@ window.addEventListener("load", () => {
         }
     });
 
-    username.addEventListener("input", () => {
-        checkCredentials(6, 16, username.value, username_error);
+    username.addEventListener("input", (event) => {
+        checkCredentials(6, 16, event.target.value, username_error);
     });
 
-    password.addEventListener("input", () => {
-        checkCredentials(8, 18, password.value, password_error);
+    password.addEventListener("input", (event) => {
+        checkCredentials(8, 18, event.target.value, password_error);
     });
 });
 

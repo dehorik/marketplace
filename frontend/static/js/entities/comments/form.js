@@ -1,4 +1,4 @@
-function appendForm(node=null, comment_data=null) {
+function appendCommentForm(node=null, comment_data=null) {
     for (let child of document.body.children) {
         child.classList.add("no-display");
     }
@@ -19,14 +19,14 @@ function appendForm(node=null, comment_data=null) {
             comment_photo_path: comment_photo_node ? comment_photo_node.src : null
         };
 
-        document.body.prepend(getFormNode(comment));
+        document.body.prepend(getCommentForm(comment));
     }
     else {
-        document.body.prepend(getFormNode());
+        document.body.prepend(getCommentForm());
     }
 }
 
-function getFormNode(comment = null) {
+function getCommentForm(comment = null) {
     const container = document.createElement("div");
     container.className = "comment-form-container";
 
@@ -186,9 +186,7 @@ function getFormNode(comment = null) {
     container.appendChild(form);
     container.appendChild(footer);
 
-    cancel_button_img.addEventListener("click", () => {
-        removeForm();
-    });
+    cancel_button_img.addEventListener("click", removeForm);
 
     textarea.addEventListener("input", (event) => {
         checkCommentText(event.target);
@@ -198,12 +196,10 @@ function getFormNode(comment = null) {
         input_elem.click();
     });
 
+    delete_button.addEventListener("click", deleteFile);
+
     input_elem.addEventListener("change", (event) => {
         uploadFile(event);
-    });
-
-    delete_button.addEventListener("click", () => {
-        deleteFile();
     });
 
     if (comment) {

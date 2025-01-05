@@ -26,7 +26,7 @@ window.addEventListener("load", () => {
         window.addEventListener("scroll", checkPosition);
 
         const comment_creation_button = document.querySelector(".comment-creation-link");
-        comment_creation_button.addEventListener("click", appendForm);
+        comment_creation_button.addEventListener("click", appendCommentForm);
     }, 500);
 
     getComments();

@@ -145,7 +145,7 @@ function createNode(comment) {
         node.append(buttons_container);
 
         edit_button.addEventListener("click", () => {
-            appendForm(node, comment);
+            appendCommentForm(node, comment);
         });
 
         delete_button.addEventListener("click", () => {

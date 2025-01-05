@@ -19,6 +19,7 @@ from auth import (
     RedisClient,
     JWTDecoder,
     NonExistentUserError,
+    get_password_hash,
     get_redis_client,
     get_jwt_decoder
 )
@@ -83,6 +84,7 @@ class UserUpdateService:
             clear_email: Annotated[bool, Form()] = False,
             clear_photo: Annotated[bool, Form()] = False,
             username: Annotated[str, Form(min_length=6, max_length=16)] = None,
+            password: Annotated[str, Form(min_length=8, max_length=18)] = None,
             email: Annotated[EmailStr, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> UserModel:
@@ -91,6 +93,11 @@ class UserUpdateService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="conflict between flags and request body"
             )
+
+        if password:
+            hashed_password = get_password_hash(password)
+        else:
+            hashed_password = None
 
         if photo:
             if not check_file(photo):
@@ -109,6 +116,7 @@ class UserUpdateService:
                 clear_email=clear_email,
                 clear_photo=clear_photo,
                 username=username,
+                hashed_password=hashed_password,
                 photo_path=photo_path
             )
             user = self.converter.fetchone(user)

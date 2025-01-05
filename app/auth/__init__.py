@@ -9,3 +9,4 @@ from auth.tokens import (
 )
 from auth.redis_client import RedisClient, get_redis_client
 from auth.exceptions import NonExistentUserError, NonExistentTokenError
+from auth.hashing_psw import get_password_hash

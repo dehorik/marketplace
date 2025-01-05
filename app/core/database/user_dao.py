@@ -71,10 +71,11 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             clear_photo: bool = False,
             role_id: int | None = None,
             username: str | None = None,
+            hashed_password: str | None = None,
             email: str | None = None,
             photo_path: str | None = None
     ) -> tuple:
-        if not any([clear_email, clear_photo, role_id, username, email, photo_path]):
+        if not any([clear_email, clear_photo, role_id, username, hashed_password, email, photo_path]):
             self.__cursor.execute(
                 """
                     SELECT 
@@ -105,6 +106,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         if username:
             query += " username = %s, "
             params.append(username)
+
+        if hashed_password:
+            query += " hashed_password = %s, "
+            params.append(hashed_password)
 
         if clear_email:
             query += " email = NULL, "
