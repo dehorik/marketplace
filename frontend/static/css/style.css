@@ -1054,7 +1054,7 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 16%;
+    height: 17%;
     width: 38%;
     margin: 0.5% 0 0 57.5%;
 }
@@ -1074,6 +1074,7 @@ div.user-page_data-editing-btn {
     font-size: 16px;
     font-weight: bolder;
     border: 1px solid dimgray;
+    background-color: #fafafa;
     border-radius: 10px;
     padding: 3%;
 }

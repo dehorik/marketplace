@@ -40,7 +40,7 @@ function getUserPage(user) {
     const registration_date_container = document.createElement("div");
     const registration_date = document.createElement("span");
     registration_date_container.className = 'user-page_registration-date';
-    registration_date.textContent = `Дата регистрации: ${user.registration_date}`;
+    registration_date.textContent = `Дата регистрации: ${user.registration_date.split("-").reverse().join(".")}`;
     registration_date_container.appendChild(registration_date);
 
     text_data_container.append(username_container, email_container, registration_date_container);

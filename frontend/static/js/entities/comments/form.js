@@ -178,7 +178,7 @@ function getCommentForm(comment = null) {
     const footer = document.createElement("div");
     const footer_text = document.createElement("span");
     footer.className = "comment-form-footer";
-    footer_text.innerHTML = "&copy; WebStore 2024";
+    footer_text.innerHTML = "&copy; WebStore";
     footer.appendChild(footer_text);
 
     container.appendChild(head);
