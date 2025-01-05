@@ -127,6 +127,10 @@ function getUserPage(user) {
         appendUserForm(user);
     });
 
+    deletion_btn.addEventListener("click", () => {
+        appendUserDeletionForm(user);
+    });
+
     logout_btn.addEventListener("click", logout);
 
     return container;
