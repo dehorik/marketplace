@@ -20,6 +20,7 @@ class ExtendedProductModel(BaseModel):
     name: str
     price: int
     description: str
+    is_ordered: bool
     is_in_cart: bool
     rating: float
     amount_comments: int

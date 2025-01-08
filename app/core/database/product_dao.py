@@ -63,6 +63,17 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     description,
                     (
                         SELECT EXISTS (
+                            SELECT order_id
+                            FROM orders
+                            WHERE user_id = %s AND product_id = %s
+                            UNION
+                            SELECT archived_order_id
+                            FROM archived_orders
+                            WHERE user_id = %s AND product_id = %s
+                        )
+                    ),
+                    (
+                        SELECT EXISTS (
                             SELECT 1
                             FROM cart_item
                             WHERE product_id = %s AND user_id = %s
@@ -87,7 +98,17 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 FROM product
                 WHERE product_id = %s;
             """,
-            [product_id, user_id, product_id, product_id, product_id]
+            [
+                user_id,
+                product_id,
+                user_id,
+                product_id,
+                product_id,
+                user_id,
+                product_id,
+                product_id,
+                product_id
+            ]
         )
 
         return self.__cursor.fetchone()

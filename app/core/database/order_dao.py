@@ -146,7 +146,21 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             [order_id, user_id]
         )
 
-        return self.__cursor.fetchone()
+        data = self.__cursor.fetchone()
+
+        if data:
+            self.__cursor.execute(
+                """
+                    INSERT INTO archived_orders (
+                        user_id,
+                        product_id
+                    )
+                    VALUES (%s, %s);
+                """,
+                [data[1], data[2]]
+            )
+
+        return data
 
     def delete_undefined_orders(self) -> list:
         self.__cursor.execute(

@@ -86,13 +86,32 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 delivery_address VARCHAR(255),
                 photo_path VARCHAR(255),
                 
-                FOREIGN KEY (product_id) 
-                REFERENCES product (product_id)
-                ON DELETE SET NULL,
-                
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
+                ON DELETE SET NULL,
+                
+                FOREIGN KEY (product_id) 
+                REFERENCES product (product_id)
                 ON DELETE SET NULL
+            );
+        """
+    )
+
+def create_archived_orders_table(sql_cursor: cursor) -> None:
+    sql_cursor.execute(
+        """
+            CREATE TABLE archived_orders (
+                archived_order_id SERIAL PRIMARY KEY,
+                user_id INT,
+                product_id INT,
+                
+                FOREIGN KEY (user_id)
+                REFERENCES users (user_id)
+                ON DELETE CASCADE,
+                
+                FOREIGN KEY (product_id)
+                REFERENCES product (product_id)
+                ON DELETE CASCADE
             );
         """
     )
@@ -172,7 +191,25 @@ def create_triggers(sql_cursor: cursor) -> None:
                 RETURN NEW;
                 END;
             $check_cart_item$ language plpgsql;
-        
+            
+            CREATE FUNCTION check_comment()
+            RETURNS TRIGGER AS $check_comment$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT order_id
+                        FROM orders
+                        WHERE user_id = NEW.user_id AND product_id = NEW.product_id
+                        UNION
+                        SELECT archived_order_id
+                        FROM archived_orders
+                        WHERE user_id = NEW.user_id AND product_id = NEW.product_id
+                    )
+                    THEN RAISE EXCEPTION 'comment creation is unavailable';
+                    END IF;
+                RETURN NEW;
+                END;
+            $check_comment$ language plpgsql;
+            
         
             CREATE TRIGGER user_creation
             BEFORE INSERT ON users
@@ -199,6 +236,11 @@ def create_triggers(sql_cursor: cursor) -> None:
             BEFORE INSERT ON cart_item
             FOR EACH ROW 
             EXECUTE FUNCTION check_cart_item(); 
+            
+            CREATE TRIGGER comment_creation
+            BEFORE INSERT ON comment
+            FOR EACH ROW
+            EXECUTE FUNCTION check_comment();
         """
     )
 
@@ -251,6 +293,7 @@ def init_database() -> None:
     create_product_table(sql_cursor)
     create_comment_table(sql_cursor)
     create_orders_table(sql_cursor)
+    create_archived_orders_table(sql_cursor)
     create_cart_item_table(sql_cursor)
     create_triggers(sql_cursor)
 

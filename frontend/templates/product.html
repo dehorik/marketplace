@@ -79,7 +79,9 @@
 <div class="comments-container">
     <div class="comments-container-header">
         <a>Все отзывы</a>
+        {% if product.is_ordered %}
         <a class="comment-creation-link">Оставить отзыв</a>
+        {% endif %}
     </div>
 
     <div class="comments-grid"></div>

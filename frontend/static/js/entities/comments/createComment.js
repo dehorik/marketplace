@@ -81,6 +81,10 @@ function createComment(form) {
                     error_text.textContent = "Ошибка аутентификации";
                 }
 
+                else if (error.status === 400) {
+                    error_text.textContent = "Отзыв не создан: товар не был заказан";
+                }
+
                 else {
                     error_text.textContent = "Ошибка создания отзыва";
                 }

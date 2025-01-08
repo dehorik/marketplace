@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timezone
 from typing import Annotated, Callable
 from fastapi import Depends, HTTPException, Form, UploadFile, File, Query, Path, status
-from psycopg2.errors import ForeignKeyViolation
+from psycopg2.errors import ForeignKeyViolation, RaiseException
 
 from entities.comments.models import (
     CommentModel,
@@ -61,6 +61,11 @@ class CommentCreationService:
                 self.file_writer(comment.photo_path, photo.file.read())
 
             return comment
+        except RaiseException:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="comment creation is unavailable"
+            )
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
