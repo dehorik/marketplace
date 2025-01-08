@@ -45,12 +45,12 @@ class CartItemCreationService:
         except RaiseException:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="product is unavailable"
+                detail="such cart item alredy exists"
             )
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="user not found"
+                detail="product not found"
             )
 
 

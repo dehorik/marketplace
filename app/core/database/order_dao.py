@@ -85,7 +85,6 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 orders.product_id,
                 orders.product_name,
                 orders.product_price,
-                product.is_hidden,
                 orders.date_start,
                 orders.date_end,
                 orders.delivery_address,

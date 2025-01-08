@@ -3,7 +3,7 @@ from random import randint
 from typing import Annotated, Callable
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, BackgroundTasks, Depends, Query, Path, status
-from psycopg2.errors import ForeignKeyViolation, RaiseException
+from psycopg2.errors import ForeignKeyViolation
 
 from core.settings import config
 from entities.orders.models import (
@@ -68,15 +68,10 @@ class OrderCreationService:
             )
 
             return order
-        except RaiseException:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="product not found"
-            )
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="user not found"
+                detail="product not found"
             )
 
 

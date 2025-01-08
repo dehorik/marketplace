@@ -9,7 +9,6 @@ class ProductModel(BaseModel):
     name: str
     price: int
     description: str
-    is_hidden: bool
     amount_orders: int
     photo_path: str
 
@@ -21,7 +20,6 @@ class ExtendedProductModel(BaseModel):
     name: str
     price: int
     description: str
-    is_hidden: bool
     is_in_cart: bool
     rating: float
     amount_comments: int

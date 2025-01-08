@@ -32,7 +32,6 @@ class OrderCardModel(BaseModel):
     product_id: int
     product_name: str
     product_price: int
-    product_is_hidden: bool
     date_start: date
     date_end: date
     delivery_address: str

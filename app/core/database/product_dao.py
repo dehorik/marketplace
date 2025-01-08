@@ -23,21 +23,19 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             name: str,
             price: float,
             description: str,
-            is_hidden: bool
     ) -> tuple:
         self.__cursor.execute(
             """
                 INSERT INTO product (
                     name, 
                     price, 
-                    description,
-                    is_hidden
+                    description
                 )
                 VALUES
-                    (%s, %s, %s, %s)
+                    (%s, %s, %s)
                 RETURNING product_id;
             """,
-            [name, price, description, is_hidden]
+            [name, price, description]
         )
 
         product_id = self.__cursor.fetchone()[0]
@@ -63,7 +61,6 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     name,
                     price, 
                     description,
-                    is_hidden,
                     (
                         SELECT EXISTS (
                             SELECT 1
@@ -100,10 +97,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             product_id: int,
             name: str | None = None,
             price: int | None = None,
-            description: str | None = None,
-            is_hidden: bool | None = None
+            description: str | None = None
     ) -> tuple:
-        if not any([name, price, description]) and is_hidden is None:
+        if not any([name, price, description]):
             self.__cursor.execute(
                 """
                     SELECT *
@@ -132,10 +128,6 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         if description:
             query += " description = %s, "
             params.append(description)
-
-        if is_hidden is not None:
-            query += " is_hidden = %s, "
-            params.append(is_hidden)
 
         query = query[:-2] + """
             WHERE product_id = %s
@@ -190,14 +182,13 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
         if last_id:
             query += """
-                WHERE product.is_hidden != true AND product.product_id < %s
+                WHERE product.product_id < %s
                 ORDER BY product.product_id DESC
                 LIMIT %s;
             """
             params.extend([last_id, amount])
         else:
             query += """
-                WHERE product.is_hidden != true
                 ORDER BY product.product_id DESC
                 LIMIT %s;
             """
@@ -238,15 +229,14 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
         if last_id:
             query += """
-                WHERE LOWER(product.name) LIKE %s
-                AND product.is_hidden != true AND product.product_id < %s
+                WHERE LOWER(product.name) LIKE %s AND product.product_id < %s
                 ORDER BY product.product_id DESC
                 LIMIT %s;
             """
             params.extend([f"%{name.replace("%", "")}%", last_id, amount])
         else:
             query += """
-                WHERE LOWER(product.name) LIKE %s AND product.is_hidden != true
+                WHERE LOWER(product.name) LIKE %s 
                 ORDER BY product.product_id DESC 
                 LIMIT %s;
             """

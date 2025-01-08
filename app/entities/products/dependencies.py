@@ -36,7 +36,6 @@ class ProductCreationService:
             name: Annotated[str, Form(min_length=5, max_length=30)],
             price: Annotated[int, Form(gt=0, le=100000)],
             description: Annotated[str, Form(min_length=150, max_length=300)],
-            is_hidden: Annotated[bool, Form()],
             photo: Annotated[UploadFile, File()]
     ) -> ProductModel:
         if not check_file(photo):
@@ -45,12 +44,7 @@ class ProductCreationService:
                 detail='invalid file type'
             )
 
-        product = self.product_data_access_obj.create(
-            name=name,
-            price=price,
-            description=description,
-            is_hidden=is_hidden
-        )
+        product = self.product_data_access_obj.create(name, price, description)
         product = self.converter.fetchone(product)
 
         self.file_writer(product.photo_path, photo.file.read())
@@ -162,7 +156,6 @@ class ProductUpdateService:
             name: Annotated[str, Form(min_length=5, max_length=30)] = None,
             price: Annotated[int, Form(gt=0, le=100000)] = None,
             descr: Annotated[str, Form(min_length=150, max_length=300)] = None,
-            is_hidden: Annotated[bool | None, Form()] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
         if photo:
@@ -178,7 +171,6 @@ class ProductUpdateService:
                 name=name,
                 price=price,
                 description=descr,
-                is_hidden=is_hidden
             )
             product = self.converter.fetchone(product)
 

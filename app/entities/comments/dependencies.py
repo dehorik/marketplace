@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timezone
 from typing import Annotated, Callable
 from fastapi import Depends, HTTPException, Form, UploadFile, File, Query, Path, status
-from psycopg2.errors import ForeignKeyViolation, RaiseException
+from psycopg2.errors import ForeignKeyViolation
 
 from entities.comments.models import (
     CommentModel,
@@ -61,15 +61,10 @@ class CommentCreationService:
                 self.file_writer(comment.photo_path, photo.file.read())
 
             return comment
-        except RaiseException:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="product not found"
-            )
         except ForeignKeyViolation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="user not found"
+                detail="product not found"
             )
 
 
@@ -187,7 +182,7 @@ class CommentUpdateService:
                     self.file_deleter(photo_path)
 
             return comment
-        except (ValueError, RaiseException):
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="comment not found"

@@ -63,14 +63,14 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
 
         if last_id:
             query += """
-                WHERE cart_item.user_id = %s AND product.is_hidden = false AND cart_item.cart_item_id < %s
+                WHERE cart_item.user_id = %s AND cart_item.cart_item_id < %s
                 ORDER BY cart_item.cart_item_id DESC
                 LIMIT %s;
             """
             params.extend([user_id, last_id, amount])
         else:
             query += """
-                WHERE cart_item.user_id = %s AND product.is_hidden = false 
+                WHERE cart_item.user_id = %s
                 ORDER BY cart_item.cart_item_id DESC
                 LIMIT %s;
             """

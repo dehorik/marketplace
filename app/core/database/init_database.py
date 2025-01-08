@@ -43,7 +43,6 @@ def create_product_table(sql_cursor: cursor) -> None:
                 name VARCHAR(255),
                 price INT,
                 description TEXT,
-                is_hidden BOOLEAN DEFAULT false,
                 amount_orders INT DEFAULT 0,
                 photo_path VARCHAR(255)
             );
@@ -149,21 +148,6 @@ def create_triggers(sql_cursor: cursor) -> None:
                 RETURN OLD;
                 END;
             $check_superusers$ LANGUAGE plpgsql;
-        
-            CREATE FUNCTION check_product()
-            RETURNS TRIGGER AS $check_product$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT product_id
-                        FROM product
-                        WHERE product_id = NEW.product_id AND is_hidden = false
-                    )
-                    THEN
-                        RAISE EXCEPTION 'product is hidden or does not exist';
-                    END IF;
-                RETURN NEW;    
-                END;       
-            $check_product$ LANGUAGE plpgsql;     
             
             CREATE FUNCTION increase_amount_orders() 
             RETURNS TRIGGER AS $increase_amount_orders$
@@ -175,28 +159,19 @@ def create_triggers(sql_cursor: cursor) -> None:
                 END; 
             $increase_amount_orders$ LANGUAGE plpgsql;
             
-            CREATE FUNCTION check_cart_item_data()
-            RETURNS TRIGGER AS $check_cart_item_data$ 
+            CREATE FUNCTION check_cart_item()
+            RETURNS TRIGGER AS $check_cart_item$ 
                 BEGIN
                     IF EXISTS (
                         SELECT 1
-                        FROM cart_item    
+                        FROM cart_item
                         WHERE cart_item.user_id = NEW.user_id AND cart_item.product_id = NEW.product_id 
-                    ) 
-                    THEN RAISE EXCEPTION 'such cart item alredy exists';
-                    END IF;
-                    
-                    IF NOT EXISTS (
-                        SELECT product_id
-                        FROM product
-                        WHERE product_id = NEW.product_id AND is_hidden = false
                     )
-                    THEN
-                        RAISE EXCEPTION 'product is hidden or does not exist';
+                    THEN RAISE EXCEPTION 'such cart item alredy exists';
                     END IF;
                 RETURN NEW;
                 END;
-            $check_cart_item_data$ language plpgsql;          
+            $check_cart_item$ language plpgsql;
         
         
             CREATE TRIGGER user_creation
@@ -215,17 +190,7 @@ def create_triggers(sql_cursor: cursor) -> None:
             FOR EACH ROW 
             EXECUTE FUNCTION check_superusers();
             
-            CREATE TRIGGER comment_creation
-            BEFORE INSERT ON comment
-            FOR EACH ROW 
-            EXECUTE FUNCTION check_product();    
-            
             CREATE TRIGGER order_creation
-            BEFORE INSERT ON orders
-            FOR EACH ROW 
-            EXECUTE FUNCTION check_product(); 
-            
-            CREATE TRIGGER new_order_handler
             AFTER INSERT ON orders
             FOR EACH ROW 
             EXECUTE FUNCTION increase_amount_orders();
@@ -233,7 +198,7 @@ def create_triggers(sql_cursor: cursor) -> None:
             CREATE TRIGGER cart_item_creation
             BEFORE INSERT ON cart_item
             FOR EACH ROW 
-            EXECUTE FUNCTION check_cart_item_data(); 
+            EXECUTE FUNCTION check_cart_item(); 
         """
     )
 

@@ -59,15 +59,13 @@ class RegistrationService:
 
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
-            self.redis_client.append_token(user.user_id, refresh_token)
             set_refresh_cookie(response, refresh_token)
             set_user_id_cookie(response, str(user.user_id))
+            self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
                 user=user,
-                token=AccessTokenModel(
-                    access_token=access_token
-                )
+                token=AccessTokenModel(access_token=access_token)
             )
         except RaiseException:
             raise HTTPException(
@@ -110,9 +108,9 @@ class LoginService:
 
             access_token = self.access_token_encoder(user)
             refresh_token = self.refresh_token_encoder(user)
-            self.redis_client.append_token(user.user_id, refresh_token)
             set_refresh_cookie(response, refresh_token)
             set_user_id_cookie(response, str(user.user_id))
+            self.redis_client.append_token(user.user_id, refresh_token)
 
             return ExtendedUserModel(
                 user=user,
@@ -136,6 +134,7 @@ class RefreshTokenValidationService:
 
     def __call__(
             self,
+            response: Response,
             refresh_token: Annotated[str | None, Cookie()] = None
     ) -> str:
         if refresh_token is None:
@@ -152,6 +151,8 @@ class RefreshTokenValidationService:
                 # если refresh токена в redis нет - им кто-то уже воспользовался
                 # для безопасности пользователя
                 # следует удалить все его refresh токены
+                response.delete_cookie(config.REFRESH_COOKIE_KEY)
+                response.delete_cookie(config.USER_ID_COOKIE_KEY)
                 self.redis_client.delete_user(payload.sub)
 
                 raise HTTPException(
@@ -161,6 +162,9 @@ class RefreshTokenValidationService:
 
             return refresh_token
         except (InvalidTokenError, NonExistentUserError):
+            response.delete_cookie(config.REFRESH_COOKIE_KEY)
+            response.delete_cookie(config.USER_ID_COOKIE_KEY)
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='not authenticated'
@@ -186,9 +190,9 @@ class LogoutService:
     ) -> dict:
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
-        self.redis_client.delete_token(payload.sub, refresh_token)
         response.delete_cookie(config.REFRESH_COOKIE_KEY)
         response.delete_cookie(config.USER_ID_COOKIE_KEY)
+        self.redis_client.delete_token(payload.sub, refresh_token)
 
         return {
             "message": "successful logout"
@@ -215,9 +219,9 @@ class TokenRefreshService:
     ) -> AccessTokenModel:
         payload = self.jwt_decoder(refresh_token)
         payload = TokenPayloadModel(**payload)
-        self.redis_client.delete_token(payload.sub, refresh_token)
         response.delete_cookie(config.REFRESH_COOKIE_KEY)
         response.delete_cookie(config.USER_ID_COOKIE_KEY)
+        self.redis_client.delete_token(payload.sub, refresh_token)
 
         refresh_token = self.refresh_token_encoder(payload)
         access_token = self.access_token_encoder(payload)
