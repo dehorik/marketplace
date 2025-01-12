@@ -12,6 +12,7 @@ function login(username, password) {
         .then((response) => {
             setToken(response.data.token.access_token);
             window.location.href = "/users/me/home";
+            createCartItems();
         })
         .catch((error) => {
             if (error.status === 401) {

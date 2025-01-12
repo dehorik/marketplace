@@ -28,12 +28,6 @@ class Session(Singleton):
         )
         self.__connection.autocommit = True
 
-    def __del__(self):
-        try:
-            self.close()
-        except InterfaceError:
-            return
-
     def close(self) -> None:
         # закрытие подключения к базе данных (сессии)
         self.__connection.close()

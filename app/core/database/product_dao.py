@@ -10,13 +10,6 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
 
     def __init__(self, session: Session):
         self.__session = session
-        self.__cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
-
-    def close(self) -> None:
-        self.__cursor.close()
 
     def create(
             self,
@@ -24,7 +17,8 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             price: float,
             description: str,
     ) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 INSERT INTO product (
                     name, 
@@ -38,23 +32,29 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             [name, price, description]
         )
 
-        product_id = self.__cursor.fetchone()[0]
-        photo_path = os.path.join(config.PRODUCT_CONTENT_PATH, str(product_id))
+        data = cursor.fetchone()
 
-        self.__cursor.execute(
+        cursor.execute(
             """                 
                 UPDATE product
                 SET photo_path = %s
                 WHERE product_id = %s
                 RETURNING *;
             """,
-            [photo_path, product_id]
+            [
+                os.path.join(config.PRODUCT_CONTENT_PATH, str(data[0])),
+                data[0]
+            ]
         )
 
-        return self.__cursor.fetchone()
+        data = cursor.fetchone()
+        cursor.close()
+
+        return data
 
     def read(self, product_id: int, user_id: int | None = None) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 SELECT 
                     product_id,
@@ -110,8 +110,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product_id
             ]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def update(
             self,
@@ -121,7 +123,8 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             description: str | None = None
     ) -> tuple:
         if not any([name, price, description]):
-            self.__cursor.execute(
+            cursor = self.__session.get_cursor()
+            cursor.execute(
                 """
                     SELECT *
                     FROM product 
@@ -129,8 +132,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 """,
                 [product_id]
             )
+            data = cursor.fetchone()
+            cursor.close()
 
-            return self.__cursor.fetchone()
+            return data
 
         query = """
             UPDATE product 
@@ -156,12 +161,16 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         """
         params.append(product_id)
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def delete(self, product_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 DELETE 
                 FROM product
@@ -170,8 +179,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """,
             [product_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def get_latest_products(
             self,
@@ -215,9 +226,12 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
             params.append(amount)
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
     def search_product(
             self,
@@ -263,9 +277,12 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
             params.extend([f"%{name.replace("%", "")}%", amount])
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
 
 def get_product_dao() -> ProductDataAccessObject:

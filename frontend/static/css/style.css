@@ -347,6 +347,8 @@ footer {
     border-radius: 14px;
     font-size: 18px;
     font-weight: bolder;
+    text-decoration: none;
+    color: black;
 }
 
 .product_order-creation-button {
@@ -1351,6 +1353,15 @@ div.user-page_data-editing-btn {
     font-weight: bolder;
     font-size: 20px;
 }
+
+
+
+
+
+
+
+
+
 
 
 

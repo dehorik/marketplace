@@ -184,13 +184,13 @@ def create_triggers(sql_cursor: cursor) -> None:
                     IF EXISTS (
                         SELECT 1
                         FROM cart_item
-                        WHERE cart_item.user_id = NEW.user_id AND cart_item.product_id = NEW.product_id 
+                        WHERE user_id = NEW.user_id AND product_id = NEW.product_id 
                     )
                     THEN RAISE EXCEPTION 'such cart item alredy exists';
                     END IF;
                 RETURN NEW;
                 END;
-            $check_cart_item$ language plpgsql;
+            $check_cart_item$ LANGUAGE plpgsql;
             
             CREATE FUNCTION check_comment()
             RETURNS TRIGGER AS $check_comment$
@@ -208,7 +208,7 @@ def create_triggers(sql_cursor: cursor) -> None:
                     END IF;
                 RETURN NEW;
                 END;
-            $check_comment$ language plpgsql;
+            $check_comment$ LANGUAGE plpgsql;
             
         
             CREATE TRIGGER user_creation

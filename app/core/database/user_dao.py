@@ -9,13 +9,6 @@ class UserDataAccessObject(InterfaceDataAccessObject):
 
     def __init__(self, session: Session):
         self.__session = session
-        self.__cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
-
-    def close(self) -> None:
-        self.__cursor.close()
 
     def create(
             self,
@@ -23,7 +16,8 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             hashed_password: str,
             current_date: date
     ) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 INSERT INTO users (
                     role_id, 
@@ -43,11 +37,14 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """,
             [username, hashed_password, current_date]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def read(self, user_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 SELECT 
                     user_id, 
@@ -61,8 +58,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """,
             [user_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def update(
             self,
@@ -76,7 +75,8 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             photo_path: str | None = None
     ) -> tuple:
         if not any([clear_email, clear_photo, role_id, username, hashed_password, email, photo_path]):
-            self.__cursor.execute(
+            cursor = self.__session.get_cursor()
+            cursor.execute(
                 """
                     SELECT 
                         user_id,
@@ -90,8 +90,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                 """,
                 [user_id]
             )
+            data = cursor.fetchone()
+            cursor.close()
 
-            return self.__cursor.fetchone()
+            return data
 
         query = """
             UPDATE users
@@ -135,12 +137,16 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         """
         params.append(user_id)
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def delete(self, user_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 DELETE
                 FROM users
@@ -155,13 +161,16 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """,
             [user_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def get_user_by_username(self, username: str) -> tuple:
         # извлекается хеш пароля!
 
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 SELECT 
                     user_id,
@@ -176,8 +185,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """,
             [username]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def get_users(self, min_role_id: int = 2) -> list:
         """
@@ -185,7 +196,8 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                будут отбираться аккаунты (включительно)
         """
 
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 SELECT
                     users.user_id,
@@ -201,8 +213,10 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             """,
             [min_role_id]
         )
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
 
 def get_user_dao() -> UserDataAccessObject:

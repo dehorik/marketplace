@@ -7,16 +7,10 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
 
     def __init__(self, session: Session):
         self.__session = session
-        self.__cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
-
-    def close(self) -> None:
-        self.__cursor.close()
 
     def create(self, user_id: int, product_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 INSERT INTO cart_item (
                     user_id,
@@ -27,8 +21,10 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
             """,
             [user_id, product_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def read(
             self,
@@ -43,21 +39,9 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
                 cart_item.product_id,
                 product.name,
                 product.price,
-                COALESCE(score.rating, 0),
-                COALESCE(score.amount_comments, 0),
                 product.photo_path
-            FROM cart_item 
-                INNER JOIN product USING(product_id)
-                LEFT JOIN (
-                    SELECT 
-                        product.product_id,
-                        ROUND(AVG(comment.rating), 1) as rating,
-                        COUNT(comment_id) as amount_comments
-                    FROM 
-                        product INNER JOIN comment 
-                        ON product.product_id = comment.product_id
-                    GROUP BY product.product_id
-                ) AS score USING(product_id)
+            FROM 
+                cart_item INNER JOIN product USING(product_id)     
         """
         params = []
 
@@ -76,15 +60,19 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
             """
             params.extend([user_id, amount])
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
     def update(self):
         raise NotImplementedError("update is not supported for cart items")
 
     def delete(self, cart_item_id: int, user_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 DELETE 
                 FROM cart_item
@@ -93,8 +81,10 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
             """,
             [cart_item_id, user_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
 
 def get_cart_item_dao() -> CartItemDataAccessObject:

@@ -57,16 +57,18 @@
         </div>
 
         <div class="product_order-buttons">
-            <a class="product_order-creation-button">
+            <a class="product_order-creation-button" href="#">
                 <span>Купить сейчас</span>
             </a>
-            <a class="product_cart-item-management-button">
-                {% if product.is_in_cart %}
+            {% if product.is_in_cart %}
+            <a class="product_cart-item-management-button" href="/cart-items">
                 <span>Уже в корзине</span>
-                {% else %}
-                <span>В корзину</span>
-                {% endif %}
             </a>
+            {% else %}
+            <a class="product_cart-item-management-button" id="cart-item-creation-button">
+                <span>В корзину</span>
+            </a>
+            {% endif %}
         </div>
 
         <div class="product-description">
@@ -100,5 +102,7 @@
 <script src="/static/js/entities/comments/updateComment.js"></script>
 <script src="/static/js/entities/comments/deleteComment.js"></script>
 <script src="/static/js/entities/comments/form.js"></script>
+<script src="/static/js/entities/cart_items/createCartItem.js"></script>
+<script src="/static/js/entities/cart_items/initProductPage.js"></script>
 </body>
 </html>

@@ -151,6 +151,7 @@ class RefreshTokenValidationService:
                 # если refresh токена в redis нет - им кто-то уже воспользовался
                 # для безопасности пользователя
                 # следует удалить все его refresh токены
+
                 response.delete_cookie(config.REFRESH_COOKIE_KEY)
                 response.delete_cookie(config.USER_ID_COOKIE_KEY)
                 self.redis_client.delete_user(payload.sub)

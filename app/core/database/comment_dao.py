@@ -11,13 +11,6 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
 
     def __init__(self, session: Session):
         self.__session = session
-        self.__cursor = session.get_cursor()
-
-    def __del__(self):
-        self.close()
-
-    def close(self) -> None:
-        self.__cursor.close()
 
     def create(
             self,
@@ -28,7 +21,8 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             text: str | None = None,
             has_photo: bool = False
     ) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 INSERT INTO comment (
                     user_id,
@@ -42,25 +36,26 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """,
             [user_id, product_id, rating, current_date, text]
         )
+        data = cursor.fetchone()
 
         if has_photo:
-            comment_id = self.__cursor.fetchone()[0]
-            photo_path = os.path.join(
-                config.COMMENT_CONTENT_PATH,
-                str(comment_id)
-            )
-
-            self.__cursor.execute(
+            cursor.execute(
                 """
                     UPDATE comment 
                     SET photo_path = %s
                     WHERE comment_id = %s
                     RETURNING *;
                 """,
-                [photo_path, comment_id]
+                [
+                    os.path.join(config.COMMENT_CONTENT_PATH, str(data[0])),
+                    data[0]
+                ]
             )
+            data = cursor.fetchone()
 
-        return self.__cursor.fetchone()
+        cursor.close()
+
+        return data
 
     def read(
             self,
@@ -100,9 +95,12 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """
             params.extend([product_id, amount])
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
     def update(
             self,
@@ -143,12 +141,16 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         """
         params.extend([comment_id, user_id])
 
-        self.__cursor.execute(query, params)
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data
 
     def delete(self, comment_id: int, user_id: int) -> tuple:
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 DELETE 
                 FROM comment
@@ -157,15 +159,18 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             """,
             [comment_id, user_id]
         )
+        data = cursor.fetchone()
+        cursor.close()
 
-        return self.__cursor.fetchone()
+        return data()
 
     def delete_undefined_comments(self) -> list:
         # удаление всех отзывов, у которых product_id или user_id равны null
         # null появляется вместо внешнего ключа,
         # если связанная запись была удалена из таблицы
 
-        self.__cursor.execute(
+        cursor = self.__session.get_cursor()
+        cursor.execute(
             """
                 DELETE
                 FROM comment
@@ -173,8 +178,10 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
                 RETURNING *;
             """,
         )
+        data = cursor.fetchall()
+        cursor.close()
 
-        return self.__cursor.fetchall()
+        return data
 
 
 def get_comment_dao() -> CommentDataAccessObject:

@@ -22,8 +22,6 @@ class CartItemCardModel(BaseModel):
     product_id: int
     product_name: str
     product_price: int
-    product_rating: int
-    product_amount_comments: int
     product_photo_path: str
 
 
