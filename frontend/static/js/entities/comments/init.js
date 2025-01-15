@@ -34,3 +34,8 @@ window.addEventListener("load", () => {
 
     getComments();
 });
+
+window.addEventListener("beforeunload", () => {
+    const state = new State();
+    state.clear();
+});

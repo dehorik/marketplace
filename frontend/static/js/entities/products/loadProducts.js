@@ -36,6 +36,11 @@ window.addEventListener("load", () => {
     }, 500);
 });
 
+window.addEventListener("beforeunload", () => {
+    const state = new State();
+    state.clear();
+});
+
 
 function appendProductsNotFoundMessage() {
     const message_area = document.createElement("div");

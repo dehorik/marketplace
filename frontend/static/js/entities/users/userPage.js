@@ -91,7 +91,7 @@ function getUserPage(user) {
     const cart_btn_container = document.createElement("div");
     const cart_btn = document.createElement("a");
     const cart_btn_text = document.createElement("span");
-    cart_btn.href = "/";
+    cart_btn.href = "/cart-items";
     cart_btn_text.textContent = "Корзина";
     cart_btn.appendChild(cart_btn_text);
     cart_btn_container.appendChild(cart_btn);

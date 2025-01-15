@@ -1,6 +1,6 @@
 function createCartItem() {
-    const cart_item_creation_btn = document.getElementById("cart-item-creation-button");
-    cart_item_creation_btn.removeEventListener("click", createCartItem);
+    const cart_item_btn = document.getElementById("cart-item-creation-button");
+    cart_item_btn.removeEventListener("click", createCartItem);
 
     getVerifiedToken()
         .then((token) => {
@@ -15,11 +15,11 @@ function createCartItem() {
                 }
             })
                 .then(() => {
-                    cart_item_creation_btn.removeAttribute("id");
-                    cart_item_creation_btn.href = "/cart-items";
+                    cart_item_btn.removeAttribute("id");
+                    cart_item_btn.href = "/cart-items";
 
-                    const cart_item_creation_btn_text = cart_item_creation_btn.querySelector("span");
-                    cart_item_creation_btn_text.textContent = "Уже в корзине";
+                    const cart_item_btn_text = cart_item_btn.querySelector("span");
+                    cart_item_btn_text.textContent = "Уже в корзине";
                 });
         });
 }
@@ -41,7 +41,7 @@ function createCartItems() {
                         data: {
                             product_id: cart_items[i].product_id
                         }
-                    })
+                    });
                 });
         }
     }
@@ -64,6 +64,10 @@ function addCartItemToStorage() {
 
     if (cart_items) {
         cart_items.unshift(cart_item);
+
+        if (cart_items.length > 10) {
+            cart_items.splice(10, 1);
+        }
     }
     else {
         cart_items = [cart_item];
@@ -71,13 +75,13 @@ function addCartItemToStorage() {
 
     localStorage.setItem("cart_items", JSON.stringify(cart_items));
 
-    const cart_items_btn = document.getElementById("cart-item-creation-button");
-    const cart_items_btn_text = cart_items_btn.querySelector("span");
+    const cart_item_btn = document.getElementById("cart-item-creation-button");
+    const cart_item_btn_text = cart_item_btn.querySelector("span");
 
-    cart_items_btn.removeEventListener("click", addCartItemToStorage);
-    cart_items_btn.removeAttribute("id");
+    cart_item_btn.removeEventListener("click", addCartItemToStorage);
+    cart_item_btn.removeAttribute("id");
+    cart_item_btn_text.textContent = "Уже в корзине";
     setTimeout(() => {
-        cart_items_btn.href = "/cart-items";
+        cart_item_btn.href = "/cart-items";
     }, 100);
-    cart_items_btn_text.textContent = "Уже в корзине";
 }

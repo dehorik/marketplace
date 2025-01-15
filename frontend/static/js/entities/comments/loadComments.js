@@ -2,7 +2,7 @@ function appendCommentsNotFoundMessage() {
     if (!grid.querySelector(".comments-message")) {
         const message_area = document.createElement("div");
         message_area.className = "comments-message";
-        message_area.textContent = "Отзывы не найдены. Вы можете стать первым, кто оценит товар.";
+        message_area.textContent = "Отзывы не найдены. Вам нужно заказать товар, чтобы иметь возможность оставить отзыв.";
 
         grid.append(message_area);
     }

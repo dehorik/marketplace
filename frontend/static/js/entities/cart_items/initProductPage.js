@@ -12,10 +12,9 @@ window.addEventListener("load", () => {
             if (cart_items) {
                 for (let i = 0; i < cart_items.length; i++) {
                     if (cart_items[i].product_id === product_id) {
+                        const cart_item_creation_btn_text = cart_item_creation_btn.querySelector("span");
                         cart_item_creation_btn.removeAttribute("id");
                         cart_item_creation_btn.href = "/cart-items";
-
-                        const cart_item_creation_btn_text = cart_item_creation_btn.querySelector("span");
                         cart_item_creation_btn_text.textContent = "Уже в корзине";
 
                         return;
