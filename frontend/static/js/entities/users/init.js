@@ -13,11 +13,11 @@ window.addEventListener("load", () => {
                 })
                 .catch(() => {
                     deleteToken();
-                    window.location.href = "/auth/form";
+                    window.location.href = "/auth/form?redirect_url=/users/me/home";
                 });
         })
         .catch(() => {
             deleteToken();
-            window.location.href = "/auth/form";
+            window.location.href = "/auth/form?redirect_url=/users/me/home";
         });
 });

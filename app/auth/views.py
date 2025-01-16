@@ -1,6 +1,6 @@
 import os
 from typing import Annotated
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Query, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -49,7 +49,7 @@ def refresh(
     return access_token
 
 @router.get("/form", response_class=HTMLResponse)
-def get_auth_form(request: Request):
+def get_auth_form(request: Request, redirect_url: Annotated[str, Query()]):
     return templates.TemplateResponse(
         name="auth_form.html",
         request=request

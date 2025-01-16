@@ -5,6 +5,6 @@ window.addEventListener("load", () => {
         auth_btn.href = "/users/me/home";
     }
     else {
-        auth_btn.href = "/auth/form";
+        auth_btn.href = "/auth/form?redirect_url=/users/me/home";
     }
 })

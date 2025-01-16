@@ -73,6 +73,6 @@ function updateUser(form, old_user_data) {
         })
         .catch(() => {
             deleteToken();
-            window.location.href = "/auth/form";
+            window.location.href = "/auth/form?redirect_url=/users/me/home";
         });
 }
