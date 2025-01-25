@@ -44,7 +44,7 @@ def get_email_verification_page(
         request: Request, token: Annotated[str, Query()]
 ):
     return templates.TemplateResponse(
-        name='email_verification.html',
+        name='email-verification-page.html',
         request=request
     )
 

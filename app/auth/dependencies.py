@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime, timezone
 from jwt.exceptions import InvalidTokenError
-from fastapi import HTTPException, Depends, Response, Cookie, Form, status
+from fastapi import HTTPException, Depends, Response, Cookie, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg2.errors import RaiseException
 
@@ -12,6 +12,7 @@ from auth.tokens import (
     get_jwt_decoder
 )
 from auth.models import (
+    CredentialsModel,
     UserModel,
     ExtendedUserModel,
     AccessTokenModel,
@@ -46,13 +47,12 @@ class RegistrationService:
     def __call__(
             self,
             response: Response,
-            username: Annotated[str, Form(min_length=6, max_length=16)],
-            password: Annotated[str, Form(min_length=8, max_length=18)]
+            credentilas: CredentialsModel
     ) -> ExtendedUserModel:
         try:
             user = self.user_data_access_obj.create(
-                username,
-                get_password_hash(password),
+                credentilas.username,
+                get_password_hash(credentilas.password),
                 datetime.now(timezone.utc).date()
             )
             user = self.converter.fetchone(user)
@@ -92,15 +92,14 @@ class LoginService:
     def __call__(
             self,
             response: Response,
-            username: Annotated[str, Form(min_length=6, max_length=16)],
-            password: Annotated[str, Form(min_length=8, max_length=18)]
+            credentilas: CredentialsModel
     ) -> ExtendedUserModel:
         try:
-            user = list(self.user_data_access_obj.get_user_by_username(username))
-            hashed_password = user.pop(-1)
-            user = self.converter.fetchone(user)
+            user = self.user_data_access_obj.get_user_by_username(credentilas.username)
+            hashed_password = user[-1]
+            user = self.converter.fetchone(user[:-1])
 
-            if not verify_password(password, hashed_password):
+            if not verify_password(credentilas.password, hashed_password):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="incorrect username or password"

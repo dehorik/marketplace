@@ -61,8 +61,8 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 RETURNING *;
             """,
             [
-                data[0],
-                os.path.join(config.ORDER_CONTENT_PATH, str(data[0]))
+                os.path.join(config.ORDER_CONTENT_PATH, str(data[0])),
+                data[0]
             ]
         )
 

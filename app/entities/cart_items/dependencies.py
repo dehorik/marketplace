@@ -68,7 +68,7 @@ class FetchCartItemsService:
     def __call__(
             self,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
-            amount: Annotated[int, Query(ge=0)] = 10,
+            amount: Annotated[int, Query(ge=0)] = 15,
             last_id: Annotated[int | None, Query(ge=1)] = None
     ) -> CartItemCardListModel:
         """

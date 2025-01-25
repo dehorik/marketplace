@@ -162,7 +162,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         data = cursor.fetchone()
         cursor.close()
 
-        return data()
+        return data
 
     def delete_undefined_comments(self) -> list:
         # удаление всех отзывов, у которых product_id или user_id равны null

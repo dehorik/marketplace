@@ -44,7 +44,7 @@ class EmailVerificationTask:
 
         loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
         env = Environment(loader=loader)
-        template = env.get_template("email_verification_letter.html")
+        template = env.get_template("email-verification-letter.html")
         letter = template.render(
             token=token,
             username=username,
@@ -130,9 +130,9 @@ orders_removal_task = OrdersRemovalTask()
 email_verification_task = EmailVerificationTask()
 order_creation_notification_task = OrderNotificationTask(
     subject="Новый заказ",
-    template_name="order_creation_letter.html"
+    template_name="order-creation-letter.html"
 )
 order_update_notification_task = OrderNotificationTask(
     subject="Изменение заказа",
-    template_name="order_update_letter.html"
+    template_name="order-update-letter.html"
 )

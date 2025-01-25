@@ -51,6 +51,6 @@ def refresh(
 @router.get("/form", response_class=HTMLResponse)
 def get_auth_form(request: Request, redirect_url: Annotated[str, Query()]):
     return templates.TemplateResponse(
-        name="auth_form.html",
+        name="auth-form.html",
         request=request
     )

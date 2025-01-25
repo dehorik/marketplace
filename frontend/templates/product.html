@@ -57,7 +57,7 @@
         </div>
 
         <div class="product_order-buttons">
-            <a class="product_order-creation-button" href="#">
+            <a class="product_order-creation-button">
                 <span>Купить сейчас</span>
             </a>
             {% if product.is_in_cart %}
@@ -93,16 +93,17 @@
     <span>&copy; WebStore</span>
 </footer>
 
-<script src="/static/js/auth/jwt.js"></script>
-<script src="/static/js/auth/refreshTokens.js"></script>
-<script src="/static/js/utils/state.js"></script>
-<script src="/static/js/entities/comments/init.js"></script>
-<script src="/static/js/entities/comments/loadComments.js"></script>
-<script src="/static/js/entities/comments/createComment.js"></script>
-<script src="/static/js/entities/comments/updateComment.js"></script>
-<script src="/static/js/entities/comments/deleteComment.js"></script>
-<script src="/static/js/entities/comments/form.js"></script>
-<script src="/static/js/entities/cart_items/createCartItem.js"></script>
-<script src="/static/js/entities/cart_items/initProductPage.js"></script>
+<script src="/static/src/auth/jwt.js"></script>
+<script src="/static/src/auth/refresh.js"></script>
+<script src="/static/src/utils/state.js"></script>
+<script src="/static/src/entities/comments/create.js"></script>
+<script src="/static/src/entities/comments/load.js"></script>
+<script src="/static/src/entities/comments/update.js"></script>
+<script src="/static/src/entities/comments/delete.js"></script>
+<script src="/static/src/entities/comments/form.js"></script>
+<script src="/static/src/entities/cartItems/create.js"></script>
+<script src="/static/src/entities/orders/create.js"></script>
+<script src="/static/src/entities/orders/form.js"></script>
+<script src="/static/src/pages/product.js"></script>
 </body>
 </html>

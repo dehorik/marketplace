@@ -409,7 +409,8 @@ footer {
 }
 
 .comments-container-header a:hover {
-   color: black;;
+    color: black;
+    cursor: pointer;
 }
 
 .comments-grid {
@@ -586,9 +587,14 @@ footer {
     width: 11%;
 }
 
-.comment-form-cancel-button img {
+.comment-form-cancel-button a {
     width: 55%;
     height: 40%;
+}
+
+.comment-form-cancel-button a img {
+    width: 100%;
+    height: 100%;
 }
 
 .comment-form-title {
