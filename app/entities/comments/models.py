@@ -12,7 +12,7 @@ class CommentModel(BaseModel):
     rating: int
     creation_date: date
     text: str | None
-    photo_path: str | None
+    has_photo: bool
 
 
 class CommentItemModel(BaseModel):
@@ -22,11 +22,11 @@ class CommentItemModel(BaseModel):
     user_id: int
     product_id: int
     username: str
-    user_photo_path: str | None
+    user_has_photo: bool
     rating: int
     creation_date: date
     text: str | None
-    comment_photo_path: str | None
+    comment_has_photo: bool
 
 
 class CommentItemListModel(BaseModel):

@@ -41,8 +41,8 @@ function getUserUpdateForm(user) {
     const photo = document.createElement("img");
     photo.alt = "user";
 
-    if (user.photo_path) {
-        photo.src = `/${user.photo_path}?reload=${Date.now()}`;
+    if (user.has_photo) {
+        photo.src = `/images/users/${user.user_id}.jpg?reload=${Date.now()}`;
         photo.setAttribute("data-photo-type", "uploaded");
     }
     else {
@@ -190,7 +190,7 @@ function getUserUpdateForm(user) {
 
         updateUser(
             !!(!emailInput.value && user.email),
-            !!(photo.getAttribute("data-photo-type") === "default" && user.photo_path),
+            !!(photo.getAttribute("data-photo-type") === "default" && user.has_photo),
             usernameInput.value.trim() !== user.username ? usernameInput.value.trim() : null,
             passwordInput.value.trim(),
             emailInput.value.trim() !== user.email ? emailInput.value.trim() : null,

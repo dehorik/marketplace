@@ -41,9 +41,14 @@ function getUserPageNode(user) {
     const photoContainer = document.createElement("div");
     const photo = document.createElement("img");
     photoContainer.className = "user-page_user-photo";
-    photo.src = user.photo_path ? `/${user.photo_path}?reload=${Date.now()}` : "/static/img/default-avatar.png";
-    photo.alt = user;
     photoContainer.appendChild(photo);
+
+    if (user.has_photo) {
+        photo.src = `/images/users/${user.user_id}.jpg?reload=${Date.now()}`;
+    }
+    else {
+        photo.src = "/static/img/default-avatar.png";
+    }
 
     const textDataContainer = document.createElement("div");
     textDataContainer.className = "user-page_text-data-container";

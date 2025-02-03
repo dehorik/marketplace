@@ -10,7 +10,7 @@ class ProductModel(BaseModel):
     price: int
     description: str
     amount_orders: int
-    photo_path: str
+    has_photo: bool
 
 
 class ExtendedProductModel(BaseModel):
@@ -25,7 +25,7 @@ class ExtendedProductModel(BaseModel):
     rating: float
     amount_comments: int
     amount_orders: int
-    photo_path: str
+    has_photo: bool
 
 
 class ProductCardModel(BaseModel):
@@ -36,7 +36,7 @@ class ProductCardModel(BaseModel):
     price: int
     rating: float
     amount_comments: int
-    photo_path: str
+    has_photo: bool
 
 
 class ProductCardListModel(BaseModel):

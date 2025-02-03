@@ -1,4 +1,4 @@
-import os
+from os.path import join
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -30,12 +30,12 @@ app = FastAPI(lifespan=lifespan, title='marketplace')
 
 app.mount(
     '/static',
-    StaticFiles(directory=os.path.join(ROOT_PATH, r"frontend\static")),
+    StaticFiles(directory=join(ROOT_PATH, "frontend", "static")),
     name='static'
 )
 app.mount(
     '/images',
-    StaticFiles(directory=os.path.join(ROOT_PATH, "images")),
+    StaticFiles(directory=join(ROOT_PATH, "images")),
     name='images'
 )
 
@@ -47,9 +47,7 @@ app.include_router(orders_router)
 app.include_router(cart_items_router)
 
 
-templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r"frontend\templates")
-)
+templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 
 
 @app.get("/", response_class=HTMLResponse)

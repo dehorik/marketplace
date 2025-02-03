@@ -52,8 +52,8 @@ function createCommentNode(comment) {
     userPhotoContainer.className = "comment-user-photo";
     userPhoto.alt = "user";
 
-    if (comment.user_photo_path) {
-        userPhoto.src = `/${comment.user_photo_path}`;
+    if (comment.user_has_photo) {
+        userPhoto.src = `/images/users/${comment.user_id}.jpg?reload=${Date.now()}`;
     }
     else {
         userPhoto.src = "/static/img/default-avatar.png";
@@ -100,11 +100,11 @@ function createCommentNode(comment) {
 
         dataContainer.append(text);
     }
-    if (comment.comment_photo_path) {
+    if (comment.comment_has_photo) {
         const commentPhotoContainer = document.createElement("div");
         const commentPhoto = document.createElement("img");
         commentPhotoContainer.className = "comment-photo";
-        commentPhoto.src = `/${comment.comment_photo_path}`;
+        commentPhoto.src = `/images/comments/${comment.comment_id}.jpg?reload=${Date.now()}`;
         commentPhoto.alt = "photo";
         commentPhotoContainer.append(commentPhoto);
 

@@ -15,7 +15,7 @@ class UserModel(BaseModel):
     username: str
     email: EmailStr | None
     registration_date: date
-    photo_path: str | None
+    has_photo: bool
 
 
 class AccessTokenModel(BaseModel):

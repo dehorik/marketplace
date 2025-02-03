@@ -1,8 +1,7 @@
-import os
+from psycopg2 import ProgrammingError
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
-from core.settings import config
 
 
 class ProductDataAccessObject(InterfaceDataAccessObject):
@@ -11,51 +10,42 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
     def __init__(self, session: Session):
         self.__session = session
 
+    def __execute(
+            self,
+            query: str,
+            params: list | None = None,
+            fetchone: bool = False
+    ) -> list | tuple | None:
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+
+        try:
+            data = cursor.fetchone() if fetchone else cursor.fetchall()
+            cursor.close()
+
+            return data
+        except ProgrammingError:
+            cursor.close()
+
     def create(
             self,
             name: str,
             price: float,
             description: str,
     ) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
-                INSERT INTO product (
-                    name, 
-                    price, 
-                    description
-                )
-                VALUES
-                    (%s, %s, %s)
-                RETURNING product_id;
-            """,
-            [name, price, description]
-        )
-
-        data = cursor.fetchone()
-
-        cursor.execute(
-            """                 
-                UPDATE product
-                SET photo_path = %s
-                WHERE product_id = %s
+        return self.__execute(
+            query="""
+                INSERT INTO product (name, price, description)
+                VALUES (%s, %s, %s)
                 RETURNING *;
             """,
-            [
-                os.path.join(config.PRODUCT_CONTENT_PATH, str(data[0])),
-                data[0]
-            ]
+            params=[name, price, description],
+            fetchone=True
         )
 
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
-
     def read(self, product_id: int, user_id: int | None = None) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 SELECT 
                     product_id,
                     name,
@@ -94,11 +84,11 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                         WHERE product_id = %s
                     ) AS amount_comments,
                     amount_orders,
-                    photo_path
+                    has_photo
                 FROM product
                 WHERE product_id = %s;
             """,
-            [
+            params=[
                 user_id,
                 product_id,
                 user_id,
@@ -108,12 +98,9 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product_id,
                 product_id,
                 product_id
-            ]
+            ],
+            fetchone=True
         )
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
 
     def update(
             self,
@@ -161,28 +148,19 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
         """
         params.append(product_id)
 
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
+        return self.__execute(query=query, params=params, fetchone=True)
 
     def delete(self, product_id: int) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 DELETE 
                 FROM product
                 WHERE product_id = %s
                 RETURNING *; 
             """,
-            [product_id]
+            params=[product_id],
+            fetchone=True
         )
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
 
     def get_latest_products(
             self,
@@ -196,7 +174,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product.price, 
                 COALESCE(score.rating, 0),
                 COALESCE(score.amount_comments, 0),
-                product.photo_path
+                product.has_photo
             FROM 
                 product LEFT JOIN (
                     SELECT 
@@ -226,12 +204,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
             params.append(amount)
 
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-        cursor.close()
-
-        return data
+        return self.__execute(query=query, params=params)
 
     def search_product(
             self,
@@ -246,7 +219,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product.price, 
                 COALESCE(score.rating, 0),
                 COALESCE(score.amount_comments, 0),
-                product.photo_path
+                product.has_photo
             FROM 
                 product LEFT JOIN (
                     SELECT 
@@ -277,12 +250,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             """
             params.extend([f"%{name.replace("%", "")}%", amount])
 
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-        cursor.close()
-
-        return data
+        return self.__execute(query=query, params=params)
 
 
 def get_product_dao() -> ProductDataAccessObject:

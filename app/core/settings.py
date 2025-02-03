@@ -1,10 +1,10 @@
-import os
+from os.path import join
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 ROOT_PATH = str(Path(__file__).resolve().parent.parent.parent)
-DOTENV_FILE_PATH = os.path.join(ROOT_PATH, ".env")
+DOTENV_FILE_PATH = join(ROOT_PATH, ".env")
 
 
 class Settings(BaseSettings):
@@ -18,12 +18,6 @@ class Settings(BaseSettings):
     # redis config
     REDIS_HOST: str
     REDIS_PORT: int
-
-    # path to images from database
-    COMMENT_CONTENT_PATH: str
-    ORDER_CONTENT_PATH: str
-    PRODUCT_CONTENT_PATH: str
-    USER_CONTENT_PATH: str
 
     # auth
     PRIVATE_KEY_PATH: str
@@ -49,5 +43,5 @@ class Settings(BaseSettings):
 
 config = Settings()
 
-config.PRIVATE_KEY_PATH = os.path.join(ROOT_PATH, config.PRIVATE_KEY_PATH)
-config.PUBLIC_KEY_PATH = os.path.join(ROOT_PATH, config.PUBLIC_KEY_PATH)
+config.PRIVATE_KEY_PATH = join(ROOT_PATH, config.PRIVATE_KEY_PATH)
+config.PUBLIC_KEY_PATH = join(ROOT_PATH, config.PUBLIC_KEY_PATH)

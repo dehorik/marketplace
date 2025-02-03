@@ -1,9 +1,8 @@
-import os
 from datetime import date
+from psycopg2 import ProgrammingError
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
-from core.settings import config
 
 
 class OrderDataAccessObject(InterfaceDataAccessObject):
@@ -11,6 +10,23 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
 
     def __init__(self, session: Session):
         self.__session = session
+
+    def __execute(
+            self,
+            query: str,
+            params: list | None = None,
+            fetchone: bool = False
+    ) -> list | tuple | None:
+        cursor = self.__session.get_cursor()
+        cursor.execute(query, params)
+
+        try:
+            data = cursor.fetchone() if fetchone else cursor.fetchall()
+            cursor.close()
+
+            return data
+        except ProgrammingError:
+            cursor.close()
 
     def create(
             self,
@@ -20,9 +36,8 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             date_end: date,
             delivery_address: str
     ) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 INSERT INTO orders (
                     user_id,
                     product_id,
@@ -38,9 +53,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     (SELECT price FROM product WHERE product_id = %s),
                     %s, %s, %s 
                 )
-                RETURNING order_id;
+                RETURNING *;  
             """,
-            [
+            params=[
                 user_id,
                 product_id,
                 product_id,
@@ -48,28 +63,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 date_start,
                 date_end,
                 delivery_address,
-            ]
+            ],
+            fetchone=True
         )
-
-        data = cursor.fetchone()
-
-        cursor.execute(
-            """
-                UPDATE orders
-                SET photo_path = %s
-                WHERE order_id = %s
-                RETURNING *;
-            """,
-            [
-                os.path.join(config.ORDER_CONTENT_PATH, str(data[0])),
-                data[0]
-            ]
-        )
-
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
 
     def read(
             self,
@@ -87,7 +83,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                 orders.date_start,
                 orders.date_end,
                 orders.delivery_address,
-                orders.photo_path
+                orders.has_photo
             FROM 
                 product INNER JOIN orders
                 ON product.product_id = orders.product_id
@@ -109,12 +105,7 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             """
             params.extend([user_id, amount])
 
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-        cursor.close()
-
-        return data
+        return self.__execute(query=query, params=params)
 
     def update(
             self,
@@ -123,72 +114,53 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             date_end: date,
             delivery_address: str
     ) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 UPDATE orders
-                SET 
-                    date_end = %s,
-                    delivery_address = %s
+                SET date_end = %s, delivery_address = %s
                 WHERE order_id = %s AND user_id = %s
                 RETURNING *;
             """,
-            [date_end, delivery_address, order_id, user_id]
+            params=[date_end, delivery_address, order_id, user_id],
+            fetchone=True
         )
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
 
     def delete(self, order_id: int, user_id: int) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        order = self.__execute(
+            query="""
                 DELETE 
                 FROM orders
                 WHERE order_id = %s AND user_id = %s
                 RETURNING *;
             """,
-            [order_id, user_id]
+            params=[order_id, user_id],
+            fetchone=True
         )
 
-        data = cursor.fetchone()
-
-        if data:
-            cursor.execute(
-                """
-                    INSERT INTO archived_orders (
-                        user_id,
-                        product_id
-                    )
+        if order:
+            self.__execute(
+                query="""
+                    INSERT INTO archived_orders (user_id, product_id)
                     VALUES (%s, %s);
                 """,
-                [data[1], data[2]]
+                params=[order[1], order[2]]
             )
 
-        cursor.close()
-
-        return data
+        return order
 
     def delete_undefined_orders(self) -> list:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 DELETE 
                 FROM orders
                 WHERE product_id IS NULL OR user_id IS NULL
                 RETURNING *;
             """
         )
-        data = cursor.fetchall()
-        cursor.close()
-
-        return data
 
     def get_order_notification_data(self, order_id: int) -> tuple:
-        cursor = self.__session.get_cursor()
-        cursor.execute(
-            """
+        return self.__execute(
+            query="""
                 SELECT 
                     orders.order_id,
                     orders.product_name,
@@ -203,12 +175,9 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
                     ON orders.user_id = users.user_id
                 WHERE order_id = %s;
             """,
-            [order_id]
+            params=[order_id],
+            fetchone=True
         )
-        data = cursor.fetchone()
-        cursor.close()
-
-        return data
 
 
 def get_order_dao() -> OrderDataAccessObject:

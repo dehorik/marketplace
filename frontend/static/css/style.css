@@ -1018,6 +1018,7 @@ footer {
     height: 95%;
     width: 100%;
     border-radius: 50%;
+    border: 3px solid black;
 }
 
 .user-page_text-data-container {

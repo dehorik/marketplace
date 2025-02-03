@@ -1,4 +1,4 @@
-import os
+from os.path import join
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Query
 from fastapi.templating import Jinja2Templates
@@ -18,10 +18,7 @@ from core.settings import ROOT_PATH
 
 router = APIRouter(prefix='/users', tags=['users'])
 
-
-templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r"frontend\templates")
-)
+templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 
 
 @router.get("/me/home", response_class=HTMLResponse)

@@ -23,7 +23,7 @@ class OrderModel(BaseModel):
     date_start: date
     date_end: date
     delivery_address: str
-    photo_path: str
+    has_photo: bool
 
 
 class OrderCardModel(BaseModel):
@@ -35,7 +35,7 @@ class OrderCardModel(BaseModel):
     date_start: date
     date_end: date
     delivery_address: str
-    photo_path: str
+    has_photo: bool
 
 
 class OrderCardListModel(BaseModel):

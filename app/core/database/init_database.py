@@ -7,8 +7,8 @@ from auth.hashing_psw import get_password_hash
 from core.settings import config
 
 
-def create_role_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_role_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE role (
                 role_id SERIAL PRIMARY KEY,
@@ -17,8 +17,8 @@ def create_role_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_users_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_users_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE users (
                 user_id SERIAL PRIMARY KEY,
@@ -27,7 +27,7 @@ def create_users_table(sql_cursor: cursor) -> None:
                 hashed_password VARCHAR(255),
                 email VARCHAR(255) DEFAULT NULL,
                 registration_date DATE,
-                photo_path VARCHAR(255) DEFAULT NULL,
+                has_photo BOOLEAN DEFAULT FALSE,
                 
                 FOREIGN KEY (role_id) 
                 REFERENCES role (role_id)
@@ -35,8 +35,8 @@ def create_users_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_product_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_product_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE product (
                 product_id SERIAL PRIMARY KEY,
@@ -44,13 +44,13 @@ def create_product_table(sql_cursor: cursor) -> None:
                 price INT,
                 description TEXT,
                 amount_orders INT DEFAULT 0,
-                photo_path VARCHAR(255)
+                has_photo BOOLEAN DEFAULT TRUE
             );
         """
     )
 
-def create_comment_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_comment_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE comment (
                 comment_id SERIAL PRIMARY KEY,
@@ -59,7 +59,7 @@ def create_comment_table(sql_cursor: cursor) -> None:
                 rating INT,
                 creation_date DATE,
                 text VARCHAR(255) DEFAULT NULL,
-                photo_path VARCHAR(255) DEFAULT NULL,
+                has_photo BOOLEAN DEFAULT FALSE,
             
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
@@ -72,8 +72,8 @@ def create_comment_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_orders_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_orders_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE orders (
                 order_id SERIAL PRIMARY KEY,
@@ -84,7 +84,7 @@ def create_orders_table(sql_cursor: cursor) -> None:
                 date_start DATE,
                 date_end DATE,
                 delivery_address VARCHAR(255),
-                photo_path VARCHAR(255),
+                has_photo BOOLEAN DEFAULT TRUE,
                 
                 FOREIGN KEY (user_id) 
                 REFERENCES users (user_id)
@@ -97,8 +97,8 @@ def create_orders_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_archived_orders_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_archived_orders_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE archived_orders (
                 archived_order_id SERIAL PRIMARY KEY,
@@ -116,8 +116,8 @@ def create_archived_orders_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_cart_item_table(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_cart_item_table(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE TABLE cart_item (
                 cart_item_id SERIAL PRIMARY KEY,
@@ -135,8 +135,8 @@ def create_cart_item_table(sql_cursor: cursor) -> None:
         """
     )
 
-def create_triggers(sql_cursor: cursor) -> None:
-    sql_cursor.execute(
+def create_triggers(cur: cursor) -> None:
+    cur.execute(
         """
             CREATE FUNCTION check_username()
             RETURNS TRIGGER AS $check_username$
@@ -244,8 +244,8 @@ def create_triggers(sql_cursor: cursor) -> None:
         """
     )
 
-def create_roles(sql_cursor: cursor, role_names: List[List[str]]) -> None:
-    sql_cursor.executemany(
+def create_roles(cur: cursor, role_names: List[List[str]]) -> None:
+    cur.executemany(
         """
             INSERT INTO role (
                 role_name
@@ -255,10 +255,10 @@ def create_roles(sql_cursor: cursor, role_names: List[List[str]]) -> None:
         role_names
     )
 
-def create_superuser_account(sql_cursor: cursor) -> None:
+def create_superuser_account(cur: cursor) -> None:
     password_hash = get_password_hash(config.SUPERUSER_PASSWORD)
 
-    sql_cursor.execute(
+    cur.execute(
         """
             INSERT INTO users (
                 role_id,
@@ -286,29 +286,29 @@ def init_database() -> None:
         host=config.DATABASE_HOST,
         port=config.DATABASE_PORT
     )
-    sql_cursor = connection.cursor()
+    cur = connection.cursor()
 
-    create_role_table(sql_cursor)
-    create_users_table(sql_cursor)
-    create_product_table(sql_cursor)
-    create_comment_table(sql_cursor)
-    create_orders_table(sql_cursor)
-    create_archived_orders_table(sql_cursor)
-    create_cart_item_table(sql_cursor)
-    create_triggers(sql_cursor)
+    create_role_table(cur)
+    create_users_table(cur)
+    create_product_table(cur)
+    create_comment_table(cur)
+    create_orders_table(cur)
+    create_archived_orders_table(cur)
+    create_cart_item_table(cur)
+    create_triggers(cur)
 
     create_roles(
-        sql_cursor,
+        cur,
         [
             ["пользователь"],
             ["администратор"],
             ["суперпользователь"]
         ]
     )
-    create_superuser_account(sql_cursor)
+    create_superuser_account(cur)
 
     connection.commit()
-    sql_cursor.close()
+    cur.close()
     connection.close()
 
 

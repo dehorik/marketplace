@@ -1,6 +1,6 @@
-import os
+from os.path import join
 from datetime import datetime, timezone
-from typing import Annotated, Callable
+from typing import Annotated
 from fastapi import Depends, HTTPException, Form, UploadFile, File, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation, RaiseException
 
@@ -11,8 +11,7 @@ from entities.comments.models import (
 )
 from auth import AuthorizationService, TokenPayloadModel
 from core.database import CommentDataAccessObject, get_comment_dao
-from core.settings import config
-from utils import Converter, write_file, delete_file, exists
+from utils import Converter, FileWriter, FileRemover
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -25,7 +24,7 @@ class CommentCreationService:
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel),
-            file_writer: Callable = write_file
+            file_writer: FileWriter = FileWriter(join("images", "comments"))
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
@@ -58,7 +57,7 @@ class CommentCreationService:
             comment = self.converter.fetchone(comment)
 
             if photo:
-                self.file_writer(comment.photo_path, photo.file.read())
+                self.file_writer(comment.comment_id, photo.file.read())
 
             return comment
         except RaiseException:
@@ -112,13 +111,13 @@ class CommentUpdateService:
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel),
-            file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file
+            file_writer: FileWriter = FileWriter(join("images", "comments")),
+            file_remover: FileRemover = FileRemover(join("images", "comments"))
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
         self.file_writer = file_writer
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -156,13 +155,6 @@ class CommentUpdateService:
                     detail='invalid file type'
                 )
 
-            photo_path = os.path.join(
-                config.COMMENT_CONTENT_PATH,
-                str(comment_id)
-            )
-        else:
-            photo_path = None
-
         try:
             comment = self.comment_data_access_obj.update(
                 comment_id=comment_id,
@@ -172,20 +164,14 @@ class CommentUpdateService:
                 clear_photo=clear_photo,
                 rating=rating,
                 text=text,
-                photo_path=photo_path
+                has_photo=bool(photo)
             )
             comment = self.converter.fetchone(comment)
 
             if photo:
-                self.file_writer(comment.photo_path, photo.file.read())
+                self.file_writer(comment.comment_id, photo.file.read())
             elif clear_photo:
-                photo_path = os.path.join(
-                    config.COMMENT_CONTENT_PATH,
-                    str(comment_id)
-                )
-
-                if exists(photo_path):
-                    self.file_deleter(photo_path)
+                self.file_remover(comment.comment_id)
 
             return comment
         except ValueError:
@@ -200,11 +186,11 @@ class CommentDeletionService:
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
             converter: Converter = Converter(CommentModel),
-            file_deleter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "comments"))
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -215,8 +201,8 @@ class CommentDeletionService:
             comment = self.comment_data_access_obj.delete(comment_id, payload.sub)
             comment = self.converter.fetchone(comment)
 
-            if comment.photo_path:
-                self.file_deleter(comment.photo_path)
+            if comment.has_photo:
+                self.file_remover(comment.comment_id)
 
             return comment
         except ValueError:

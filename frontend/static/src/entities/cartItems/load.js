@@ -64,7 +64,7 @@ function createCartItemNode(cartItem) {
     const photo = document.createElement("img");
     photoContainer.className = "cart-item_photo-container";
     photoLink.href = `/products/${cartItem.product_id}`;
-    photo.src = cartItem.product_photo_path;
+    photo.src = `/images/products/${cartItem.product_id}.jpg?reload=${Date.now()}`;
     photoLink.appendChild(photo);
     photoContainer.appendChild(photoLink);
 

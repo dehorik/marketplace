@@ -92,8 +92,8 @@ function getCommentForm(comment=null) {
     photo.alt = "photo";
 
     if (comment) {
-        if (comment.comment_photo_path) {
-            photo.src = `/${comment.comment_photo_path}`;
+        if (comment.comment_has_photo) {
+            photo.src = `/images/comments/${comment.comment_id}.jpg?reload=${Date.now()}`;
             photo.setAttribute("data-photo-type", "uploaded");
         }
         else {
@@ -196,7 +196,7 @@ function getCommentForm(comment=null) {
                     productId,
                     comment.comment_id,
                     !!(!text.value && comment.text),
-                    !!(photo.getAttribute("data-photo-type") === "default" && comment.comment_photo_path),
+                    !!(photo.getAttribute("data-photo-type") === "default" && comment.comment_has_photo),
                     Number(newRating) !== Number(comment.rating) ? newRating : null,
                     newText.trim() !== comment.text ? newText.trim() : null,
                     newPhoto ? newPhoto : null

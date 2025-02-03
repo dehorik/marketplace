@@ -44,13 +44,12 @@ function createCartItems() {
     }
 }
 
-function addCartItemToStorage(cartItemCreationBtn, productId, productName, productPrice, productPhotoPath) {
+function addCartItemToStorage(cartItemCreationBtn, productId, productName, productPrice) {
     let cartItem = {
         product_id: productId,
         product_name: productName,
         product_price: productPrice,
-        product_photo_path: productPhotoPath
-    }
+    };
 
     let cartItems = JSON.parse(localStorage.getItem("cartItems"));
 

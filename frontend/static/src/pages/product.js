@@ -53,7 +53,6 @@ function initCartItemBtn() {
     const productId = window.location.pathname.split("/").slice(-1)[0];
     const productName = document.querySelector(".product-name span").textContent;
     const productPrice = document.querySelector(".product-price span").textContent.slice(0, -2);
-    const productPhotoPath = document.querySelector(".product-photo img").src;
 
     const cartItemCreationBtn = document.getElementById("cart-item-creation-button");
 
@@ -76,7 +75,7 @@ function initCartItemBtn() {
             }
 
             cartItemCreationBtn.addEventListener("click", (event) => {
-                addCartItemToStorage(event.target, productId, productName, productPrice, productPhotoPath);
+                addCartItemToStorage(event.target, productId, productName, productPrice);
             });
         }
     }

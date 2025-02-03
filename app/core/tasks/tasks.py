@@ -1,5 +1,4 @@
-import os
-from typing import Callable
+from os.path import join
 from datetime import UTC, datetime, timedelta, timezone
 from jinja2 import Environment, FileSystemLoader
 
@@ -12,13 +11,7 @@ from core.database import (
     get_order_dao
 )
 from core.settings import ROOT_PATH
-from utils import (
-    exists,
-    delete_file,
-    Converter,
-    EmailSender,
-    get_email_sender
-)
+from utils import Converter, FileRemover, EmailSender, get_email_sender
 
 
 class EmailVerificationTask:
@@ -42,7 +35,7 @@ class EmailVerificationTask:
         payload = payload.model_dump()
         token = self.jwt_encoder(payload)
 
-        loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
+        loader = FileSystemLoader(join(ROOT_PATH, "frontend", "templates"))
         env = Environment(loader=loader)
         template = env.get_template("email-verification-letter.html")
         letter = template.render(
@@ -79,7 +72,7 @@ class OrderNotificationTask:
         order.date_start = order.date_start.strftime("%d.%m.%Y")
         order.date_end = order.date_end.strftime("%d.%m.%Y")
 
-        loader = FileSystemLoader(os.path.join(ROOT_PATH, r"frontend\templates"))
+        loader = FileSystemLoader(join(ROOT_PATH, "frontend", "templates"))
         env = Environment(loader=loader)
         template = env.get_template(self.template_name)
         letter = template.render(order=order, year=datetime.now(timezone.utc).date().year)
@@ -91,38 +84,32 @@ class CommentsRemovalTask:
     def __init__(
             self,
             comment_dao: CommentDataAccessObject = get_comment_dao(),
-            file_deleter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "comments"))
     ):
         self.comment_data_access_obj = comment_dao
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(self) -> None:
         comments = self.comment_data_access_obj.delete_undefined_comments()
 
         for comment in comments:
-            photo_path = comment[-1]
-
-            if photo_path and exists(photo_path):
-                self.file_deleter(photo_path)
+            self.file_remover(comment[0])
 
 
 class OrdersRemovalTask:
     def __init__(
             self,
             order_dao: OrderDataAccessObject = get_order_dao(),
-            file_deleter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "orders"))
     ):
         self.order_data_access_obj = order_dao
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(self) -> None:
         orders = self.order_data_access_obj.delete_undefined_orders()
 
         for order in orders:
-            photo_path = order[-1]
-
-            if photo_path and exists(photo_path):
-                self.file_deleter(photo_path)
+            self.file_remover(order[0])
 
 
 comments_removal_task = CommentsRemovalTask()

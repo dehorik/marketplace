@@ -1,27 +1,33 @@
-import os
+from os import remove
+from os.path import exists, join
 
 from core.settings import ROOT_PATH
 
 
-def exists(path: str) -> bool:
-    # параметр path: путь к файлу относительно директории marketplace
-    return os.path.exists(os.path.join(ROOT_PATH, path))
+class FileWriter:
+    def __init__(self, base_path: str, file_format: str = "jpg"):
+        self.__base_path = base_path
+        self.__file_format = file_format
 
-def write_file(path: str, file: bytes) -> None:
-    # параметр path: путь к файлу относительно директории marketplace
-    # используется и для записи, и для перезаписи файлов
+    def __call__(self, item_id: str | int, file: bytes) -> str:
+        path = join(ROOT_PATH, self.__base_path, f"{item_id}.{self.__file_format}")
 
-    with open(os.path.join(ROOT_PATH, path), 'wb') as photo:
-        photo.write(file)
+        with open(path, "wb") as photo:
+            photo.write(file)
 
-def copy_file(path_from: str, path_to: str) -> None:
-    # path_from: путь к копируемому файлу
-    # path_to: путь к новому файлу
+        return path
 
-    with open(os.path.join(ROOT_PATH, path_to), 'wb') as new_file:
-        with open(os.path.join(ROOT_PATH, path_from), 'rb') as copied_file:
-            new_file.write(copied_file.read())
 
-def delete_file(path: str) -> None:
-    # параметр path: путь к файлу относительно директории marketplace
-    os.remove(os.path.join(ROOT_PATH, path))
+class FileRemover:
+    def __init__(self, base_path: str, file_format: str = ".jpg"):
+        self.__base_path = base_path
+        self.__file_format = file_format
+
+    def __call__(self, item_id: str | int) -> str | None:
+        path = join(ROOT_PATH, self.__base_path, f"{item_id}{self.__file_format}")
+
+        if exists(path):
+            remove(path)
+            return path
+        else:
+            return None

@@ -1,11 +1,11 @@
-import os
+from os.path import join
 from random import randint
-from typing import Annotated, Callable
+from shutil import copy
+from typing import Annotated
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, BackgroundTasks, Depends, Query, Path, status
 from psycopg2.errors import ForeignKeyViolation
 
-from core.settings import config
 from entities.orders.models import (
     OrderCreationRequest,
     OrderUpdateRequest,
@@ -19,7 +19,8 @@ from core.tasks import (
     order_update_notification_task
 )
 from core.database import OrderDataAccessObject, get_order_dao
-from utils import Converter, copy_file, delete_file
+from utils import Converter, FileRemover
+from core.settings import ROOT_PATH
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -31,12 +32,10 @@ class OrderCreationService:
     def __init__(
             self,
             order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderModel),
-            file_copier: Callable = copy_file
+            converter: Converter = Converter(OrderModel)
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
-        self.file_copier = file_copier
 
     def __call__(
             self,
@@ -45,27 +44,21 @@ class OrderCreationService:
             data: OrderCreationRequest
     ) -> OrderModel:
         try:
-            date_start = datetime.now(timezone.utc).date()
-            date_end = date_start + timedelta(days=randint(1, 2))
             order = self.order_data_access_obj.create(
                 payload.sub,
                 data.product_id,
-                date_start,
-                date_end,
+                datetime.now(timezone.utc).date(),
+                datetime.now(timezone.utc).date() + timedelta(days=randint(1, 2)),
                 data.delivery_address
             )
             order = self.converter.fetchone(order)
 
-            product_photo_path = os.path.join(
-                config.PRODUCT_CONTENT_PATH,
-                str(data.product_id)
+            copy(
+                join(ROOT_PATH, "images", "products", f"{order.product_id}.jpg"),
+                join(ROOT_PATH, "images", "orders", f"{order.order_id}.jpg")
             )
-            self.file_copier(product_photo_path, order.photo_path)
 
-            background_tasks.add_task(
-                order_creation_notification_task,
-                order.order_id
-            )
+            background_tasks.add_task(order_creation_notification_task, order.order_id)
 
             return order
         except ForeignKeyViolation:
@@ -117,20 +110,15 @@ class OrderUpdateService:
             data: OrderUpdateRequest
     ) -> OrderModel:
         try:
-            now = datetime.now(timezone.utc).date()
-            date_end = now + timedelta(days=randint(2, 3))
             order = self.order_data_access_obj.update(
                 order_id,
                 payload.sub,
-                date_end,
+                datetime.now(timezone.utc).date() + timedelta(days=randint(2, 3)),
                 data.delivery_address
             )
             order = self.converter.fetchone(order)
 
-            background_tasks.add_task(
-                order_update_notification_task,
-                order.order_id
-            )
+            background_tasks.add_task(order_update_notification_task, order.order_id)
 
             return order
         except ValueError:
@@ -145,11 +133,11 @@ class OrderDeletionService:
             self,
             order_dao: OrderDataAccessObject = get_order_dao(),
             converter: Converter = Converter(OrderModel),
-            file_deleter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "orders"))
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -160,7 +148,7 @@ class OrderDeletionService:
             order = self.order_data_access_obj.delete(order_id, payload.sub)
             order = self.converter.fetchone(order)
 
-            self.file_deleter(order.photo_path)
+            self.file_remover(order.order_id)
 
             return order
         except ValueError:

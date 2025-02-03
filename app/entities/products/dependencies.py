@@ -1,4 +1,5 @@
-from typing import Annotated, Callable
+from os.path import join
+from typing import Annotated
 from fastapi import UploadFile, File, Form, Query, Path, Cookie
 from fastapi import BackgroundTasks, Depends, HTTPException, status
 
@@ -11,7 +12,7 @@ from entities.products.models import (
 from auth import AuthorizationService, TokenPayloadModel
 from core.tasks import comments_removal_task, orders_removal_task
 from core.database import ProductDataAccessObject, get_product_dao
-from utils import Converter, write_file, delete_file
+from utils import Converter, FileWriter, FileRemover
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -24,7 +25,7 @@ class ProductCreationService:
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
             converter: Converter = Converter(ProductModel),
-            file_writer: Callable = write_file
+            file_writer: FileWriter = FileWriter(join("images", "products"))
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -47,7 +48,7 @@ class ProductCreationService:
         product = self.product_data_access_obj.create(name, price, description)
         product = self.converter.fetchone(product)
 
-        self.file_writer(product.photo_path, photo.file.read())
+        self.file_writer(product.product_id, photo.file.read())
 
         return product
 
@@ -143,7 +144,7 @@ class ProductUpdateService:
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
             converter: Converter = Converter(ProductModel),
-            file_writer: Callable = write_file
+            file_writer: FileWriter = FileWriter(join("images", "products"))
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -175,7 +176,7 @@ class ProductUpdateService:
             product = self.converter.fetchone(product)
 
             if photo:
-                self.file_writer(product.photo_path, photo.file.read())
+                self.file_writer(product.product_id, photo.file.read())
 
             return product
         except ValueError:
@@ -190,11 +191,11 @@ class ProductDeletionService:
             self,
             product_dao: ProductDataAccessObject = get_product_dao(),
             converter: Converter = Converter(ProductModel),
-            file_delter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "products"))
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
-        self.file_delter = file_delter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -209,7 +210,7 @@ class ProductDeletionService:
             background_tasks.add_task(comments_removal_task)
             background_tasks.add_task(orders_removal_task)
 
-            self.file_delter(product.photo_path)
+            self.file_remover(product.product_id)
 
             return product
         except ValueError:

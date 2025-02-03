@@ -45,7 +45,7 @@ function getOrderForm(data) {
     const productPhotoContainer = document.createElement("div");
     const productPhoto = document.createElement("img");
     productPhotoContainer.className = "order-creation-form_photo-container";
-    productPhoto.src = `${data.product_photo_path}`;
+    productPhoto.src = `/images/products/${data.product_id}.jpg?reload=${Date.now()}`;
     productPhoto.alt = "product";
     productPhotoContainer.appendChild(productPhoto);
 

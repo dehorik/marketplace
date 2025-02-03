@@ -1,4 +1,4 @@
-import os
+from os.path import join
 from typing import Annotated
 from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse
@@ -22,10 +22,7 @@ from core.settings import ROOT_PATH
 
 router = APIRouter(prefix='/products', tags=['prodcuts'])
 
-
-templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r"frontend\templates")
-)
+templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 
 
 @router.post("", response_model=ProductModel, status_code=status.HTTP_201_CREATED)
@@ -33,7 +30,6 @@ def create_product(
         product: Annotated[ProductModel, Depends(product_creation_service)]
 ):
     return product
-
 
 @router.get("/latest", response_model=ProductCardListModel)
 def get_latest_products(

@@ -1,6 +1,6 @@
-import os
+from os.path import join
+from typing import Annotated
 from pydantic import EmailStr
-from typing import Annotated, Callable
 from jwt import InvalidTokenError
 from fastapi import UploadFile, File, Form, Query
 from fastapi import BackgroundTasks, HTTPException, Depends,  Response, status
@@ -31,7 +31,7 @@ from core.tasks import (
 )
 from core.database import UserDataAccessObject, get_user_dao
 from core.settings import config
-from utils import Converter, write_file, delete_file
+from utils import Converter, FileWriter, FileRemover
 
 
 user_dependency = AuthorizationService(min_role_id=1)
@@ -69,13 +69,13 @@ class UserUpdateService:
             self,
             user_dao: UserDataAccessObject = get_user_dao(),
             converter: Converter = Converter(UserModel),
-            file_writer: Callable = write_file,
-            file_deleter: Callable = delete_file
+            file_writer: FileWriter = FileWriter(join("images", "users")),
+            file_remover: FileRemover = FileRemover(join("images", "users"))
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
         self.file_writer = file_writer
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -94,11 +94,6 @@ class UserUpdateService:
                 detail="conflict between flags and request body"
             )
 
-        if password:
-            hashed_password = get_password_hash(password)
-        else:
-            hashed_password = None
-
         if photo:
             if not check_file(photo):
                 raise HTTPException(
@@ -106,9 +101,8 @@ class UserUpdateService:
                     detail='invalid file type'
                 )
 
-            photo_path = os.path.join(config.USER_CONTENT_PATH, str(payload.sub))
-        else:
-            photo_path = None
+        hashed_password = get_password_hash(password) if password else None
+        has_photo = bool(photo)
 
         try:
             user = self.user_data_access_obj.update(
@@ -117,14 +111,14 @@ class UserUpdateService:
                 clear_photo=clear_photo,
                 username=username,
                 hashed_password=hashed_password,
-                photo_path=photo_path
+                has_photo=has_photo
             )
             user = self.converter.fetchone(user)
 
             if photo:
-                self.file_writer(user.photo_path, photo.file.read())
+                self.file_writer(user.user_id, photo.file.read())
             elif clear_photo:
-                self.file_deleter(os.path.join(config.USER_CONTENT_PATH, str(payload.sub)))
+                self.file_remover(user.user_id)
 
             if email:
                 background_tasks.add_task(
@@ -235,13 +229,13 @@ class UserDeletionService:
             redis_client: RedisClient = get_redis_client(),
             user_dao: UserDataAccessObject = get_user_dao(),
             converter: Converter = Converter(UserModel),
-            file_deleter: Callable = delete_file
+            file_remover: FileRemover = FileRemover(join("images", "users"))
     ):
         self.jwt_decoder = jwt_decoder
         self.redis_client = redis_client
         self.user_data_access_obj = user_dao
         self.converter = converter
-        self.file_deleter = file_deleter
+        self.file_remover = file_remover
 
     def __call__(
             self,
@@ -260,8 +254,8 @@ class UserDeletionService:
             background_tasks.add_task(comments_removal_task)
             background_tasks.add_task(orders_removal_task)
 
-            if user.photo_path:
-                self.file_deleter(user.photo_path)
+            if user.has_photo:
+                self.file_remover(user.user_id)
 
             return user
         except ValueError:

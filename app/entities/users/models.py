@@ -20,7 +20,7 @@ class UserModel(BaseModel):
     username: str
     email: EmailStr | None
     registration_date: date
-    photo_path: str | None
+    has_photo: bool
 
 
 class UserItemModel(BaseModel):
@@ -30,7 +30,7 @@ class UserItemModel(BaseModel):
     role_id: int
     role_name: str
     username: str
-    photo_path: str | None
+    has_photo: bool
 
 
 class UserItemListModel(BaseModel):

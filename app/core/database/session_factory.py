@@ -1,4 +1,4 @@
-from psycopg2 import InterfaceError, connect
+from psycopg2 import connect
 from psycopg2.extensions import cursor
 
 from core.settings import config

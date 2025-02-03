@@ -53,7 +53,7 @@ function createProductNode(product) {
     const photo = document.createElement("img");
     photoContainer.className = "product-catalog-card-photo";
     photoLink.href = productUrl;
-    photo.src = `/${product.photo_path}`;
+    photo.src = `/images/products/${product.product_id}.jpg?reload=${Date.now()}`;
     photo.alt = "photo";
     photoLink.append(photo);
     photoContainer.append(photoLink);
