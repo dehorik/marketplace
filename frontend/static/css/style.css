@@ -511,6 +511,7 @@ footer {
     height: 70%;
     width: 72%;
     border-radius: 50%;
+    border: 1px solid black;
 }
 
 .comment-username {
@@ -1187,6 +1188,7 @@ div.user-page_data-editing-btn {
     height: 100%;
     width: 100%;
     border-radius: 50%;
+    border: 3px solid black;
 }
 
 .user-data-editing-form_photo-buttons-container {
@@ -1364,8 +1366,6 @@ div.user-page_data-editing-btn {
 }
 
 
-
-
 .cart_header {
     width: 100%;
     height: 100px;
@@ -1426,13 +1426,13 @@ div.user-page_data-editing-btn {
     display: flex;
     align-items: center;
     font-weight: bolder;
-    font-size: 26px;
+    font-size: 24px;
 }
 
 .cart_grid {
     width: 95%;
     display: grid;
-    padding: 0 0 14px 0;
+    padding: 0 0 22px 0;
     margin: 0 auto;
 }
 
@@ -1542,7 +1542,7 @@ div.user-page_data-editing-btn {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 25px;
+    font-size: 22px;
     font-weight: bolder;
     border-top: 1px solid dimgray;
 }
@@ -1566,7 +1566,6 @@ div.user-page_data-editing-btn {
     background-color: #f1f1f1;
     border-radius: 10px;
 }
-
 
 
 .order-creation-form_container {
@@ -1748,6 +1747,340 @@ div.user-page_data-editing-btn {
 }
 
 
+.orders_header {
+    width: 100%;
+    height: 100px;
+    background-color: #FFFFFF;
+}
+
+.orders_header-logo {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0 1.6%;
+    width: 9.4%;
+    height: 100%;
+}
+
+.orders_header-logo img {
+    height: 70%;
+    width: 100%;
+}
+
+.orders_return-btn {
+    display: flex;
+    align-items: center;
+    height: 65px;
+    width: 100%;
+}
+
+.orders_return-btn a {
+    width: 3%;
+    height: 40%;
+    margin: 0 0 0 2.3%;
+}
+
+.orders_return-btn a img {
+    width: 100%;
+    height: 100%;
+}
+
+.orders_container {
+    width: 100%;
+    min-height: 494px;
+    display: flex;
+    align-items: start;
+    justify-content: center;
+}
+
+.orders {
+    min-height: 464px;
+    width: 96%;
+    margin: 0 0 30px 0;
+    background-color: white;
+    border-radius: 20px;
+}
+
+.orders_title {
+    width: 94%;
+    height: 70px;
+    margin: 10px auto 0;
+    display: flex;
+    align-items: center;
+    font-weight: bolder;
+    font-size: 24px;
+}
+
+.orders_grid {
+    width: 95%;
+    display: grid;
+    margin: 0 auto;
+    padding: 0 0 22px 0;
+}
+
+.orders-message {
+    height: 80px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bolder;
+    border-top: 1px solid dimgray;
+}
+
+.orders-message a {
+    color: dimgray;
+    text-decoration: none;
+}
+
+.orders-message a:hover {
+    color: #3b3af6;
+}
+
+.order-container {
+    height: 240px;
+    width: 100%;
+    margin: 10px 0 10px 0;
+    display: flex;
+    border: 1px solid dimgray;
+    border-radius: 15px;
+    transition: height ease 1.8s, margin ease 1.8s;
+}
+
+.order_photo-container {
+    width: 16%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order_photo-container a {
+    width: 90%;
+    height: 90%;
+}
+
+.order_photo-container a:hover {
+    cursor: pointer;
+}
+
+.order_photo-container a img {
+    height: 100%;
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid dimgray;
+}
+
+.order_text-data-container {
+    height: 100%;
+    width: 54%;
+}
+
+.order_product-name-container {
+    height: 34%;
+    width: 100%;
+    display: flex;
+    align-items: end;
+    font-size: 22px;
+    font-weight: bolder;
+}
+
+.order_product-name-container a {
+    color: black;
+    text-decoration: none;
+}
+
+.order_product-name-container a:hover {
+    cursor: pointer;
+}
+
+.order_product-price-container {
+    height: 16%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 21px;
+    font-weight: bolder;
+}
+
+.order_date-end-container {
+    height: 14%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.order_date-end-container span span {
+    font-weight: bolder;
+}
+
+.order_address-container {
+    height: 36%;
+    width: 100%;
+    display: flex;
+    align-items: start;
+    font-size: 18px;
+}
+
+.order_address-container span span {
+    font-weight: bolder;
+}
+
+.order_buttons-container {
+    height: 100%;
+    width: 30%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order_buttons {
+    height: 50%;
+    width: 100%;
+}
+
+.order_button-container {
+    height: 50%;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+}
+
+.order_button {
+    height: 80%;
+    width: 50%;
+    border: 2px solid dimgray;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 17px;
+    color: black;
+    text-decoration: none;
+}
+
+.order_button:hover {
+    cursor: pointer;
+    background-color: #ececec;
+}
+
+.order_button-container:last-child a{
+    background-color: #ececec;
+}
+
+.order_button-container:last-child a:hover {
+    background-color: #dedede;
+}
+
+.order-update-form-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.order-update-form {
+    height: 58%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: center;
+    gap: 1%;
+}
+
+.order-update-form label {
+    height: 28%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 19px;
+    font-weight: bolder;
+}
+
+.order-update-form input {
+    height: 28%;
+    width: 20%;
+    border: 2px solid dimgray;
+    border-radius: 10px;
+    padding: 0.6%;
+    font-size: 18px;
+}
+
+.order-update-form-buttons-container {
+    height: 28%;
+    width: 20%;
+    display: flex;
+}
+
+.order-update-form-button-container {
+    height: 100%;
+    width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-update-form-button-container a {
+    height: 100%;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bolder;
+    border: 2px solid dimgray;
+    border-radius: 10px;
+    color: black;
+    text-decoration: none;
+}
+
+.order-update-form-button-container a:hover {
+    cursor: pointer;
+    background-color: #ececec;
+}
+
+.order-update-form-button-container:last-child a {
+    background-color: #ececec;
+}
+
+.order-update-form-button-container:last-child a:hover {
+    background-color: #dedede;
+}
+
+.order-update-error-container {
+    height: 30%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    color: red;
+    font-weight: bolder;
+    font-size: 17px;
+}
+
+.order-deletion-error-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-size: 22px;
+    font-weight: bolder;
+    background-color: #f1f1f1;
+    border-radius: 15px;
+}
+
+.deleted-order-container {
+    height: 0;
+    margin: 0;
+    background-color: #f1f1f1;
+    border: 0.5px solid dimgray;
+}
 
 
 .no-display {

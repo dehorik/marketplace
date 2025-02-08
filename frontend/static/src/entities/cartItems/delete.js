@@ -1,4 +1,4 @@
-function deleteCartItem(node, cartItemId) {
+function deleteCartItem(cartItemId, node) {
     getVerifiedToken()
         .then((token) => {
             axios({

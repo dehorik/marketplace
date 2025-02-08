@@ -125,7 +125,7 @@ function createCartItemNode(cartItem) {
 
     if (cartItem.cart_item_id) {
         deleteBtn.addEventListener("click", () => {
-            deleteCartItem(container, cartItem.cart_item_id);
+            deleteCartItem(cartItem.cart_item_id, container);
         });
     }
     else {

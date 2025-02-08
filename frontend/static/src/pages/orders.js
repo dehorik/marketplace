@@ -1,7 +1,7 @@
-const cartItemsGrid = document.querySelector(".cart_grid");
+const ordersGrid = document.querySelector(".orders_grid");
 
 
-window.addEventListener("load", initCartItems);
+window.addEventListener("load", initOrders);
 
 window.addEventListener("beforeunload", () => {
     const state = new State();
@@ -9,7 +9,7 @@ window.addEventListener("beforeunload", () => {
 });
 
 
-function initCartItems() {
+function initOrders() {
     if (getToken()) {
         const state = new State();
         state.clear();
@@ -17,16 +17,16 @@ function initCartItems() {
 
         setTimeout(() => {
             const observer = new MutationObserver(() => {
-                if (cartItemsGrid.querySelectorAll(".cart-item_container").length <= 5) {
+                if (ordersGrid.querySelectorAll(".order-container").length <= 5) {
                     window.removeEventListener("scroll", checkPosition);
                     setTimeout(() => {
                         window.addEventListener("scroll", checkPosition);
                     }, 250);
 
-                    getCartItems();
+                    getOrders();
                 }
             });
-            observer.observe(cartItemsGrid, {
+            observer.observe(ordersGrid, {
                 childList: true,
                 subtree: true
             });
@@ -34,18 +34,15 @@ function initCartItems() {
             window.addEventListener("scroll", checkPosition);
         }, 500);
 
-        getCartItems();
+        getOrders();
     }
     else {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems"));
+        const message = document.createElement("div");
+        const messageText = document.createElement("span");
+        message.className = "orders-message";
+        messageText.innerHTML = "Чтобы просмотреть свои заказы, <a href='/auth/form?redirect_url=/orders'>войдите</a> в аккаунт";
+        message.appendChild(messageText);
 
-        if (!cartItems || cartItems.length === 0) {
-            appendCartItemsNotFoundMessage();
-        }
-        else {
-            for (let item of cartItems) {
-                appendCartItem(item);
-            }
-        }
+        ordersGrid.appendChild(message);
     }
 }
