@@ -23,7 +23,7 @@ function getProducts() {
                 if (products.length === 0) {
                     state.clear();
 
-                    if (!productsGrid.querySelector(".product-catalog-card")) {
+                    if (!productsGrid.firstChild) {
                         appendProductsNotFoundMessage();
                     }
                 }

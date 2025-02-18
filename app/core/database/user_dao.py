@@ -94,7 +94,7 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                         username,
                         email,
                         registration_date,
-                        photo_path
+                        has_photo
                     FROM users
                     WHERE user_id = %s;
                 """,
