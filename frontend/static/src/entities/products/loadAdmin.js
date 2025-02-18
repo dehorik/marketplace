@@ -93,6 +93,10 @@ function createAdminProductNode(product) {
     node.appendChild(buttonsContainer);
     container.appendChild(node);
 
+    deleteButton.addEventListener("click", () => {
+        deleteProduct(product.product_id, container);
+    });
+
     return container;
 }
 
