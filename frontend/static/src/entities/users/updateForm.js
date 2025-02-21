@@ -163,11 +163,11 @@ function getUserUpdateForm(user) {
         fileInput.click();
     });
 
-    photoDeleteBtn.addEventListener("click", deleteFile);
+    photoDeleteBtn.addEventListener("click", deleteUserPhoto);
 
     fileInput.addEventListener("change", (event) => {
-        uploadFile(event);
-    })
+        uploadUserPhoto(event);
+    });
 
     usernameInput.addEventListener("input", (event) => {
        checkUsername(6, 16, event.target.value.trim(), usernameInputErrorText);
@@ -248,7 +248,7 @@ function checkPassword(ge, le, password, errorText) {
     }
 }
 
-function uploadFile(event) {
+function uploadUserPhoto(event) {
     const photo = document.querySelector(".user-data-editing-form_photo-container img");
     const file = event.target.files[0];
 
@@ -263,7 +263,7 @@ function uploadFile(event) {
     }
 }
 
-function deleteFile() {
+function deleteUserPhoto() {
     const photo = document.querySelector(".user-data-editing-form_photo-container img");
     photo.src = "/static/img/default-avatar.png";
     photo.setAttribute("data-photo-type", "default");

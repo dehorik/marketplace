@@ -156,7 +156,7 @@ class ProductUpdateService:
             product_id: Annotated[int, Path(ge=1)],
             name: Annotated[str, Form(min_length=5, max_length=30)] = None,
             price: Annotated[int, Form(gt=0, le=100000)] = None,
-            descr: Annotated[str, Form(min_length=150, max_length=300)] = None,
+            description: Annotated[str, Form(min_length=150, max_length=300)] = None,
             photo: Annotated[UploadFile, File()] = None
     ) -> ProductModel:
         if photo:
@@ -171,7 +171,7 @@ class ProductUpdateService:
                 product_id=product_id,
                 name=name,
                 price=price,
-                description=descr,
+                description=description,
             )
             product = self.converter.fetchone(product)
 

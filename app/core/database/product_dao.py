@@ -174,6 +174,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product.price, 
                 COALESCE(score.rating, 0),
                 COALESCE(score.amount_comments, 0),
+                product.description,
                 product.has_photo
             FROM 
                 product LEFT JOIN (
@@ -219,6 +220,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                 product.price, 
                 COALESCE(score.rating, 0),
                 COALESCE(score.amount_comments, 0),
+                product.description,
                 product.has_photo
             FROM 
                 product LEFT JOIN (

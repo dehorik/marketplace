@@ -2377,34 +2377,265 @@ div.user-page_data-editing-btn {
 }
 
 
+.product-form-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.product-form {
+    height: 80%;
+    width: 50%;
+    background-color: white;
+    border-radius: 15px;
+}
 
+.product-form-title {
+    height: 10%;
+    width: 100%;
+    display: flex;
+}
 
+.product-form-title-return-button-container {
+    height: 100%;
+    width: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.product-form-title-return-button-container a {
+    height: 48%;
+    width: 52%;
+}
 
+.product-form-title-return-button-container a:hover {
+    cursor: pointer;
+}
 
+.product-form-title-return-button-container a img {
+    height: 100%;
+    width: 100%;
+}
 
+.product-form-title-text-container {
+    height: 100%;
+    width: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bolder;
+}
 
+.product-form form {
+    height: 82%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
 
+.product-form-name-price-photo-management {
+    height: 85%;
+    width: 36%;
+}
 
+.product-form-photo-management {
+    height: 70%;
+    width: 100%;
+}
 
+.product-form-photo-container {
+    height: 80%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.product-form-photo-container img {
+    height: 100%;
+    width: 82%;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+}
 
+.product-form-photo-upload-button-container {
+    height: 20%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.product-form-photo-upload-button-container a {
+    height: 65%;
+    width: 82%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bolder;
+    color: black;
+    border: 2px solid dimgray;
+    border-radius: 8px;
+}
 
+.product-form-photo-upload-button-container a:hover {
+    cursor: pointer;
+}
 
+.product-form-name-price-management {
+    height: 30%;
+    width: 100%;
+}
 
+.product-form-name-management {
+    height: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
+.product-form-name-management input {
+    height: 65%;
+    width: 82%;
+    padding: 2.6%;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+    font-size: 16px;
+    font-weight: bolder;
+}
 
+.product-form-name-management label {
+    height: 35%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bolder;
+}
 
+.product-form-price-management {
+    height: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
+.product-form-price-management input {
+    height: 65%;
+    width: 72%;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+    padding: 2.8%;
+    font-size: 16px;
+    font-weight: bolder;
+}
 
+.product-form-price-management div {
+    width: 10%;
+    height: 65%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: bolder;
+}
 
+.product-form-price-management label {
+    height: 35%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bolder;
+}
 
+.product-form-description-management {
+    height: 85%;
+    width: 64%;
+    display: flex;
+    justify-content: start;
+    flex-wrap: wrap;
+}
 
+.product-form-description-management textarea {
+    height: 94.7%;
+    width: 95%;
+    padding: 1%;
+    resize: none;
+    border: 2px solid dimgray;
+    border-radius: 8px;
+    font-size: 16px;
+}
 
+.product-form-description-management label {
+    height: 5.3%;
+    width: 95%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bolder;
+}
 
+.product-form-submit-button-container {
+    height: 10%;
+    width: 93.5%;
+    display: flex;
+    align-items: end;
+    margin: 0 auto;
+}
 
+.product-form-submit-button-container button {
+    height: 85%;
+    width: 32%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+    font-size: 16px;
+    font-weight: bolder;
+}
+
+.product-form-error-color {
+    color: red;
+}
+
+.product-form-submit-button-container button:hover {
+    background-color: #eeeeee;
+    cursor: pointer;
+}
+
+.product-form-error-container {
+    height: 5%;
+    width: 100%;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bolder;
+    color: red;
+}
+
+.product-form-footer {
+    height: 8%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 16px;
+}
 
 
 .no-display {

@@ -36,6 +36,7 @@ class ProductCardModel(BaseModel):
     price: int
     rating: float
     amount_comments: int
+    description: str
     has_photo: bool
 
 

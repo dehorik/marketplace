@@ -93,6 +93,10 @@ function createAdminProductNode(product) {
     node.appendChild(buttonsContainer);
     container.appendChild(node);
 
+    editingButton.addEventListener("click", () => {
+        appendProductForm(product, container);
+    });
+
     deleteButton.addEventListener("click", () => {
         deleteProduct(product.product_id, container);
     });
@@ -117,6 +121,10 @@ function appendAdminProductsNotFoundMessage() {
 
     buttonContainer.appendChild(text);
     buttonContainer.appendChild(button);
+
+    button.addEventListener("click", () => {
+        appendProductForm();
+    });
 }
 
 function deleteAdminProductsNotFoundMessage() {
@@ -132,6 +140,10 @@ function deleteAdminProductsNotFoundMessage() {
     button.appendChild(buttonText);
 
     buttonContainer.appendChild(button);
+
+    button.addEventListener("click", () => {
+        appendProductForm();
+    });
 }
 
 function checkPosition() {

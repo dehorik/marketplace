@@ -3,7 +3,7 @@ function appendOrderForm(data) {
         document.body.removeChild(document.body.firstChild);
     }
 
-    document.body.appendChild(getOrderForm(data));
+    document.body.prepend(getOrderForm(data));
 }
 
 function getOrderForm(data) {

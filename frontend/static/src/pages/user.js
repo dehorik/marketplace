@@ -244,11 +244,11 @@ function replaceAdminsWithProducts(node) {
 function appendProductsGrid(node) {
     const creationButtonContainer = document.createElement("div");
     const creationButtonContainerText = document.createElement("span");
-    const creationButton = document.createElement("div");
+    const creationButton = document.createElement("a");
     const creationButtonText = document.createElement("span");
     creationButtonContainer.className = "admin-panel_creation-button-container";
     creationButtonContainerText.textContent = "Товаров пока нет!";
-    creationButtonText.className = "Создать новый товар?";
+    creationButtonText.textContent = "Создать новый товар?";
     creationButton.appendChild(creationButtonText);
     creationButtonContainer.appendChild(creationButtonContainerText);
     creationButtonContainer.appendChild(creationButton);
@@ -283,6 +283,10 @@ function appendProductsGrid(node) {
     setTimeout(() => {
         window.addEventListener("scroll", checkPosition);
     }, 400);
+
+    creationButton.addEventListener("click", () => {
+        appendProductForm();
+    });
 }
 
 function deleteProductsGrid(node) {
@@ -299,7 +303,7 @@ function deleteProductsGrid(node) {
 
 function appendAdminsGrid(node) {
     const creationButtonContainer = document.createElement("div");
-    const creationButton = document.createElement("div");
+    const creationButton = document.createElement("a");
     const creationButtonText = document.createElement("span");
     creationButtonContainer.className = "admin-panel_creation-button-container";
     creationButtonText.textContent = "Добавить администратора";

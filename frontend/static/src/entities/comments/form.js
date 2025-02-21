@@ -3,7 +3,7 @@ function appendCommentForm(comment=null) {
         document.body.removeChild(document.body.firstChild);
     }
 
-    document.body.appendChild(getCommentForm(comment));
+    document.body.prepend(getCommentForm(comment));
 }
 
 function getCommentForm(comment=null) {
@@ -178,10 +178,10 @@ function getCommentForm(comment=null) {
     });
 
     fileInput.addEventListener("change", (event) => {
-        uploadFile(event);
+        uploadCommentPhoto(event);
     });
 
-    deleteButton.addEventListener("click", deleteFile);
+    deleteButton.addEventListener("click", deleteCommentPhoto);
 
     if (comment) {
         form.addEventListener("submit", (event) => {
@@ -243,7 +243,7 @@ function makeStarsActive(currentStar) {
     }
 }
 
-function uploadFile(event) {
+function uploadCommentPhoto(event) {
     const photo = document.querySelector(".comment-form-photo img");
     const file = event.target.files[0];
 
@@ -258,7 +258,7 @@ function uploadFile(event) {
     }
 }
 
-function deleteFile() {
+function deleteCommentPhoto() {
     const photo = document.querySelector(".comment-form-photo img");
     photo.src = "/static/img/empty_photo.png";
     photo.setAttribute("data-photo-type", "default");
