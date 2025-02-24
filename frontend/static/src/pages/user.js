@@ -190,15 +190,26 @@ function getAdminPanelNode(user) {
     productsButtonText.textContent = "Товары";
     productsButton.appendChild(productsButtonText);
 
-    const adminsButton = document.createElement("a");
-    const adminsButtonText = document.createElement("span");
-    adminsButton.classList.add("admin-panel_button");
-    adminsButtonText.textContent = "Администраторы";
-    adminsButton.appendChild(adminsButtonText);
-
     buttonsContainer.appendChild(accountButton);
     buttonsContainer.appendChild(productsButton);
-    buttonsContainer.appendChild(adminsButton);
+
+    if (user.role_id > 2) {
+        const adminsButton = document.createElement("a");
+        const adminsButtonText = document.createElement("span");
+        adminsButton.classList.add("admin-panel_button");
+        adminsButtonText.textContent = "Администраторы";
+        adminsButton.appendChild(adminsButtonText);
+
+        productsButton.addEventListener("click", () => {
+            replaceAdminsWithProducts(node);
+        });
+
+        adminsButton.addEventListener("click", () => {
+            replaceProductsWithAdmins(node);
+        });
+
+        buttonsContainer.appendChild(adminsButton);
+    }
 
     node.appendChild(buttonsContainer);
     appendProductsGrid(node);
@@ -206,14 +217,6 @@ function getAdminPanelNode(user) {
 
     accountButton.addEventListener("click", () => {
         deleteAdminPanelNode(user, container);
-    });
-
-    productsButton.addEventListener("click", () => {
-        replaceAdminsWithProducts(node);
-    });
-
-    adminsButton.addEventListener("click", () => {
-       replaceProductsWithAdmins(node);
     });
 
     return container;
@@ -317,6 +320,10 @@ function appendAdminsGrid(node) {
     node.appendChild(adminsGrid);
 
     getAdmins(adminsGrid);
+
+    creationButton.addEventListener("click", () => {
+        appendAdminCreationForm(adminsGrid);
+    });
 }
 
 function deleteAdminsGrid(node) {

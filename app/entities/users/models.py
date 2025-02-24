@@ -8,7 +8,7 @@ class EmailVerificationRequest(BaseModel):
 
 
 class SetRoleRequest(BaseModel):
-    user_id: int = Field(ge=1)
+    username: str = Field(min_length=6, max_length=16)
     role_id: int = Field(ge=1)
 
 

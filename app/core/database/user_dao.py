@@ -204,9 +204,31 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     users INNER JOIN role
                     ON users.role_id = role.role_id
                 WHERE role.role_id >= %s
-                ORDER BY role.role_id DESC;
+                ORDER BY role.role_id DESC, users.user_id ASC;
             """,
             params=[min_role_id]
+        )
+
+    def set_role(self, username: str, role_id: int, request_sender_id: int) -> tuple:
+        return self.__execute(
+            query="""
+                UPDATE users 
+                SET role_id = %s
+                WHERE username = %s AND user_id != %s;
+                
+                SELECT
+                    users.user_id,
+                    role.role_id,
+                    role.role_name,
+                    users.username,
+                    users.has_photo
+                FROM 
+                    users INNER JOIN role
+                    ON users.role_id = role.role_id
+                WHERE users.username = %s AND users.user_id != %s;
+            """,
+            params=[role_id, username, request_sender_id, username, request_sender_id],
+            fetchone=True
         )
 
 

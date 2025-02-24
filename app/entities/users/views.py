@@ -12,7 +12,7 @@ from entities.users.dependencies import (
     user_deletion_service,
     fetch_users_service
 )
-from entities.users.models import UserModel, UserItemListModel
+from entities.users.models import UserModel, UserItemModel, UserItemListModel
 from core.settings import ROOT_PATH
 
 
@@ -51,8 +51,8 @@ def verify_email(
 ):
     return user
 
-@router.patch("/role", response_model=UserModel)
-def set_role(user: Annotated[UserModel, Depends(role_management_service)]):
+@router.patch("/roles", response_model=UserItemModel)
+def set_role(user: Annotated[UserItemModel, Depends(role_management_service)]):
     return user
 
 @router.delete("/me", response_model=UserModel)

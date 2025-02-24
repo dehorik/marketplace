@@ -2273,6 +2273,27 @@ div.user-page_data-editing-btn {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: height ease 1s
+}
+
+.deleted-admin-container {
+    height: 0;
+}
+
+.deleted-admin {
+    background-color: #f1f1f1;
+}
+
+.admin-error-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    font-weight: bolder;
+    background-color: #f1f1f1;
+    border-radius: 12px;
 }
 
 .admin {
@@ -2373,6 +2394,168 @@ div.user-page_data-editing-btn {
 }
 
 .admin-buttons a:last-child:hover {
+    background-color: #dedede;
+}
+
+.admin-editing-form-container {
+    height: 100%;
+    width: 100%;
+}
+
+.admin-editing-form-container form {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-editing-form-return-btn-container {
+    height: 20%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-editing-form-return-btn-container a {
+    text-decoration: none;
+    color: black;
+    font-size: 18px;
+    font-weight: bolder;
+}
+
+.admin-editing-form-return-btn-container a:hover {
+    cursor: pointer;
+    color: dimgray;
+}
+
+.admin-editing-form-buttons-container {
+    height: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.admin-editing-form-buttons-container div {
+    height: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4%;
+    font-weight: bolder;
+    font-size: 16px;
+}
+
+.admin-editing-form-submit-btn-container {
+    height: 30%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-editing-form-submit-btn-container button {
+    height: 70%;
+    width: 10%;
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+    font-weight: bolder;
+    font-size: 16px;
+}
+
+.admin-editing-form-submit-btn-container button:hover {
+    cursor: pointer;
+    background-color: #eeeeee;
+}
+
+.admin-creation-form {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.admin-creation-form-username-container {
+    height: 30%;
+    width: 99.3%;
+    display: flex;
+    align-items: center;
+}
+
+.admin-creation-form-username-error-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 0 0.5%;
+    color: red;
+    font-size: 15px;
+    font-weight: bolder;
+}
+
+.admin-creation-form-username-container input {
+    height: 75%;
+    width: 12%;
+    border: 2px solid dimgray;
+    border-radius: 8px;
+    color: black;
+    padding: 0.5%;
+    font-size: 16px;
+    font-weight: bolder;
+}
+
+.admin-creation-form-role-buttons {
+    height: 40%;
+    width: 99%;
+}
+
+.admin-creation-form-role-buttons div {
+    height: 50%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5%;
+    font-weight: bolder;
+}
+
+.admin-creation-form-buttons {
+    height: 30%;
+    width: 99.3%;
+    display: flex;
+    gap: 0.5%;
+    align-items: center;
+}
+
+.admin-creation-form-buttons div, button {
+    height: 70%;
+    width: 7%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 2px solid dimgray;
+    background-color: white;
+    color: black;
+    font-weight: bolder;
+    font-size: 16px;
+}
+
+.admin-creation-form-buttons div {
+    background-color: #ececec;
+}
+
+.admin-creation-form-buttons button:hover {
+    cursor: pointer;
+    background-color: #ececec;
+}
+
+.admin-creation-form-buttons div:hover {
+    cursor: pointer;
     background-color: #dedede;
 }
 

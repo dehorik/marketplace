@@ -186,7 +186,7 @@ class RoleManagementService:
     def __init__(
             self,
             user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            converter: Converter = Converter(UserItemModel)
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
@@ -195,17 +195,12 @@ class RoleManagementService:
             self,
             payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)],
             data: SetRoleRequest
-    ) -> UserModel:
-        if payload.sub == data.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="you cannot change your role"
-            )
-
+    ) -> UserItemModel:
         try:
-            user = self.user_data_access_obj.update(
-                user_id=data.user_id,
-                role_id=data.role_id
+            user = self.user_data_access_obj.set_role(
+                username=data.username,
+                role_id=data.role_id,
+                request_sender_id=payload.sub
             )
             user = self.converter.fetchone(user)
 
