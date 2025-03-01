@@ -1,4 +1,6 @@
 function updateUser(clearEmail, clearPhoto, username, password, email, photo) {
+    // апи запрос на обновление данных пользователя
+
     const data = new FormData();
 
     data.set("clear_email", clearEmail);

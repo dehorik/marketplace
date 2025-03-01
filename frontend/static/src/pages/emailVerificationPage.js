@@ -1,7 +1,11 @@
-window.addEventListener("load", verifyEmail);
+window.addEventListener("load", () => {
+    verifyEmail();
+});
 
 
 function verifyEmail() {
+    // апи запрос на связывание почты с аккаунтом
+
     const token = new URLSearchParams(window.location.search).get('token');
     const status = document.querySelector(".email-verification_status span");
 

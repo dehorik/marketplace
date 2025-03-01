@@ -1,4 +1,8 @@
 function appendUserDeletionForm(user) {
+    // функция, добавляющая форму для удаления пользователя в контейнер страницы пользователя;
+    // (все прежнее содержимое удаляется, таким обазом, для возврата на предыдущую страницу придется
+    // рендерить все снова (+ апи запрос на бэк для получения актуальных данных о юзере))
+
     const container = document.querySelector(".user-page_container");
 
     while (container.firstChild) {
@@ -9,6 +13,9 @@ function appendUserDeletionForm(user) {
 }
 
 function getUserDeletionForm(user) {
+    // функция, которая возвращает дом элемент формы для удаления пользователя;
+    // обработчики событий вешаются здесь
+
     const container = document.createElement("div");
     container.className = "user-deletion-form";
 

@@ -1,4 +1,6 @@
 function deleteOrder(orderId, node) {
+    // апи запрос на удаление заказа
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -16,27 +18,23 @@ function deleteOrder(orderId, node) {
                         ordersGrid.removeChild(node);
 
                         if (!ordersGrid.querySelector(".order-container")) {
-                            appendOrdersNotFoundMessage();
+                            appendOrdersNotFoundMessage("Тут пока пусто!");
                         }
                     }, 1800);
                 })
                 .catch(() => {
-                    appendOrderDeletionError(node);
+                    const error = document.createElement("div");
+                    const errorText = document.createElement("span");
+                    error.className = "order-deletion-error-container";
+                    errorText.textContent = "Не удалось удалить заказ";
+                    error.appendChild(errorText);
+
+                    node.innerHTML = null;
+                    node.appendChild(error);
                 });
         })
         .catch(() => {
             deleteToken();
             window.location.href = "/auth/form?redirect_url=/orders";
         });
-}
-
-function appendOrderDeletionError(node) {
-    const error = document.createElement("div");
-    const errorText = document.createElement("span");
-    error.className = "order-deletion-error-container";
-    errorText.textContent = "Не удалось удалить заказ";
-    error.appendChild(errorText);
-
-    node.innerHTML = null;
-    node.appendChild(error);
 }

@@ -1,4 +1,6 @@
 function deleteCartItem(cartItemId, node) {
+    // апи запрос на удаление товара из корзины
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -16,7 +18,7 @@ function deleteCartItem(cartItemId, node) {
                         cartItemsGrid.removeChild(node);
 
                         if (!cartItemsGrid.querySelector(".cart-item_container")) {
-                            appendCartItemsNotFoundMessage();
+                            appendCartItemsNotFoundMessage("Тут пока пусто!");
                         }
                     }, 1800);
                 })
@@ -31,6 +33,8 @@ function deleteCartItem(cartItemId, node) {
 }
 
 function deleteCartItemFromStorage(node, productId) {
+    // удаление товара из localStorage
+
     try {
         node.innerHTML = null;
         node.classList.add("deleted-cart-item");
@@ -39,7 +43,7 @@ function deleteCartItemFromStorage(node, productId) {
             document.querySelector(".cart_grid").removeChild(node);
 
             if (!cartItemsGrid.querySelector(".cart-item_container")) {
-                appendCartItemsNotFoundMessage();
+                appendCartItemsNotFoundMessage("Тут пока пусто!");
             }
         }, 1800);
 
@@ -60,6 +64,8 @@ function deleteCartItemFromStorage(node, productId) {
 }
 
 function appendCartItemDeletionError(node) {
+    // добавление сообщения об ошибке, возникшей во время удаления товара из корзины
+
     const error = document.createElement("div");
     const errorText = document.createElement("span");
     error.className = "cart-item-deletion-error";

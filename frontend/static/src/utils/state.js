@@ -1,5 +1,10 @@
 class State {
+    // класс для создания объектов состояния, хранящих временные данные
+    // для параметризации get запросов
+
     constructor() {
+        // создаем объект состояния на основе данных из localStorage
+
         let data = JSON.parse(localStorage.getItem("state"));
 
         if (data) {
@@ -11,20 +16,28 @@ class State {
     }
 
     get(key) {
+        // получение данных о состоянии по ключу
+
         return this.data[key];
     }
 
     set(key, value) {
+        // запись в состояние данных по ключу
+
         this.data[key] = value;
         localStorage.setItem("state", JSON.stringify(this.data));
     }
 
-    clear() {
-        this.data = {};
-        localStorage.removeItem("state");
+    delete(key) {
+        // удаление данных из состояния по ключу
+
+        delete this.data[key];
+        localStorage.setItem("state", JSON.stringify(this.data));
     }
 
-    isEmpty() {
-        return Object.keys(this.data).length === 0;
+    hasProperty(key) {
+        // проверка наличия данных в состоянии по ключу
+
+        return Object.prototype.hasOwnProperty.call(this.data, key);
     }
 }

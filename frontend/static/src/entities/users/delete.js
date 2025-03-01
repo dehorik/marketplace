@@ -1,4 +1,6 @@
 function deleteUser() {
+    // апи запрос на удаление пользователя
+
     getVerifiedToken()
         .then((token) => {
             axios({

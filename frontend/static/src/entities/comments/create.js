@@ -1,4 +1,6 @@
 function createComment(productId, rating, text, photo) {
+    // апи запрос на создание отзыва
+
     const data = new FormData();
 
     data.append("product_id", productId);

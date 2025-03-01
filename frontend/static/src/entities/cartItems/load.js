@@ -1,7 +1,9 @@
 function getCartItems() {
+    // апи запрос на получение товаров в корзине пользователя
+
     const state = new State();
 
-    if (!state.isEmpty()) {
+    if (state.hasProperty("lastCartItemId")) {
         getVerifiedToken()
             .then((token) => {
                 axios({
@@ -12,21 +14,21 @@ function getCartItems() {
                     },
                     params: {
                         amount: 15,
-                        last_id: state.get("last_id")
+                        last_id: state.get("lastCartItemId")
                     }
                 })
                     .then((response) => {
                         let cartItems = response.data.cart_items;
 
                         if (cartItems.length === 0) {
-                            state.clear();
+                            state.delete("lastCartItemId");
 
                             if (!cartItemsGrid.querySelector(".cart-item_container")) {
-                                appendCartItemsNotFoundMessage();
+                                appendCartItemsNotFoundMessage("Тут пока пусто!");
                             }
                         }
                         else {
-                            state.set("last_id", cartItems.slice(-1)[0].cart_item_id);
+                            state.set("lastCartItemId", cartItems.slice(-1)[0].cart_item_id);
 
                             for (let item of cartItems) {
                                 appendCartItem(item);
@@ -35,7 +37,7 @@ function getCartItems() {
                     })
                     .catch(() => {
                         if (!cartItemsGrid.querySelector(".cart-item_container")) {
-                            appendCartItemsNotFoundMessage();
+                            appendCartItemsNotFoundMessage("Возникла ошибка во время загрузки товаров в корзине");
                         }
                     });
             })
@@ -47,10 +49,14 @@ function getCartItems() {
 }
 
 function appendCartItem(cartItem) {
+    // добавление узла карточки товара в корзине в сетку
+
     cartItemsGrid.appendChild(createCartItemNode(cartItem));
 }
 
 function createCartItemNode(cartItem) {
+    // создание узла карточки товара в корзине
+
     const container = document.createElement("div");
     container.className = "cart-item_container";
     container.setAttribute("data-product-id", cartItem.product_id);
@@ -137,27 +143,31 @@ function createCartItemNode(cartItem) {
     return container;
 }
 
-function appendCartItemsNotFoundMessage() {
+function appendCartItemsNotFoundMessage(text) {
+    // добавляем сообщение, если товары в корзине не были найдены
+
     if (!cartItemsGrid.querySelector(".cart-items-message")) {
         const message = document.createElement("div");
         const messageText = document.createElement("span");
         message.className = "cart-items-message";
-        messageText.textContent = "Тут пока пусто!";
+        messageText.textContent = text;
         message.appendChild(messageText);
 
         cartItemsGrid.appendChild(message);
     }
 }
 
-function checkPosition() {
+function checkCartItemsPosition() {
+    // отслеживание текущей позиции для дозагрузки товаров из корзины
+
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     const scrollPosition = window.scrollY;
 
     if (documentHeight - (windowHeight + scrollPosition) <= 220) {
-        window.removeEventListener("scroll", checkPosition);
+        window.removeEventListener("scroll", checkCartItemsPosition);
         setTimeout(() => {
-            window.addEventListener("scroll", checkPosition);
+            window.addEventListener("scroll", checkCartItemsPosition);
         }, 250);
 
         getCartItems();

@@ -1,7 +1,14 @@
-window.addEventListener("load", appendUserPage);
+window.addEventListener("load", () => {
+    // этот файл нужен для инициализации именно страницы пользователя,
+    // админ панель инициализируется другим файлом (adminPanel.js);
+
+    appendUserPage();
+});
 
 
 function appendUserPage() {
+    // добавляем страницу пользователя, перед этим запрашиваем с бэка его данные
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -32,6 +39,8 @@ function appendUserPage() {
 }
 
 function getUserPageNode(user) {
+    // создание дом узла страницы пользователя + вешаем слушатели событий на кнопочки
+
     const container = document.createElement("div");
     container.className = "user-page";
 
@@ -137,6 +146,8 @@ function getUserPageNode(user) {
     navbar.appendChild(ordersBtnContainer);
 
     if (user.role_id >= 2) {
+        // добавляем досуп к админ панели при наличии соответствующих прав
+
         const adminBtnContainer = document.createElement("div");
         const adminBtn = document.createElement("a");
         const adminBtnText = document.createElement("span");
@@ -166,186 +177,4 @@ function getUserPageNode(user) {
     logoutBtn.addEventListener("click", logout);
 
     return container;
-}
-
-function getAdminPanelNode(user) {
-    const container = document.createElement("div");
-    container.className = "admin-panel_container";
-
-    const node = document.createElement("div");
-    node.className = "admin-panel";
-
-    const buttonsContainer = document.createElement("div");
-    buttonsContainer.className = "admin-panel_buttons";
-
-    const accountButton = document.createElement("a");
-    const accountButtonText = document.createElement("span");
-    accountButton.classList.add("admin-panel_button");
-    accountButtonText.textContent = "Аккаунт";
-    accountButton.appendChild(accountButtonText);
-
-    const productsButton = document.createElement("a");
-    const productsButtonText = document.createElement("span");
-    productsButton.classList.add("admin-panel_button", "admin-panel_chosen-button");
-    productsButtonText.textContent = "Товары";
-    productsButton.appendChild(productsButtonText);
-
-    buttonsContainer.appendChild(accountButton);
-    buttonsContainer.appendChild(productsButton);
-
-    if (user.role_id > 2) {
-        const adminsButton = document.createElement("a");
-        const adminsButtonText = document.createElement("span");
-        adminsButton.classList.add("admin-panel_button");
-        adminsButtonText.textContent = "Администраторы";
-        adminsButton.appendChild(adminsButtonText);
-
-        productsButton.addEventListener("click", () => {
-            replaceAdminsWithProducts(node);
-        });
-
-        adminsButton.addEventListener("click", () => {
-            replaceProductsWithAdmins(node);
-        });
-
-        buttonsContainer.appendChild(adminsButton);
-    }
-
-    node.appendChild(buttonsContainer);
-    appendProductsGrid(node);
-    container.appendChild(node);
-
-    accountButton.addEventListener("click", () => {
-        deleteAdminPanelNode(user, container);
-    });
-
-    return container;
-}
-
-function replaceProductsWithAdmins(node) {
-    if (!node.querySelector(".admin-panel_admins-grid")) {
-        deleteProductsGrid(node);
-        appendAdminsGrid(node);
-
-        const navbarButtons = node.querySelectorAll(".admin-panel_buttons a");
-        navbarButtons[1].classList.remove("admin-panel_chosen-button");
-        navbarButtons[2].classList.add("admin-panel_chosen-button");
-    }
-}
-
-function replaceAdminsWithProducts(node) {
-    if (!node.querySelector(".admin-panel_products-grid")) {
-        deleteAdminsGrid(node);
-        appendProductsGrid(node);
-
-        const navbarButtons = node.querySelectorAll(".admin-panel_buttons a");
-        navbarButtons[2].classList.remove("admin-panel_chosen-button");
-        navbarButtons[1].classList.add("admin-panel_chosen-button");
-    }
-}
-
-function appendProductsGrid(node) {
-    const creationButtonContainer = document.createElement("div");
-    const creationButtonContainerText = document.createElement("span");
-    const creationButton = document.createElement("a");
-    const creationButtonText = document.createElement("span");
-    creationButtonContainer.className = "admin-panel_creation-button-container";
-    creationButtonContainerText.textContent = "Товаров пока нет!";
-    creationButtonText.textContent = "Создать новый товар?";
-    creationButton.appendChild(creationButtonText);
-    creationButtonContainer.appendChild(creationButtonContainerText);
-    creationButtonContainer.appendChild(creationButton);
-
-    const productsGrid = document.createElement("div");
-    productsGrid.className = "admin-panel_products-grid";
-
-    node.appendChild(creationButtonContainer);
-    node.appendChild(productsGrid);
-
-    const observer = new MutationObserver(() => {
-        if (productsGrid.querySelectorAll(".admin-panel_product-container").length <= 30) {
-            window.removeEventListener("scroll", checkPosition);
-            setTimeout(() => {
-                window.addEventListener("scroll", checkPosition);
-            }, 250);
-
-            getAdminProducts(productsGrid);
-        }
-    });
-    observer.observe(productsGrid, {
-        childList: true,
-        subtree: true
-    });
-
-    const state = new State();
-    state.clear();
-    state.set("last_id", null);
-
-    getAdminProducts(productsGrid);
-
-    setTimeout(() => {
-        window.addEventListener("scroll", checkPosition);
-    }, 400);
-
-    creationButton.addEventListener("click", () => {
-        appendProductForm();
-    });
-}
-
-function deleteProductsGrid(node) {
-    const creationButtonContainer = document.querySelector(".admin-panel_creation-button-container");
-    const productsGrid = document.querySelector(".admin-panel_products-grid");
-    node.removeChild(creationButtonContainer);
-    node.removeChild(productsGrid);
-
-    const state = new State();
-    state.clear();
-
-    window.removeEventListener("scroll", checkPosition);
-}
-
-function appendAdminsGrid(node) {
-    const creationButtonContainer = document.createElement("div");
-    const creationButton = document.createElement("a");
-    const creationButtonText = document.createElement("span");
-    creationButtonContainer.className = "admin-panel_creation-button-container";
-    creationButtonText.textContent = "Добавить администратора";
-    creationButton.appendChild(creationButtonText);
-    creationButtonContainer.appendChild(creationButton);
-
-    const adminsGrid = document.createElement("div");
-    adminsGrid.className = "admin-panel_admins-grid";
-
-    node.appendChild(creationButtonContainer);
-    node.appendChild(adminsGrid);
-
-    getAdmins(adminsGrid);
-
-    creationButton.addEventListener("click", () => {
-        appendAdminCreationForm(adminsGrid);
-    });
-}
-
-function deleteAdminsGrid(node) {
-    const creationButtonContainer = document.querySelector(".admin-panel_creation-button-container");
-    const adminsGrid = document.querySelector(".admin-panel_admins-grid");
-    node.removeChild(creationButtonContainer);
-    node.removeChild(adminsGrid);
-}
-
-function appendAdminPanelNode(user, userPageContainer) {
-    document.body.replaceChild(getAdminPanelNode(user), userPageContainer);
-}
-
-function deleteAdminPanelNode(user, adminPanelNode) {
-    const state = new State();
-    state.clear();
-
-    window.removeEventListener("scroll", checkPosition);
-
-    const userPageContainer = document.createElement("div");
-    userPageContainer.className = "user-page_container";
-    userPageContainer.appendChild(getUserPageNode(user));
-
-    document.body.replaceChild(userPageContainer, adminPanelNode);
 }

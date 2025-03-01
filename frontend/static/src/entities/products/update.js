@@ -1,4 +1,6 @@
 function updateProduct(productId, name, price, description, photo, form, productNode) {
+    // апи запрос на обновление данных о товаре
+
     getVerifiedToken()
         .then((token) => {
             const data = new FormData();
@@ -18,7 +20,7 @@ function updateProduct(productId, name, price, description, photo, form, product
             })
                 .then((response) => {
                     const productsGrid = document.querySelector(".admin-panel_products-grid");
-                    const updatedProductNode = createAdminProductNode(response.data);
+                    const updatedProductNode = createAdminPanelProductNode(response.data);
 
                     productsGrid.replaceChild(updatedProductNode, productNode);
 

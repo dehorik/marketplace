@@ -1,38 +1,15 @@
-function createAdmin(username, roleId, container) {
-    getVerifiedToken()
-        .then((token) => {
-            axios({
-                url: "/users/roles",
-                method: "patch",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                data: {
-                    username: username,
-                    role_id: roleId
-                }
-            })
-                .then((response) => {
-                    container.parentNode.replaceChild(createAdminNode(response.data), container);
-                })
-                .catch(() => {
-                    const errorText = container.querySelector(".admin-creation-form-username-error-container span");
-                    errorText.textContent = "Не удалось добавить администратора";
-                });
-        })
-        .catch(() => {
-            deleteToken();
-            window.location.href = "/auth/form?redirect_url=/users/me/home";
-        });
-}
-
 function appendAdminCreationForm(adminsGrid) {
+    // добавление формы для создания админа (выдачи прав пользователю);
+    // форма добавляется непосредственно в сетку админов
+
     if (!adminsGrid.querySelector(".admin-creation-form")) {
         adminsGrid.prepend(getAdminCreationForm(adminsGrid));
     }
 }
 
 function deleteAdminCreationForm(container) {
+    // удаление формы для создания админа
+
     container.classList.add("deleted-admin-container");
     container.firstChild.innerHTML = null;
     container.firstChild.classList.add("deleted-admin");
@@ -43,6 +20,9 @@ function deleteAdminCreationForm(container) {
 }
 
 function getAdminCreationForm(adminsGrid) {
+    // создание дом узла формы для создания админа;
+    // все нужные обработчики вешаются тут же
+
     const container = document.createElement("div");
     container.className = "admin-container";
 
@@ -154,6 +134,8 @@ function getAdminCreationForm(adminsGrid) {
 }
 
 function checkAdminUsername(username, errorText) {
+    // валидация юзернейма
+
     if (username.length === 0) {
         errorText.textContent = null;
     }

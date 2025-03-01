@@ -1,4 +1,6 @@
 function updateComment(productId, commentId, clearText, clearPhoto, rating, text, photo) {
+    // апи запрос на изменение отзыва
+
     const data = new FormData();
 
     data.append("clear_text", clearText);

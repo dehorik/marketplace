@@ -1,4 +1,6 @@
-function deleteComment(node, commentId, productId) {
+function deleteComment(commentId, productId, node) {
+    // апи запрос на удаление отзыва
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -23,7 +25,9 @@ function deleteComment(node, commentId, productId) {
                         recalculateProductRating();
 
                         if (commentsGrid.querySelectorAll(".comment").length === 0) {
-                            appendCommentsNotFoundMessage();
+                            appendCommentsNotFoundMessage(
+                                "Отзывы не найдены. Вам нужно заказать товар, чтобы иметь возможность оставить отзыв."
+                            );
                         }
                     }, 1610);
                 })
@@ -45,6 +49,8 @@ function deleteComment(node, commentId, productId) {
 }
 
 function recalculateProductRating() {
+    // меняем количество отзывов о товаре и его рейтинг после удаления одного из отзывов пользователем
+
     const amountCommentsContainer = document.querySelector(".product_amount-comments span");
     const ratingContainer = document.querySelector(".product-rating span");
     const starContainer = document.querySelector(".product-rating img");
@@ -63,14 +69,14 @@ function recalculateProductRating() {
         ratingContainer.textContent = String(rating);
 
         if (rating >= 4) {
-            starContainer.src = "/static/img/active_star.png";
+            starContainer.src = "/static/img/active-star.png";
         }
         else {
-            starContainer.src = "/static/img/inactive_star.png";
+            starContainer.src = "/static/img/inactive-star.png";
         }
     }
     else {
         ratingContainer.textContent = "0.0";
-        starContainer.src = "/static/img/inactive_star.png";
+        starContainer.src = "/static/img/inactive-star.png";
     }
 }

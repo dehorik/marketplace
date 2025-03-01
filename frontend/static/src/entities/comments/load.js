@@ -1,42 +1,56 @@
 function getComments() {
+    // апи запрос на получение отзывов
+
     const state = new State();
 
-    if (!state.isEmpty()) {
+    if (state.hasProperty("lastCommentId") && state.hasProperty("currentProductId")) {
         axios({
             url: "/comments/latest",
             method: "get",
             params: {
-                product_id: state.get("product_id"),
+                product_id: state.get("currentProductId"),
                 amount: 15,
-                last_id: state.get("last_id")
+                last_id: state.get("lastCommentId")
             }
         })
             .then((response) => {
                 let comments = response.data.comments;
 
                 if (comments.length === 0) {
-                    state.clear();
+                    state.delete("lastCommentId");
+                    state.delete("currentProductId");
 
                     if (!commentsGrid.querySelector(".comment")) {
-                        appendCommentsNotFoundMessage();
+                        appendCommentsNotFoundMessage(
+                            "Отзывы не найдены. Вам нужно заказать товар, чтобы иметь возможность оставить отзыв."
+                        );
                     }
                 }
                 else {
-                    state.set("last_id", comments.slice(-1)[0].comment_id);
+                    state.set("lastCommentId", comments.slice(-1)[0].comment_id);
 
                     for (let comment of comments) {
                         appendComment(comment);
                     }
+                }
+            })
+            .catch(() => {
+                if (!commentsGrid.querySelector(".comment")) {
+                    appendCommentsNotFoundMessage("Возникла ошибка во время загрузки отзывов.");
                 }
             });
     }
 }
 
 function appendComment(comment) {
+    // добавление ноды отзыва в сетку
+
     commentsGrid.append(createCommentNode(comment));
 }
 
 function createCommentNode(comment) {
+    // создание ноды отзыва
+
     const container = document.createElement("div");
     container.className = "comment";
     container.setAttribute("data-comment-id", comment.comment_id);
@@ -50,7 +64,6 @@ function createCommentNode(comment) {
     const userPhotoContainer = document.createElement("div");
     const userPhoto = document.createElement("img");
     userPhotoContainer.className = "comment-user-photo";
-    userPhoto.alt = "user";
 
     if (comment.user_has_photo) {
         userPhoto.src = `/images/users/${comment.user_id}.jpg?reload=${Date.now()}`;
@@ -75,13 +88,12 @@ function createCommentNode(comment) {
 
     for (let i = 1; i < 6; i++) {
         const starImg = document.createElement("img");
-        starImg.alt = "star";
 
         if (comment.rating >= i) {
-            starImg.src = "/static/img/active_star.png";
+            starImg.src = "/static/img/active-star.png";
         }
         else {
-            starImg.src = "/static/img/inactive_star.png";
+            starImg.src = "/static/img/inactive-star.png";
         }
 
         stars.append(starImg);
@@ -105,7 +117,6 @@ function createCommentNode(comment) {
         const commentPhoto = document.createElement("img");
         commentPhotoContainer.className = "comment-photo";
         commentPhoto.src = `/images/comments/${comment.comment_id}.jpg?reload=${Date.now()}`;
-        commentPhoto.alt = "photo";
         commentPhotoContainer.append(commentPhoto);
 
         dataContainer.append(commentPhotoContainer);
@@ -116,6 +127,8 @@ function createCommentNode(comment) {
     const token = getToken();
 
     if (token && comment.user_id === decodeToken(token).sub) {
+        // если отзыв принадлежит текущему пользователю - добавляем ему кнопки для управления отзывом
+
         const buttonsContainer = document.createElement("div");
         buttonsContainer.classList.add("comment-buttons-container", "no-display");
 
@@ -139,7 +152,7 @@ function createCommentNode(comment) {
         });
 
         deleteButton.addEventListener("click", () => {
-            deleteComment(container, comment.comment_id, comment.product_id);
+            deleteComment(comment.comment_id, comment.product_id, container);
         });
 
         container.addEventListener("mouseenter", (event) => {
@@ -155,6 +168,8 @@ function createCommentNode(comment) {
 }
 
 function showCommentButtons(event) {
+    // показываем кнопки для управления отзывом
+
     const dataContainer = event.target.querySelector(".comment-data-container");
 
     if (dataContainer) {
@@ -176,6 +191,8 @@ function showCommentButtons(event) {
 }
 
 function hideCommentButtons(event) {
+    // скрываем кнопки для управления отзывом
+
     const dataContainer = event.target.querySelector(".comment-data-container");
 
     if (dataContainer) {
@@ -193,25 +210,29 @@ function hideCommentButtons(event) {
     }
 }
 
-function appendCommentsNotFoundMessage() {
+function appendCommentsNotFoundMessage(text) {
+    // добавляем сообщение, если отзывы не были найдены
+
     if (!commentsGrid.querySelector(".comments-message")) {
         const message = document.createElement("div");
         message.className = "comments-message";
-        message.textContent = "Отзывы не найдены. Вам нужно заказать товар, чтобы иметь возможность оставить отзыв.";
+        message.textContent = text;
 
         commentsGrid.append(message);
     }
 }
 
-function checkPosition() {
+function checkCommentsPosition() {
+    // отслеживание позиции для дозагрузки отзывов
+
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     const scrollPosition = window.scrollY;
 
     if (documentHeight - (windowHeight + scrollPosition) <= 220) {
-        window.removeEventListener("scroll", checkPosition);
+        window.removeEventListener("scroll", checkCommentsPosition);
         setTimeout(() => {
-            window.addEventListener("scroll", checkPosition);
+            window.addEventListener("scroll", checkCommentsPosition);
         }, 250);
 
         getComments();

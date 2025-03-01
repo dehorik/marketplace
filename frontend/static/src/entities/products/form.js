@@ -1,4 +1,8 @@
 function appendProductForm(product=null, productNode=null) {
+    // добавление формы для управления товаром (создание и обновление товаров);
+    // при создании: ничего не передавать
+    // при обновлении: передать js object, содержащий данные о товаре, и текущую ноду карточки товара
+
     for (let node of document.body.children) {
         node.classList.add("no-display");
     }
@@ -7,6 +11,8 @@ function appendProductForm(product=null, productNode=null) {
 }
 
 function deleteProductForm(container) {
+    // удаление формы для создания товара
+
     container.remove();
 
     for (let node of document.body.children) {
@@ -15,6 +21,8 @@ function deleteProductForm(container) {
 }
 
 function getProductForm(product=null, productNode=null) {
+    // создание дом узла формы для управления товаром
+
     const container = document.createElement("div");
     container.className = "product-form-container";
 
@@ -28,7 +36,7 @@ function getProductForm(product=null, productNode=null) {
     const returnButton = document.createElement("a");
     const returnButtonImg = document.createElement("img");
     returnButtonContainer.className = "product-form-title-return-button-container";
-    returnButtonImg.src = "/static/img/back.png";
+    returnButtonImg.src = "/static/img/arrow-back.png";
     returnButton.appendChild(returnButtonImg);
     returnButtonContainer.appendChild(returnButton);
 
@@ -58,7 +66,7 @@ function getProductForm(product=null, productNode=null) {
         photo.src = `/images/products/${product.product_id}.jpg?reload=${Date.now()}`;
     }
     else {
-        photo.src = "/static/img/empty_photo.png";
+        photo.src = "/static/img/empty-photo.png";
     }
 
     photoContainer.appendChild(photo);
@@ -249,6 +257,8 @@ function getProductForm(product=null, productNode=null) {
 }
 
 function uploadProductPhoto(event, globalErrorText) {
+    // загрузка изображения товара
+
     const photo = document.querySelector(".product-form-photo-container img");
     const file = event.target.files[0];
 
@@ -265,6 +275,8 @@ function uploadProductPhoto(event, globalErrorText) {
 }
 
 function checkProductName(name, errorText, globalErrorText) {
+    // валидация названия товара
+
     globalErrorText.textContent = null;
 
     if ((name.length < 5 || name.length > 30) && name.length !== 0) {
@@ -284,6 +296,8 @@ function checkProductName(name, errorText, globalErrorText) {
 }
 
 function checkProductPrice(price, errorText, globalErrorText) {
+    // валидация цены товара
+
     globalErrorText.textContent = null;
 
     const intPrice = parseInt(price, 10);
@@ -309,6 +323,8 @@ function checkProductPrice(price, errorText, globalErrorText) {
 }
 
 function checkProductDescription(description, errorText, globalErrorText) {
+    // валидация описания товара
+
     globalErrorText.textContent = null;
 
     if (description.length === 0) {

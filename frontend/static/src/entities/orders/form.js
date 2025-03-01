@@ -1,4 +1,6 @@
 function appendOrderForm(data) {
+    // добавление на страницу формы для создания заказа
+
     while (document.body.firstChild) {
         document.body.removeChild(document.body.firstChild);
     }
@@ -7,6 +9,8 @@ function appendOrderForm(data) {
 }
 
 function getOrderForm(data) {
+    // создание дом узла формы для создания заказа
+
     const container = document.createElement("div");
     container.className = "order-creation-form_container";
 
@@ -22,8 +26,7 @@ function getOrderForm(data) {
     const returnBtnImg = document.createElement("img");
     returnBtn.className = "order-creation-form_title_return-btn";
     returnBtnLink.href = data.cart_item_id ? "/cart-items" : `/products/${data.product_id}`;
-    returnBtnImg.src = "/static/img/back.png";
-    returnBtnImg.alt = "back";
+    returnBtnImg.src = "/static/img/arrow-back.png";
     returnBtnLink.appendChild(returnBtnImg);
     returnBtn.appendChild(returnBtnLink);
 
@@ -46,7 +49,6 @@ function getOrderForm(data) {
     const productPhoto = document.createElement("img");
     productPhotoContainer.className = "order-creation-form_photo-container";
     productPhoto.src = `/images/products/${data.product_id}.jpg?reload=${Date.now()}`;
-    productPhoto.alt = "product";
     productPhotoContainer.appendChild(productPhoto);
 
     const productDataWrapper = document.createElement("div");

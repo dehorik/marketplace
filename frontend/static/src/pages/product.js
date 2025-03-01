@@ -9,47 +9,46 @@ window.addEventListener("load", () => {
 
 window.addEventListener("beforeunload", () => {
     const state = new State();
-    state.clear();
+    state.delete("lastCommentId");
+    state.delete("currentProductId");
 });
 
 
 function initComments() {
+    // инициализация отзывов под товаром
+
     const state = new State();
-    state.clear();
-    state.set("product_id", window.location.pathname.split("/").slice(-1)[0]);
-    state.set("last_id", null);
+
+    state.set("lastCommentId", null);
+    state.set("currentProductId", window.location.pathname.split("/").slice(-1)[0]);
+    getComments();
+
+    const commentCreationBtn = document.querySelector(".comment-creation-link");
+    if (commentCreationBtn) {
+        commentCreationBtn.addEventListener("click", () => {
+            appendCommentForm();
+        });
+    }
+
+    // если слишком много отзывов было удалено пользователем - нужно запросить новые
+    const observer = new MutationObserver(() => {
+        if (commentsGrid.querySelectorAll(".comment").length <= 10) {
+            getComments();
+        }
+    });
+    observer.observe(commentsGrid, {
+        childList: true,
+        subtree: true
+    });
 
     setTimeout(() => {
-        const observer = new MutationObserver(() => {
-            if (commentsGrid.querySelectorAll(".comment").length <= 10) {
-                window.removeEventListener("scroll", checkPosition);
-                setTimeout(() => {
-                    window.addEventListener("scroll", checkPosition);
-                }, 250);
-
-                getComments();
-            }
-        });
-        observer.observe(commentsGrid, {
-            childList: true,
-            subtree: true
-        });
-
-        window.addEventListener("scroll", checkPosition);
-
-        const commentCreationBtn = document.querySelector(".comment-creation-link");
-
-        if (commentCreationBtn) {
-            commentCreationBtn.addEventListener("click", () => {
-                appendCommentForm();
-            });
-        }
+        window.addEventListener("scroll", checkCommentsPosition);
     }, 500);
-
-    getComments();
 }
 
 function initCartItemBtn() {
+    // инициализация кнопки для добавления товара в корзину
+
     const productId = window.location.pathname.split("/").slice(-1)[0];
     const productName = document.querySelector(".product-name span").textContent;
     const productPrice = document.querySelector(".product-price span").textContent.slice(0, -2);
@@ -82,6 +81,8 @@ function initCartItemBtn() {
 }
 
 function initOrderBtn() {
+    // инициализация кнопки для быстрого создания заказа
+
     const productId = window.location.pathname.split("/").slice(-1)[0];
     const btn = document.querySelector(".product_order-creation-button");
 

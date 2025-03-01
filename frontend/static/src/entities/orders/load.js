@@ -1,7 +1,9 @@
 function getOrders() {
+    // апи запрос на получение последних заказов
+
     const state = new State();
 
-    if (!state.isEmpty()) {
+    if (state.hasProperty("lastOrderId")) {
         getVerifiedToken()
             .then((token) => {
                 axios({
@@ -12,21 +14,21 @@ function getOrders() {
                     },
                     params: {
                         amount: 15,
-                        last_id: state.get("last_id")
+                        last_id: state.get("lastOrderId")
                     }
                 })
                     .then((response) => {
                         let orders = response.data.orders;
 
                         if (orders.length === 0) {
-                            state.clear();
+                            state.delete("lastOrderId");
 
                             if (!ordersGrid.querySelector(".order-container")) {
-                                appendOrdersNotFoundMessage();
+                                appendOrdersNotFoundMessage("Тут пока пусто!");
                             }
                         }
                         else {
-                            state.set("last_id", orders.slice(-1)[0].order_id);
+                            state.set("lastOrderId", orders.slice(-1)[0].order_id);
 
                             for (let order of orders) {
                                 appendOrder(order);
@@ -35,7 +37,7 @@ function getOrders() {
                     })
                     .catch(() => {
                         if (!ordersGrid.querySelector(".order-container")) {
-                            appendOrdersNotFoundMessage();
+                            appendOrdersNotFoundMessage("Возникла ошибка во время загрузки заказов");
                         }
                     });
             })
@@ -47,10 +49,14 @@ function getOrders() {
 }
 
 function appendOrder(order) {
+    // добавление дом узла карточки заказа в сетку
+
     ordersGrid.appendChild(createOrderNode(order));
 }
 
 function createOrderNode(order) {
+    // создание дом узла карточки заказа
+
     const currentDate = new Date(Date.UTC(
         new Date().getUTCFullYear(),
         new Date().getUTCMonth(),
@@ -121,6 +127,8 @@ function createOrderNode(order) {
     container.appendChild(buttonsContainer);
 
     if (currentDate.getTime() < orderDateEnd.getTime()) {
+        // если заказ еще не был доставлен - создаем скрытую форму для изменения адреса доставки
+
         const updateButtonContainer = document.createElement("div");
         const updateButton = document.createElement("a");
         const updateButtonText = document.createElement("span");
@@ -238,6 +246,8 @@ function createOrderNode(order) {
 }
 
 function showUpdateForm(node) {
+    // показываем форму для изменения адреса доставки, скрывая все остальное в карточке заказа
+
     const photoContainer = node.querySelector(".order_photo-container");
     const textDataContainer = node.querySelector(".order_text-data-container");
     const buttonsContainer = node.querySelector(".order_buttons-container");
@@ -254,6 +264,8 @@ function showUpdateForm(node) {
 }
 
 function hideUpdateForm(node) {
+    // возвращаем карточку заказа, скрывая форму для обновления адреса доставки
+
     const photoContainer = node.querySelector(".order_photo-container");
     const textDataContainer = node.querySelector(".order_text-data-container");
     const buttonsContainer = node.querySelector(".order_buttons-container");
@@ -270,6 +282,8 @@ function hideUpdateForm(node) {
 }
 
 function checkAddress(ge, le, address, errorText) {
+    // валидируем адрес, введенный в форму
+
     if (address.length < ge) {
         errorText.textContent = `Недопустимая длина адреса`;
     }
@@ -282,27 +296,31 @@ function checkAddress(ge, le, address, errorText) {
     }
 }
 
-function appendOrdersNotFoundMessage() {
+function appendOrdersNotFoundMessage(text) {
+    // добавляем сообщение о том, что заказы не найдены
+
     if (!ordersGrid.querySelector(".orders-message")) {
         const message = document.createElement("div");
         const messageText = document.createElement("span");
         message.className = "orders-message";
-        messageText.textContent = "Тут пока пусто!";
+        messageText.innerHTML = text;
         message.appendChild(messageText);
 
         ordersGrid.appendChild(message);
     }
 }
 
-function checkPosition() {
+function checkOrdersPosition() {
+    // отслеживание текущей позиции для подгрузки заказов
+
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     const scrollPosition = window.scrollY;
 
     if (documentHeight - (windowHeight + scrollPosition) <= 220) {
-        window.removeEventListener("scroll", checkPosition);
+        window.removeEventListener("scroll", checkOrdersPosition);
         setTimeout(() => {
-            window.addEventListener("scroll", checkPosition);
+            window.addEventListener("scroll", checkOrdersPosition);
         }, 250);
 
         getOrders();

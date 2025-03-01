@@ -1,4 +1,6 @@
 function deleteAdmin(username, container) {
+    // запрос на удаление админа (установка минимально возможной роли)
+
     getVerifiedToken()
         .then((token) => {
             axios({

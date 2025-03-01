@@ -8,11 +8,15 @@ window.addEventListener("load", () => {
 
 window.addEventListener("beforeunload", () => {
     const state = new State();
-    state.clear();
+    state.delete("lastProductId");
+    state.delete("lastSearchedProductId");
+    state.delete("searchedProductName");
 });
 
 
 function initAuthBtn() {
+    // инициализация ссылки на аккаунт пользователя или на форму для входа в аккаунт
+
     const btn = document.querySelector(".auth-btn");
 
     if (getToken()) {
@@ -24,8 +28,14 @@ function initAuthBtn() {
 }
 
 function initProducts() {
-    const searchForm = document.getElementById("search-form");
+    // инициализация сетки товаров на главной странице (в том числе и поиска)
 
+    const state = new State();
+
+    state.set("lastProductId", null);
+    getProducts();
+
+    const searchForm = document.getElementById("search-form");
     searchForm.addEventListener("submit", (event) => {
         event.preventDefault();
 
@@ -40,21 +50,15 @@ function initProducts() {
             }
 
             const state = new State();
-            state.clear();
-            state.set("name", productName.value.trim());
-            state.set("last_id", null);
+            state.delete("lastProductId")
+            state.set("searchedProductName", productName.value.trim());
+            state.set("lastSearchedProductId", null);
 
             getProducts();
         }
     });
 
-    const state = new State();
-    state.clear();
-    state.set("last_id", null);
-
-    getProducts();
-
     setTimeout(() => {
-        window.addEventListener("scroll", checkPosition);
+        window.addEventListener("scroll", checkProductsPosition);
     }, 500);
 }

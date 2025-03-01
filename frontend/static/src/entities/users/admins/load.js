@@ -1,4 +1,6 @@
 function getAdmins(adminsGrid) {
+    // запрос на получение всех администраторов (суперпользователей)
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -21,10 +23,14 @@ function getAdmins(adminsGrid) {
 }
 
 function appendAdmin(admin, adminsGrid) {
+    // добавление ноды администратора в сетку
+
     adminsGrid.append(createAdminNode(admin));
 }
 
 function createAdminNode(admin) {
+    // создание дом ноды администратора + вешаем обработчики событий
+
     const container = document.createElement("div");
     container.className = "admin-container";
 
@@ -66,6 +72,8 @@ function createAdminNode(admin) {
     node.appendChild(textDataContainer);
 
     if (admin.user_id !== decodeToken(getToken()).sub) {
+        // мы можем удалять или обновлять роли всех админов, кроме себя
+
         const buttonsContainer = document.createElement("div");
         const buttons = document.createElement("div");
         const editingButton = document.createElement("a");
@@ -229,6 +237,9 @@ function createAdminNode(admin) {
             const newRoleId = Number(editingFormButtonsContainer.querySelector("input[name='role_id']:checked").value);
 
             if (currentRoleId === newRoleId) {
+                // если роли совпадают, то ничего обновлять не нужно. просто вызовем событие,
+                // обработчик котрого скроет форму обновления админа
+
                 returnButton.click();
             }
             else {

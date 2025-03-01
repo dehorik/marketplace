@@ -11,21 +11,22 @@
     <title>webstore</title>
 </head>
 <body>
+
 <header class="product_header">
     <div class="product_header-logo">
-        <img src="/static/img/logo.png" alt="logo">
+        <img src="/static/img/webstore.png">
     </div>
 </header>
 
 <div class="catalog-return-button">
     <a href="/">
-        <img src="/static/img/back.png" alt="back">
+        <img src="/static/img/arrow-back.png">
     </a>
 </div>
 
 <div class="product-container">
     <div class="product-photo">
-        <img src="/images/products/{{product.product_id}}.jpg" alt="photo">
+        <img src="/images/products/{{product.product_id}}.jpg">
     </div>
 
     <div class="product-text-data">
@@ -40,18 +41,18 @@
         <div class="product-score">
             <div class="product-rating">
                 {% if product.rating >= 4 %}
-                <img src="/static/img/active_star.png" alt="star">
+                <img src="/static/img/active-star.png">
                 {% else %}
-                <img src="/static/img/inactive_star.png" alt="star">
+                <img src="/static/img/inactive-star.png">
                 {% endif %}
                 <span>{{product.rating}}</span>
             </div>
             <div class="product_amount-comments">
-                <img src="/static/img/comment.png" alt="comment">
+                <img src="/static/img/comment.png">
                 <span>{{product.amount_comments}}</span>
             </div>
             <div>
-                <img src="/static/img/orders.png" alt="order">
+                <img src="/static/img/orders.png">
                 <span>{{product.amount_orders}}</span>
             </div>
         </div>
@@ -105,5 +106,6 @@
 <script src="/static/src/entities/orders/create.js"></script>
 <script src="/static/src/entities/orders/form.js"></script>
 <script src="/static/src/pages/product.js"></script>
+
 </body>
 </html>

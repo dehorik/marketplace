@@ -1,4 +1,6 @@
 function createOrder(product_id, address) {
+    // апи запрос на создание заказа
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -17,13 +19,7 @@ function createOrder(product_id, address) {
                 })
                 .catch((error) => {
                     const errorText = document.querySelector(".order-creation-form_error span");
-
-                    if (error.status === 422) {
-                        errorText.textContent = "Ошибка в введенных данных";
-                    }
-                    else {
-                        errorText.textContent = "Ошибка создания заказа";
-                    }
+                    errorText.textContent = "Ошибка создания заказа";
                 });
         })
         .catch(() => {

@@ -1,7 +1,11 @@
-window.addEventListener("load", initAuthForm);
+window.addEventListener("load", () => {
+    initAuthForm();
+});
 
 
 function initAuthForm() {
+    // инициализация формы для входа в аккаунт или регистрации
+
     const container = document.querySelector(".auth-form_container");
     const form = container.querySelector("form");
     const formTypeChanger = container.querySelector(".auth-form_form-type-changer_button");
@@ -38,6 +42,8 @@ function initAuthForm() {
 }
 
 function changeFormType(container) {
+    // смена типа формы с входа на регистрацию и обратно
+
     const title = container.querySelector(".auth-form_title span");
     const submitBtn = container.querySelector(".auth-form_submit-button button");
     const formTypeChangerText = container.querySelector(".auth-form_form-type-changer_title span");
@@ -73,6 +79,8 @@ function changeFormType(container) {
 }
 
 function checkCredentials(ge, le, value, errorText) {
+    // валидация введенных в форму данных
+
     document.querySelector(".auth-form_error-message span").textContent = null;
 
     if (value.length < ge) {

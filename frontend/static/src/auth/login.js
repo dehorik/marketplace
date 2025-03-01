@@ -1,4 +1,6 @@
 function login(username, password) {
+    // запрос на вход в аккаунт
+
     axios({
         url: "/auth/login",
         method: "post",

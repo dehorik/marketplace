@@ -2531,7 +2531,7 @@ div.user-page_data-editing-btn {
     align-items: center;
 }
 
-.admin-creation-form-buttons div, button {
+.admin-creation-form-buttons div, .admin-creation-form-buttons button {
     height: 70%;
     width: 7%;
     display: flex;

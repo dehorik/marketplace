@@ -1,4 +1,6 @@
 async function refresh() {
+    // запрос на обновление пары jwt токенов
+
     try {
         const response = await axios({
             url: "/auth/refresh",

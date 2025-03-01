@@ -20,7 +20,7 @@ from entities.products.models import (
 from core.settings import ROOT_PATH
 
 
-router = APIRouter(prefix='/products', tags=['prodcuts'])
+router = APIRouter(prefix='/products', tags=['products'])
 
 templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 

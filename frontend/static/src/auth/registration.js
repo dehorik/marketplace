@@ -1,4 +1,6 @@
 function registration(username, password) {
+    // запрос на регистрацию
+
     axios({
         url: "/auth/registration",
         method: "post",

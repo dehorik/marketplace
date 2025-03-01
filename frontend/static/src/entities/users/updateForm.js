@@ -1,4 +1,8 @@
 function appendUserUpdateForm(user) {
+    // функция, добавляющая форму для обновления данных пользователя в контейнер страницы пользователя;
+    // (все прежнее содержимое удаляется, таким обазом, для возврата на предыдущую страницу придется
+    // рендерить все снова (+ апи запрос на бэк для получения актуальных данных о юзере))
+
     const container = document.querySelector(".user-page_container");
 
     while (container.firstChild) {
@@ -9,6 +13,9 @@ function appendUserUpdateForm(user) {
 }
 
 function getUserUpdateForm(user) {
+    // функция, которая возвращает дом элемент формы для обновления данных пользователя;
+    // обработчики событий ввода для валидации данных вешаются здесь
+
     const container = document.createElement("div");
     container.className = "user-data-editing-form";
 
@@ -18,8 +25,7 @@ function getUserUpdateForm(user) {
     const titleReturnBtn = document.createElement("div");
     const returnBtnImg = document.createElement("img");
     titleReturnBtn.className = "user-data-editing-form_title-return-btn";
-    returnBtnImg.src = "/static/img/back.png";
-    returnBtnImg.alt = "back";
+    returnBtnImg.src = "/static/img/arrow-back.png";
     titleReturnBtn.appendChild(returnBtnImg);
     const titleTextContainer = document.createElement("div");
     const titleText = document.createElement("span");
@@ -39,7 +45,6 @@ function getUserUpdateForm(user) {
     const photoContainer = document.createElement("div");
     photoContainer.className = "user-data-editing-form_photo-container";
     const photo = document.createElement("img");
-    photo.alt = "user";
 
     if (user.has_photo) {
         photo.src = `/images/users/${user.user_id}.jpg?reload=${Date.now()}`;
@@ -202,6 +207,8 @@ function getUserUpdateForm(user) {
 }
 
 function checkUsername(ge, le, username, errorText) {
+    // валидация юзернейма
+
     const globalErrorText = document.querySelector(".user-data-editing-form_error span");
     globalErrorText.textContent = null;
 
@@ -218,6 +225,8 @@ function checkUsername(ge, le, username, errorText) {
 }
 
 function checkEmail(email, errorText) {
+    // валидация email
+
     const globalErrorText = document.querySelector(".user-data-editing-form_error span");
     globalErrorText.textContent = null;
 
@@ -233,6 +242,8 @@ function checkEmail(email, errorText) {
 }
 
 function checkPassword(ge, le, password, errorText) {
+    // валидация пароля
+
     const globalErrorText =  document.querySelector(".user-data-editing-form_error span");
     globalErrorText.textContent = null;
 
@@ -249,6 +260,8 @@ function checkPassword(ge, le, password, errorText) {
 }
 
 function uploadUserPhoto(event) {
+    // загрузка изображения пользователя
+
     const photo = document.querySelector(".user-data-editing-form_photo-container img");
     const file = event.target.files[0];
 
@@ -264,6 +277,8 @@ function uploadUserPhoto(event) {
 }
 
 function deleteUserPhoto() {
+    // удаление загруженного изображения пользоваеля
+
     const photo = document.querySelector(".user-data-editing-form_photo-container img");
     photo.src = "/static/img/default-avatar.png";
     photo.setAttribute("data-photo-type", "default");

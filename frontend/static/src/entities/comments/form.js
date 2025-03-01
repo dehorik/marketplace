@@ -1,4 +1,7 @@
 function appendCommentForm(comment=null) {
+    // добавление формы для создания или изменения отзыва;
+    // если нужна форма для изменения отзыва - передать json с данными об отзыве (иначе null)
+
     while (document.body.firstChild) {
         document.body.removeChild(document.body.firstChild);
     }
@@ -7,6 +10,8 @@ function appendCommentForm(comment=null) {
 }
 
 function getCommentForm(comment=null) {
+    // создание дом узла формы для управления отзывом
+
     const productId = window.location.pathname.split("/").slice(-1)[0];
 
     const container = document.createElement("div");
@@ -20,7 +25,7 @@ function getCommentForm(comment=null) {
     const returnBtnImg = document.createElement("img");
     returnBtn.className = "comment-form-cancel-button";
     returnBtnLink.href = `/products/${productId}`;
-    returnBtnImg.src = "/static/img/back.png";
+    returnBtnImg.src = "/static/img/arrow-back.png";
     returnBtnLink.appendChild(returnBtnImg);
     returnBtn.appendChild(returnBtnLink);
 
@@ -49,16 +54,16 @@ function getCommentForm(comment=null) {
 
         if (comment) {
             if (comment.rating >= i) {
-                star.src = "/static/img/active_star.png";
+                star.src = "/static/img/active-star.png";
                 star.setAttribute("data-state", "1");
             }
             else {
-                star.src = "/static/img/inactive_star.png";
+                star.src = "/static/img/inactive-star.png";
                 star.setAttribute("data-state", "0");
             }
         }
         else {
-            star.src = "/static/img/inactive_star.png";
+            star.src = "/static/img/inactive-star.png";
             star.setAttribute("data-state", "0");
         }
 
@@ -67,7 +72,6 @@ function getCommentForm(comment=null) {
         });
 
         star.setAttribute("data-value", String(i));
-        star.alt = "star";
 
         starContainer.appendChild(star);
         ratingStarsContainer.appendChild(starContainer);
@@ -89,7 +93,6 @@ function getCommentForm(comment=null) {
     const photoContainer = document.createElement("div");
     const photo = document.createElement("img");
     photoContainer.className = "comment-form-photo";
-    photo.alt = "photo";
 
     if (comment) {
         if (comment.comment_has_photo) {
@@ -97,12 +100,12 @@ function getCommentForm(comment=null) {
             photo.setAttribute("data-photo-type", "uploaded");
         }
         else {
-            photo.src = "/static/img/empty_photo.png";
+            photo.src = "/static/img/empty-photo.png";
             photo.setAttribute("data-photo-type", "default");
         }
     }
     else {
-        photo.src = "/static/img/empty_photo.png";
+        photo.src = "/static/img/empty-photo.png";
         photo.setAttribute("data-photo-type", "default");
     }
 
@@ -223,6 +226,8 @@ function getCommentForm(comment=null) {
 }
 
 function makeStarsActive(currentStar) {
+    // раскарска звезд по нажатию
+
     const ratingBar = document.querySelectorAll(".comment-form-rating-stars-container a img");
     const rating = Number(currentStar.getAttribute("data-value"));
     currentStar.parentNode.parentNode.setAttribute("data-rating", String(rating));
@@ -230,20 +235,22 @@ function makeStarsActive(currentStar) {
     if (rating < 5) {
         for (let i = 4; i >= rating; i--) {
             if (ratingBar[i].getAttribute("data-state") === "1") {
-                ratingBar[i].src = "/static/img/inactive_star.png";
+                ratingBar[i].src = "/static/img/inactive-star.png";
                 ratingBar[i].setAttribute("data-state", "0");
             }
         }
     }
     for (let i = 0; i < rating; i++) {
         if (ratingBar[i].getAttribute("data-state") === "0") {
-            ratingBar[i].src = "/static/img/active_star.png";
+            ratingBar[i].src = "/static/img/active-star.png";
             ratingBar[i].setAttribute("data-state", "1");
         }
     }
 }
 
 function uploadCommentPhoto(event) {
+    // загрузка фото отзыва
+
     const photo = document.querySelector(".comment-form-photo img");
     const file = event.target.files[0];
 
@@ -259,14 +266,18 @@ function uploadCommentPhoto(event) {
 }
 
 function deleteCommentPhoto() {
+    // удаление загруженного фото
+
     const photo = document.querySelector(".comment-form-photo img");
-    photo.src = "/static/img/empty_photo.png";
+    photo.src = "/static/img/empty-photo.png";
     photo.setAttribute("data-photo-type", "default");
 
     document.getElementById("input-comment-photo").value = null;
 }
 
 function checkCommentText(text, errorText) {
+    // валидация текста отзыва
+
     if (text.length > 200) {
         errorText.textContent = "Текст слишком длинный!";
     }
@@ -280,6 +291,8 @@ function checkCommentText(text, errorText) {
 }
 
 function checkCommentRating() {
+    // валидация введенного рейтинга
+
     const ratingBar = document.querySelectorAll(".comment-form-rating-stars-container a img");
     const rating = Number(ratingBar[0].parentNode.parentNode.getAttribute("data-rating"));
 

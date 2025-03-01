@@ -1,4 +1,6 @@
 function createProduct(name, price, description, photo, form) {
+    // апи запрос на создание товара
+
     getVerifiedToken()
         .then((token) => {
             const data = new FormData();
@@ -18,7 +20,7 @@ function createProduct(name, price, description, photo, form) {
             })
                 .then((response) => {
                     const productsGrid = document.querySelector(".admin-panel_products-grid");
-                    const productNode = createAdminProductNode(response.data);
+                    const productNode = createAdminPanelProductNode(response.data);
 
                     productsGrid.prepend(productNode);
 

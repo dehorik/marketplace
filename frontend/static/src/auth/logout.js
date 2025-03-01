@@ -1,4 +1,6 @@
 function logout() {
+    // запрос на выход из аккаунта
+
     deleteToken();
     window.location.href = "/";
 

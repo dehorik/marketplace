@@ -1,4 +1,6 @@
 function deleteProduct(productId, node) {
+    // апи запрос на удаление товара
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -10,7 +12,7 @@ function deleteProduct(productId, node) {
             })
                 .then(() => {
                     if (node.parentNode.children.length === 1) {
-                        appendAdminProductsNotFoundMessage();
+                        appendAdminPanelProductsNotFoundMessage();
                     }
 
                     node.parentNode.removeChild(node);

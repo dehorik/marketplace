@@ -1,4 +1,6 @@
 function updateOrder(orderId, address, node) {
+    // апи запрос на обновление заказа (изменение адреса доставки)
+
     getVerifiedToken()
         .then((token) => {
             axios({

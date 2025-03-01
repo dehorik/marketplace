@@ -1,4 +1,6 @@
 function createCartItem(productId) {
+    // апи запрос на создание товара в корзине
+
     getVerifiedToken()
         .then((token) => {
             axios({
@@ -22,6 +24,9 @@ function createCartItem(productId) {
 }
 
 function createCartItems() {
+    // апи запрос на создание всех товаров в корзине, которые были добавлены в localStorage;
+    // функция вызывается после регистрации или входа в аккаунт
+
     let cartItems = JSON.parse(localStorage.getItem("cartItems"));
 
     if (cartItems) {
@@ -45,6 +50,9 @@ function createCartItems() {
 }
 
 function addCartItemToStorage(cartItemCreationBtn, productId, productName, productPrice) {
+    // сохранение товара в localStorage для последующего запроса на создание такого товара в корзине на бэке;
+    // доступно для пользователей, которые не вошли в аккаунт или не зарегистрировались
+
     let cartItem = {
         product_id: productId,
         product_name: productName,
@@ -69,6 +77,8 @@ function addCartItemToStorage(cartItemCreationBtn, productId, productName, produ
 }
 
 function replaceCartItemBtn() {
+    // заменяем кнопку на странице товара, если данный товар находится в корзине пользователя
+
     const cartItemsBtn = document.createElement("a");
     const cartItemsBtnText = document.createElement("span");
     cartItemsBtn.className = "product_cart-item-management-button";
