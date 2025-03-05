@@ -1,4 +1,4 @@
-import os
+from os.path import join
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Query, status
 from fastapi.responses import HTMLResponse
@@ -16,10 +16,7 @@ from core.settings import ROOT_PATH
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
-
-templates = Jinja2Templates(
-    directory=os.path.join(ROOT_PATH, r"frontend\templates")
-)
+templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 
 
 @router.post(
@@ -27,15 +24,11 @@ templates = Jinja2Templates(
     response_model=ExtendedUserModel,
     status_code=status.HTTP_201_CREATED
 )
-def registration(
-        user: Annotated[ExtendedUserModel, Depends(registration_service)]
-):
+def registration(user: Annotated[ExtendedUserModel, Depends(registration_service)]):
     return user
 
 @router.post("/login", response_model=ExtendedUserModel)
-def login(
-        user: Annotated[ExtendedUserModel, Depends(login_service)]
-):
+def login(user: Annotated[ExtendedUserModel, Depends(login_service)]):
     return user
 
 @router.post("/logout")
@@ -43,9 +36,7 @@ def logout(response: Annotated[dict, Depends(logout_service)]):
     return response
 
 @router.post("/refresh", response_model=AccessTokenModel)
-def refresh(
-        access_token: Annotated[AccessTokenModel, Depends(token_refresh_service)]
-):
+def refresh(access_token: Annotated[AccessTokenModel, Depends(token_refresh_service)]):
     return access_token
 
 @router.get("/form", response_class=HTMLResponse)

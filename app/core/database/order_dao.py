@@ -1,5 +1,4 @@
 from datetime import date
-from psycopg2 import ProgrammingError
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
@@ -16,16 +15,23 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             query: str,
             params: list | None = None,
             fetchone: bool = False
-    ) -> list | tuple | None:
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
+    ) -> list | tuple:
+        """
+        :param query: sql запрос
+        :param params: параметры для подстановки в запрос
+        :param fetchone: если True, возвращает одну строку; если False — все строки
+               (для запросов, которые не возвращают данные, параметр игнорируется)
+        """
 
         try:
-            data = cursor.fetchone() if fetchone else cursor.fetchall()
-            cursor.close()
+            cursor = self.__session.get_cursor()
+            cursor.execute(query, params)
 
-            return data
-        except ProgrammingError:
+            if cursor.description:
+                return cursor.fetchone() if fetchone else cursor.fetchall()
+            else:
+                return []
+        finally:
             cursor.close()
 
     def create(
@@ -70,10 +76,10 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
     def read(
             self,
             user_id: int,
-            amount: int = 10,
+            amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        query = """
+        query_parts = ["""
             SELECT 
                 orders.order_id,
                 orders.user_id,
@@ -87,25 +93,25 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
             FROM 
                 product INNER JOIN orders
                 ON product.product_id = orders.product_id
-        """
+        """]
         params = []
 
         if last_id:
-            query += """
+            query_parts.append("""
                 WHERE orders.user_id = %s AND orders.order_id < %s
                 ORDER BY orders.order_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([user_id, last_id, amount])
         else:
-            query += """
+            query_parts.append("""
                 WHERE orders.user_id = %s 
                 ORDER BY orders.order_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([user_id, amount])
 
-        return self.__execute(query=query, params=params)
+        return self.__execute(query="".join(query_parts), params=params)
 
     def update(
             self,
@@ -149,6 +155,10 @@ class OrderDataAccessObject(InterfaceDataAccessObject):
         return order
 
     def delete_undefined_orders(self) -> list:
+        # удаление всех заказов, у которых product_id или user_id равны null;
+        # null появляется вместо внешнего ключа,
+        # если связанная запись была удалена
+
         return self.__execute(
             query="""
                 DELETE 

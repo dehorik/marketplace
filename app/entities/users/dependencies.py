@@ -14,7 +14,8 @@ from entities.users.models import (
     UserItemListModel
 )
 from auth import (
-    AuthorizationService,
+    user_dependency,
+    superuser_dependency,
     TokenPayloadModel,
     RedisClient,
     JWTDecoder,
@@ -34,16 +35,13 @@ from core.settings import config
 from utils import Converter, FileWriter, FileRemover
 
 
-user_dependency = AuthorizationService(min_role_id=1)
-admin_dependency = AuthorizationService(min_role_id=2)
-superuser_dependency = AuthorizationService(min_role_id=3)
-
-
 class FetchUserService:
+    """Получение данных пользователя"""
+
     def __init__(
             self,
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
@@ -64,13 +62,40 @@ class FetchUserService:
             )
 
 
-class UserUpdateService:
+class FetchUsersService:
+    """
+    Получение списка из пользователей с определенной ролью
+    (администраторы и суперпользователи)
+    """
+
     def __init__(
             self,
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel),
-            file_writer: FileWriter = FileWriter(join("images", "users")),
-            file_remover: FileRemover = FileRemover(join("images", "users"))
+            user_dao: UserDataAccessObject,
+            converter: Converter
+    ):
+        self.user_data_access_obj = user_dao
+        self.converter = converter
+
+    def __call__(
+            self,
+            payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)],
+            min_role_id: Annotated[int, Query(ge=1)] = 2
+    ) -> UserItemListModel:
+        users = self.user_data_access_obj.get_users(min_role_id=min_role_id)
+        users = self.converter.fetchmany(users)
+
+        return UserItemListModel(users=users)
+
+
+class UserUpdateService:
+    """Обновление данных пользователя"""
+
+    def __init__(
+            self,
+            user_dao: UserDataAccessObject,
+            converter: Converter,
+            file_writer: FileWriter,
+            file_remover: FileRemover
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
@@ -144,9 +169,9 @@ class EmailVerificationService:
 
     def __init__(
             self,
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            jwt_decoder: JWTDecoder,
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
         self.jwt_decoder = jwt_decoder
         self.user_data_access_obj = user_dao
@@ -185,8 +210,8 @@ class RoleManagementService:
 
     def __init__(
             self,
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserItemModel)
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
         self.user_data_access_obj = user_dao
         self.converter = converter
@@ -218,12 +243,14 @@ class RoleManagementService:
 
 
 class UserDeletionService:
+    """Удаление пользователя"""
+
     def __init__(
             self,
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            redis_client: RedisClient = get_redis_client(),
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel),
+            jwt_decoder: JWTDecoder,
+            redis_client: RedisClient,
+            user_dao: UserDataAccessObject,
+            converter: Converter,
             file_remover: FileRemover = FileRemover(join("images", "users"))
     ):
         self.jwt_decoder = jwt_decoder
@@ -270,33 +297,42 @@ class UserDeletionService:
             )
 
 
-class FetchUsersService:
-    def __init__(
-            self,
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserItemModel)
-    ):
-        self.user_data_access_obj = user_dao
-        self.converter = converter
-
-    def __call__(
-            self,
-            payload: Annotated[TokenPayloadModel, Depends(superuser_dependency)],
-            min_role_id: Annotated[int, Query(ge=1)] = 2
-    ) -> UserItemListModel:
-        users = self.user_data_access_obj.get_users(min_role_id=min_role_id)
-        users = self.converter.fetchmany(users)
-
-        return UserItemListModel(users=users)
-
-
 def check_file(file: UploadFile) -> bool:
     return file.content_type.split('/')[0] == 'image'
 
 
-fetch_user_service = FetchUserService()
-user_update_service = UserUpdateService()
-email_verification_service = EmailVerificationService()
-role_management_service = RoleManagementService()
-user_deletion_service = UserDeletionService()
-fetch_users_service = FetchUsersService()
+fetch_user_service = FetchUserService(
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+fetch_users_service = FetchUsersService(
+    user_dao=get_user_dao(),
+    converter=Converter(UserItemModel)
+)
+
+user_update_service = UserUpdateService(
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel),
+    file_writer=FileWriter(join("images", "users")),
+    file_remover=FileRemover(join("images", "users"))
+)
+
+email_verification_service = EmailVerificationService(
+    jwt_decoder=get_jwt_decoder(),
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+role_management_service = RoleManagementService(
+    user_dao=get_user_dao(),
+    converter=Converter(UserItemModel)
+)
+
+user_deletion_service = UserDeletionService(
+    jwt_decoder=get_jwt_decoder(),
+    redis_client=get_redis_client(),
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel),
+    file_remover=FileRemover(join("images", "users"))
+)

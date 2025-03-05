@@ -1,5 +1,4 @@
 from datetime import date
-from psycopg2 import ProgrammingError
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
@@ -16,16 +15,23 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             query: str,
             params: list | None = None,
             fetchone: bool = False
-    ) -> list | tuple | None:
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
+    ) -> list | tuple:
+        """
+        :param query: sql запрос
+        :param params: параметры для подстановки в запрос
+        :param fetchone: если True, возвращает одну строку; если False — все строки
+               (для запросов, которые не возвращают данные, параметр игнорируется)
+        """
 
         try:
-            data = cursor.fetchone() if fetchone else cursor.fetchall()
-            cursor.close()
+            cursor = self.__session.get_cursor()
+            cursor.execute(query, params)
 
-            return data
-        except ProgrammingError:
+            if cursor.description:
+                return cursor.fetchone() if fetchone else cursor.fetchall()
+            else:
+                return []
+        finally:
             cursor.close()
 
     def create(
@@ -85,9 +91,8 @@ class UserDataAccessObject(InterfaceDataAccessObject):
             has_photo: bool | None = None
     ) -> tuple:
         if not any([clear_email, clear_photo, role_id, username, hashed_password, email, has_photo]):
-            cursor = self.__session.get_cursor()
-            cursor.execute(
-                """
+            return self.__execute(
+                query="""
                     SELECT 
                         user_id,
                         role_id, 
@@ -98,43 +103,39 @@ class UserDataAccessObject(InterfaceDataAccessObject):
                     FROM users
                     WHERE user_id = %s;
                 """,
-                [user_id]
+                params=[user_id],
+                fetchone=True
             )
-            data = cursor.fetchone()
-            cursor.close()
 
-            return data
-
-        query = """
-            UPDATE users
-            SET 
-        """
+        fields = []
         params = []
 
         if role_id:
-            query += " role_id = %s, "
+            fields.append("role_id = %s")
             params.append(role_id)
 
         if username:
-            query += " username = %s, "
+            fields.append("username = %s")
             params.append(username)
 
         if hashed_password:
-            query += " hashed_password = %s, "
+            fields.append("hashed_password = %s")
             params.append(hashed_password)
 
         if clear_email:
-            query += " email = NULL, "
+            fields.append("email = NULL")
         elif email:
-            query += " email = %s, "
+            fields.append("email = %s")
             params.append(email)
 
         if clear_photo:
-            query += " has_photo = FALSE, "
+            fields.append("has_photo = FALSE")
         elif has_photo:
-            query += " has_photo = TRUE, "
+            fields.append("has_photo = TRUE")
 
-        query = query[:-2] + """
+        query = f"""
+            UPDATE users
+            SET {", ".join(fields)}
             WHERE user_id = %s
             RETURNING 
                 user_id,
@@ -210,6 +211,15 @@ class UserDataAccessObject(InterfaceDataAccessObject):
         )
 
     def set_role(self, username: str, role_id: int, request_sender_id: int) -> tuple:
+        """
+        Установка роли пользователю по юзернейму.
+        Отправитель запроса не может устанавливать роль самому себе.
+
+        :param username: юзернейм пользователя
+        :param role_id: role_id будущей роли пользователя
+        :param request_sender_id: user_id отправителя запроса
+        """
+
         return self.__execute(
             query="""
                 UPDATE users 

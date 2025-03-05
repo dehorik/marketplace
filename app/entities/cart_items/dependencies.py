@@ -8,14 +8,9 @@ from entities.cart_items.models import (
     CartItemCardModel,
     CartItemCardListModel
 )
-from auth import AuthorizationService, TokenPayloadModel
+from auth import user_dependency, TokenPayloadModel
 from core.database import CartItemDataAccessObject, get_cart_item_dao
 from utils import Converter
-
-
-user_dependency = AuthorizationService(min_role_id=1)
-admin_dependency = AuthorizationService(min_role_id=2)
-superuser_dependency = AuthorizationService(min_role_id=3)
 
 
 class CartItemCreationService:
@@ -23,8 +18,8 @@ class CartItemCreationService:
 
     def __init__(
             self,
-            cart_item_dao: CartItemDataAccessObject = get_cart_item_dao(),
-            converter: Converter = Converter(CartItemModel)
+            cart_item_dao: CartItemDataAccessObject,
+            converter: Converter
     ):
         self.cart_item_data_access_obj = cart_item_dao
         self.converter = converter
@@ -55,12 +50,12 @@ class CartItemCreationService:
 
 
 class FetchCartItemsService:
-    """Загрузка карточек товаров в корзине"""
+    """Загрузка товаров из корзины"""
 
     def __init__(
             self,
-            cart_item_dao: CartItemDataAccessObject = get_cart_item_dao(),
-            converter: Converter = Converter(CartItemCardModel)
+            cart_item_dao: CartItemDataAccessObject,
+            converter: Converter
     ):
         self.cart_item_data_access_obj = cart_item_dao
         self.converter = converter
@@ -92,8 +87,8 @@ class CartItemDeletionService:
 
     def __init__(
             self,
-            cart_item_dao: CartItemDataAccessObject = get_cart_item_dao(),
-            converter: Converter = Converter(CartItemModel)
+            cart_item_dao: CartItemDataAccessObject,
+            converter: Converter
     ):
         self.cart_item_data_access_obj = cart_item_dao
         self.converter = converter
@@ -118,6 +113,17 @@ class CartItemDeletionService:
             )
 
 
-cart_item_creation_service = CartItemCreationService()
-fetch_cart_items_service = FetchCartItemsService()
-cart_item_deletion_service = CartItemDeletionService()
+cart_item_creation_service = CartItemCreationService(
+    cart_item_dao=get_cart_item_dao(),
+    converter=Converter(CartItemModel)
+)
+
+fetch_cart_items_service = FetchCartItemsService(
+    cart_item_dao=get_cart_item_dao(),
+    converter=Converter(CartItemCardModel)
+)
+
+cart_item_deletion_service = CartItemDeletionService(
+    cart_item_dao=get_cart_item_dao(),
+    converter=Converter(CartItemModel)
+)

@@ -1,5 +1,4 @@
 from datetime import date
-from psycopg2 import ProgrammingError
 
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
@@ -16,16 +15,23 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             query: str,
             params: list | None = None,
             fetchone: bool = False
-    ) -> list | tuple | None:
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
+    ) -> list | tuple:
+        """
+        :param query: sql запрос
+        :param params: параметры для подстановки в запрос
+        :param fetchone: если True, возвращает одну строку; если False — все строки
+               (для запросов, которые не возвращают данные, параметр игнорируется)
+        """
 
         try:
-            data = cursor.fetchone() if fetchone else cursor.fetchall()
-            cursor.close()
+            cursor = self.__session.get_cursor()
+            cursor.execute(query, params)
 
-            return data
-        except ProgrammingError:
+            if cursor.description:
+                return cursor.fetchone() if fetchone else cursor.fetchall()
+            else:
+                return []
+        finally:
             cursor.close()
 
     def create(
@@ -60,7 +66,7 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        query = f"""
+        query_parts = ["""
             SELECT 
                 comment.comment_id, 
                 users.user_id,
@@ -74,25 +80,25 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             FROM users 
                 INNER JOIN comment USING(user_id)
                 INNER JOIN product USING(product_id)
-        """
+        """]
         params = []
 
         if last_id:
-            query += """
+            query_parts.append("""
                 WHERE product.product_id = %s AND comment.comment_id < %s
                 ORDER BY comment.comment_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([product_id, last_id, amount])
         else:
-            query += """
+            query_parts.append("""
                 WHERE product.product_id = %s
                 ORDER BY comment.comment_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([product_id, amount])
 
-        return self.__execute(query=query, params=params)
+        return self.__execute(query="".join(query_parts), params=params)
 
     def update(
             self,
@@ -105,28 +111,27 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
             text: str | None = None,
             has_photo: bool | None = None
     ) -> tuple:
-        query = """
-            UPDATE comment 
-            SET creation_date = %s
-        """
+        fields = ["creation_date = %s"]
         params = [current_date]
 
         if rating:
-            query += ", rating = %s"
+            fields.append("rating = %s")
             params.append(rating)
 
         if clear_text:
-            query += ", text = NULL"
+            fields.append("text = NULL")
         elif text:
-            query += ", text = %s"
+            fields.append("text = %s")
             params.append(text)
 
         if clear_photo:
-            query += ", has_photo = FALSE"
+            fields.append("has_photo = FALSE")
         elif has_photo:
-            query += ", has_photo = TRUE"
+            fields.append("has_photo = TRUE")
 
-        query += """
+        query = f"""
+            UPDATE comment 
+            SET {", ".join(fields)}
             WHERE comment_id = %s AND user_id = %s
             RETURNING *;
         """
@@ -147,9 +152,9 @@ class CommentDataAccessObject(InterfaceDataAccessObject):
         )
 
     def delete_undefined_comments(self) -> list:
-        # удаление всех отзывов, у которых product_id или user_id равны null
+        # удаление всех отзывов, у которых product_id или user_id равны null;
         # null появляется вместо внешнего ключа,
-        # если связанная запись была удалена из таблицы
+        # если связанная запись была удалена
 
         return self.__execute(
             query="""

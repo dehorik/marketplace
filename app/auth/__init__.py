@@ -1,5 +1,9 @@
 from auth.views import router as auth_router
-from auth.dependencies import AuthorizationService
+from auth.dependencies import (
+    user_dependency,
+    admin_dependency,
+    superuser_dependency
+)
 from auth.models import TokenPayloadModel
 from auth.tokens import (
     JWTEncoder,

@@ -7,7 +7,7 @@ from core.settings import config
 
 
 class JWTEncoder:
-    """Универсальный класс для выпуска токенов"""
+    """Универсальный класс для выпуска jwt"""
 
     def __init__(self, private_key: str, algorithm: str):
         self.__private_key = private_key
@@ -24,7 +24,7 @@ class JWTEncoder:
 
 
 class JWTDecoder:
-    """Универсальный класс для декодирования токенов"""
+    """Универсальный класс для декодирования jwt"""
 
     def __init__(self, public_key: str, algorithm: str):
         self.__public_key = public_key
@@ -42,13 +42,13 @@ class JWTDecoder:
 
 def get_jwt_encoder() -> JWTEncoder:
     return JWTEncoder(
-        Path(config.PRIVATE_KEY_PATH).read_text(),
+        Path(config.PRIVATE_KEY_PATH).read_text(encoding="utf-8"),
         config.ALGORITHM
     )
 
 def get_jwt_decoder() -> JWTDecoder:
     return JWTDecoder(
-        Path(config.PUBLIC_KEY_PATH).read_text(),
+        Path(config.PUBLIC_KEY_PATH).read_text(encoding="utf-8"),
         config.ALGORITHM
     )
 

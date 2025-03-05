@@ -32,6 +32,12 @@ def get_user_page(request: Request):
 def get_user(user: Annotated[UserModel, Depends(fetch_user_service)]):
     return user
 
+@router.get("", response_model=UserItemListModel)
+def get_users(
+        users: Annotated[UserItemListModel, Depends(fetch_users_service)]
+):
+    return users
+
 @router.patch("/me", response_model=UserModel)
 def update_user(user: Annotated[UserModel, Depends(user_update_service)]):
     return user
@@ -58,9 +64,3 @@ def set_role(user: Annotated[UserItemModel, Depends(role_management_service)]):
 @router.delete("/me", response_model=UserModel)
 def delete_user(user: Annotated[UserModel, Depends(user_deletion_service)]):
     return user
-
-@router.get("", response_model=UserItemListModel)
-def get_users(
-        users: Annotated[UserItemListModel, Depends(fetch_users_service)]
-):
-    return users

@@ -1,5 +1,3 @@
-from psycopg2 import ProgrammingError
-
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 
@@ -15,16 +13,23 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
             query: str,
             params: list | None = None,
             fetchone: bool = False
-    ) -> list | tuple | None:
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
+    ) -> list | tuple:
+        """
+        :param query: sql запрос
+        :param params: параметры для подстановки в запрос
+        :param fetchone: если True, возвращает одну строку; если False — все строки
+               (для запросов, которые не возвращают данные, параметр игнорируется)
+        """
 
         try:
-            data = cursor.fetchone() if fetchone else cursor.fetchall()
-            cursor.close()
+            cursor = self.__session.get_cursor()
+            cursor.execute(query, params)
 
-            return data
-        except ProgrammingError:
+            if cursor.description:
+                return cursor.fetchone() if fetchone else cursor.fetchall()
+            else:
+                return []
+        finally:
             cursor.close()
 
     def create(self, user_id: int, product_id: int) -> tuple:
@@ -41,10 +46,10 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
     def read(
             self,
             user_id: int,
-            amount: int = 10,
+            amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        query = """
+        query_parts = ["""
             SELECT
                 cart_item.cart_item_id,
                 cart_item.user_id,
@@ -53,25 +58,25 @@ class CartItemDataAccessObject(InterfaceDataAccessObject):
                 product.price
             FROM 
                 cart_item INNER JOIN product USING(product_id)     
-        """
+        """]
         params = []
 
         if last_id:
-            query += """
+            query_parts.append("""
                 WHERE cart_item.user_id = %s AND cart_item.cart_item_id < %s
                 ORDER BY cart_item.cart_item_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([user_id, last_id, amount])
         else:
-            query += """
+            query_parts.append("""
                 WHERE cart_item.user_id = %s
                 ORDER BY cart_item.cart_item_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([user_id, amount])
 
-        return self.__execute(query=query, params=params)
+        return self.__execute(query="".join(query_parts), params=params)
 
     def update(self):
         raise NotImplementedError("update is not supported for cart items")

@@ -119,7 +119,9 @@ function getOrderForm(data) {
        checkAddress(6, 30, event.target.value.trim(), addressError);
     });
 
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
         if (checkAddress(6, 30, addressInput.value.trim(), addressError)) {
             createOrder(data.product_id, addressInput.value.trim());
         }

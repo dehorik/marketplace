@@ -30,13 +30,15 @@ http_bearer = HTTPBearer()
 
 
 class RegistrationService:
+    """Регистрация"""
+
     def __init__(
             self,
-            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
-            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
-            redis_client: RedisClient = get_redis_client(),
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            access_token_encoder: AccessTokenEncoder,
+            refresh_token_encoder: RefreshTokenEncoder,
+            redis_client: RedisClient,
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
         self.access_token_encoder = access_token_encoder
         self.refresh_token_encoder = refresh_token_encoder
@@ -75,13 +77,15 @@ class RegistrationService:
 
 
 class LoginService:
+    """Вход в аккаунт"""
+
     def __init__(
             self,
-            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
-            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
-            redis_client: RedisClient = get_redis_client(),
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            access_token_encoder: AccessTokenEncoder,
+            refresh_token_encoder: RefreshTokenEncoder,
+            redis_client: RedisClient,
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
         self.access_token_encoder = access_token_encoder
         self.refresh_token_encoder = refresh_token_encoder
@@ -123,10 +127,12 @@ class LoginService:
 
 
 class RefreshTokenValidationService:
+    """Валидация refresh токена из cookie"""
+
     def __init__(
             self,
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            redis_client: RedisClient = get_redis_client()
+            jwt_decoder: JWTDecoder,
+            redis_client: RedisClient
     ):
         self.jwt_decoder = jwt_decoder
         self.redis_client = redis_client
@@ -147,9 +153,8 @@ class RefreshTokenValidationService:
             payload = TokenPayloadModel(**payload)
 
             if refresh_token not in self.redis_client.get_tokens(payload.sub):
-                # если refresh токена в redis нет - им кто-то уже воспользовался
-                # для безопасности пользователя
-                # следует удалить все его refresh токены
+                # если refresh токена в redis нет - им кто-то уже воспользовался;
+                # для безопасности пользователя следует удалить все его refresh токены
 
                 response.delete_cookie(config.REFRESH_COOKIE_KEY)
                 response.delete_cookie(config.USER_ID_COOKIE_KEY)
@@ -171,14 +176,19 @@ class RefreshTokenValidationService:
             )
 
 
-refresh_token_validation_service = RefreshTokenValidationService()
+refresh_token_validation_service = RefreshTokenValidationService(
+    jwt_decoder=get_jwt_decoder(),
+    redis_client=get_redis_client()
+)
 
 
 class LogoutService:
+    """Выход из аккаунта"""
+
     def __init__(
             self,
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            redis_client: RedisClient = get_redis_client()
+            jwt_decoder: JWTDecoder,
+            redis_client: RedisClient
     ):
         self.jwt_decoder = jwt_decoder
         self.redis_client = redis_client
@@ -200,12 +210,14 @@ class LogoutService:
 
 
 class TokenRefreshService:
+    """Выпуск новой пары токенов с помощью refresh токена"""
+
     def __init__(
             self,
-            jwt_decoder: JWTDecoder = get_jwt_decoder(),
-            access_token_encoder: AccessTokenEncoder = AccessTokenEncoder(),
-            refresh_token_encoder: RefreshTokenEncoder = RefreshTokenEncoder(),
-            redis_client: RedisClient = get_redis_client()
+            jwt_decoder: JWTDecoder,
+            access_token_encoder: AccessTokenEncoder,
+            refresh_token_encoder: RefreshTokenEncoder,
+            redis_client: RedisClient
     ):
         self.jwt_decoder = jwt_decoder
         self.access_token_encoder = access_token_encoder
@@ -235,7 +247,7 @@ class TokenRefreshService:
 class AccessTokenValidationService:
     """Валидация access токена из заголовков"""
 
-    def __init__(self, jwt_decoder: JWTDecoder = get_jwt_decoder()):
+    def __init__(self, jwt_decoder: JWTDecoder):
         self.jwt_decoder = jwt_decoder
 
     def __call__(
@@ -254,16 +266,22 @@ class AccessTokenValidationService:
             )
 
 
-access_token_validation_service = AccessTokenValidationService()
+access_token_validation_service = AccessTokenValidationService(
+    jwt_decoder=get_jwt_decoder()
+)
 
 
 class AuthorizationService:
+    """Авторизация"""
+
     def __init__(
             self,
             min_role_id: int,
-            user_dao: UserDataAccessObject = get_user_dao(),
-            converter: Converter = Converter(UserModel)
+            user_dao: UserDataAccessObject,
+            converter: Converter
     ):
+        # min_role_id - id минимальной роли, необходимой для доступа к эндпоинту
+
         self.__min_role_id = min_role_id
         self.user_data_access_obj = user_dao
         self.converter = converter
@@ -303,7 +321,7 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 def set_user_id_cookie(response: Response, user_id: str) -> None:
-    """устанавливает куку с id пользователя"""
+    """устанавливает user_id в cookie"""
 
     max_age = config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     response.set_cookie(
@@ -314,7 +332,48 @@ def set_user_id_cookie(response: Response, user_id: str) -> None:
     )
 
 
-registration_service = RegistrationService()
-login_service = LoginService()
-logout_service = LogoutService()
-token_refresh_service = TokenRefreshService()
+registration_service = RegistrationService(
+    access_token_encoder=AccessTokenEncoder(),
+    refresh_token_encoder=RefreshTokenEncoder(),
+    redis_client=get_redis_client(),
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+login_service = LoginService(
+    access_token_encoder=AccessTokenEncoder(),
+    refresh_token_encoder=RefreshTokenEncoder(),
+    redis_client=get_redis_client(),
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+logout_service = LogoutService(
+    jwt_decoder=get_jwt_decoder(),
+    redis_client=get_redis_client()
+)
+
+token_refresh_service = TokenRefreshService(
+    jwt_decoder=get_jwt_decoder(),
+    access_token_encoder=AccessTokenEncoder(),
+    refresh_token_encoder=RefreshTokenEncoder(),
+    redis_client=get_redis_client()
+)
+
+user_dependency = AuthorizationService(
+    min_role_id=1,
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+admin_dependency = AuthorizationService(
+    min_role_id=2,
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)
+
+superuser_dependency = AuthorizationService(
+    min_role_id=3,
+    user_dao=get_user_dao(),
+    converter=Converter(UserModel)
+)

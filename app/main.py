@@ -51,7 +51,7 @@ templates = Jinja2Templates(directory=join(ROOT_PATH, "frontend", "templates"))
 
 
 @app.get("/", response_class=HTMLResponse)
-def root(request: Request):
+def main(request: Request):
     return templates.TemplateResponse(
         name='index.html',
         request=request

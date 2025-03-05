@@ -1,7 +1,7 @@
 from typing import List
 from datetime import datetime, timezone
 from psycopg2 import connect
-from psycopg2.extensions import cursor as cursor
+from psycopg2.extensions import cursor
 
 from auth.hashing_psw import get_password_hash
 from core.settings import config

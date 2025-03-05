@@ -29,7 +29,7 @@ class ExtendedProductModel(BaseModel):
 
 
 class ProductCardModel(BaseModel):
-    """Схема карточки товара в каталоге"""
+    """Схема товара для подгрузки на страницу"""
 
     product_id: int
     name: str
@@ -41,4 +41,6 @@ class ProductCardModel(BaseModel):
 
 
 class ProductCardListModel(BaseModel):
+    """Схема списка товаров для подгрузки на страницу"""
+
     products: List[ProductCardModel]

@@ -3,6 +3,8 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class CredentialsModel(BaseModel):
+    """Схема данных, содержащая данные для аутентификации"""
+
     username: str = Field(min_length=6, max_length=16)
     password: str = Field(min_length=8, max_length=18)
 
@@ -19,6 +21,8 @@ class UserModel(BaseModel):
 
 
 class AccessTokenModel(BaseModel):
+    """Схема данных токена доступа"""
+
     access_token: str
     type: str = "Bearer"
 
@@ -34,7 +38,7 @@ class ExtendedUserModel(BaseModel):
 
 
 class TokenPayloadModel(BaseModel):
-    """Полезная нагрузка токена"""
+    """Схема данных полезной нагрузки токена"""
 
     token_type: str
     sub: int

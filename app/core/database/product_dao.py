@@ -1,5 +1,3 @@
-from psycopg2 import ProgrammingError
-
 from core.database.session_factory import Session, get_session
 from core.database.interface_dao import InterfaceDataAccessObject
 
@@ -15,16 +13,23 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             query: str,
             params: list | None = None,
             fetchone: bool = False
-    ) -> list | tuple | None:
-        cursor = self.__session.get_cursor()
-        cursor.execute(query, params)
+    ) -> list | tuple:
+        """
+        :param query: sql запрос
+        :param params: параметры для подстановки в запрос
+        :param fetchone: если True, возвращает одну строку; если False — все строки
+               (для запросов, которые не возвращают данные, параметр игнорируется)
+        """
 
         try:
-            data = cursor.fetchone() if fetchone else cursor.fetchall()
-            cursor.close()
+            cursor = self.__session.get_cursor()
+            cursor.execute(query, params)
 
-            return data
-        except ProgrammingError:
+            if cursor.description:
+                return cursor.fetchone() if fetchone else cursor.fetchall()
+            else:
+                return []
+        finally:
             cursor.close()
 
     def create(
@@ -61,10 +66,10 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                             FROM archived_orders
                             WHERE user_id = %s AND product_id = %s
                         )
-                    ),
+                    ) AS is_ordered,
                     (
                         SELECT EXISTS (
-                            SELECT 1
+                            SELECT cart_item_id
                             FROM cart_item
                             WHERE product_id = %s AND user_id = %s
                         )
@@ -110,39 +115,34 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             description: str | None = None
     ) -> tuple:
         if not any([name, price, description]):
-            cursor = self.__session.get_cursor()
-            cursor.execute(
-                """
+            return self.__execute(
+                query="""
                     SELECT *
                     FROM product 
                     WHERE product_id = %s;
                 """,
-                [product_id]
+                params=[product_id],
+                fetchone=True
             )
-            data = cursor.fetchone()
-            cursor.close()
 
-            return data
-
-        query = """
-            UPDATE product 
-            SET   
-        """
+        fields = []
         params = []
 
         if name:
-            query += " name = %s, "
+            fields.append("name = %s")
             params.append(name)
 
         if price:
-            query += " price = %s, "
+            fields.append("price = %s")
             params.append(price)
 
         if description:
-            query += " description = %s, "
+            fields.append("description = %s")
             params.append(description)
 
-        query = query[:-2] + """
+        query = f"""
+            UPDATE product 
+            SET {", ".join(fields)}
             WHERE product_id = %s
             RETURNING *;
         """
@@ -167,7 +167,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        query = """
+        query_parts = ["""
             SELECT 
                 product.product_id, 
                 product.name, 
@@ -188,24 +188,24 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     GROUP BY product.product_id
                 ) AS score
                 ON product.product_id = score.product_id
-        """
+        """]
         params = []
 
         if last_id:
-            query += """
+            query_parts.append("""
                 WHERE product.product_id < %s
                 ORDER BY product.product_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([last_id, amount])
         else:
-            query += """
+            query_parts.append("""
                 ORDER BY product.product_id DESC
                 LIMIT %s;
-            """
+            """)
             params.append(amount)
 
-        return self.__execute(query=query, params=params)
+        return self.__execute(query="".join(query_parts), params=params)
 
     def search_product(
             self,
@@ -213,7 +213,7 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
             amount: int = 15,
             last_id: int | None = None
     ) -> list:
-        query = """
+        query_parts = ["""
             SELECT 
                 product.product_id, 
                 product.name, 
@@ -234,25 +234,25 @@ class ProductDataAccessObject(InterfaceDataAccessObject):
                     GROUP BY product.product_id
                 ) AS score
                 ON product.product_id = score.product_id
-        """
+        """]
         params = []
 
         if last_id:
-            query += """
+            query_parts.append("""
                 WHERE LOWER(product.name) LIKE %s AND product.product_id < %s
                 ORDER BY product.product_id DESC
                 LIMIT %s;
-            """
+            """)
             params.extend([f"%{name.replace("%", "")}%", last_id, amount])
         else:
-            query += """
+            query_parts.append("""
                 WHERE LOWER(product.name) LIKE %s 
                 ORDER BY product.product_id DESC 
                 LIMIT %s;
-            """
+            """)
             params.extend([f"%{name.replace("%", "")}%", amount])
 
-        return self.__execute(query=query, params=params)
+        return self.__execute(query="".join(query_parts), params=params)
 
 
 def get_product_dao() -> ProductDataAccessObject:

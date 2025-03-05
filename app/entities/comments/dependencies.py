@@ -9,22 +9,19 @@ from entities.comments.models import (
     CommentItemModel,
     CommentItemListModel
 )
-from auth import AuthorizationService, TokenPayloadModel
+from auth import user_dependency, TokenPayloadModel
 from core.database import CommentDataAccessObject, get_comment_dao
 from utils import Converter, FileWriter, FileRemover
 
 
-user_dependency = AuthorizationService(min_role_id=1)
-admin_dependency = AuthorizationService(min_role_id=2)
-superuser_dependency = AuthorizationService(min_role_id=3)
-
-
 class CommentCreationService:
+    """Создание отзыва под товаром"""
+
     def __init__(
             self,
-            comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel),
-            file_writer: FileWriter = FileWriter(join("images", "comments"))
+            comment_dao: CommentDataAccessObject,
+            converter: Converter,
+            file_writer: FileWriter
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
@@ -77,8 +74,8 @@ class FetchCommentsService:
 
     def __init__(
             self,
-            comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentItemModel)
+            comment_dao: CommentDataAccessObject,
+            converter: Converter
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
@@ -107,12 +104,14 @@ class FetchCommentsService:
 
 
 class CommentUpdateService:
+    """Обновление данных отзыва"""
+
     def __init__(
             self,
-            comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel),
-            file_writer: FileWriter = FileWriter(join("images", "comments")),
-            file_remover: FileRemover = FileRemover(join("images", "comments"))
+            comment_dao: CommentDataAccessObject,
+            converter: Converter,
+            file_writer: FileWriter,
+            file_remover: FileRemover
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
@@ -182,11 +181,13 @@ class CommentUpdateService:
 
 
 class CommentDeletionService:
+    """Удаление отзыва"""
+
     def __init__(
             self,
-            comment_dao: CommentDataAccessObject = get_comment_dao(),
-            converter: Converter = Converter(CommentModel),
-            file_remover: FileRemover = FileRemover(join("images", "comments"))
+            comment_dao: CommentDataAccessObject,
+            converter: Converter,
+            file_remover: FileRemover
     ):
         self.comment_data_access_obj = comment_dao
         self.converter = converter
@@ -216,7 +217,26 @@ def check_file(file: UploadFile) -> bool:
     return file.content_type.split('/')[0] == 'image'
 
 
-comment_creation_service = CommentCreationService()
-fetch_comments_service = FetchCommentsService()
-comment_update_service = CommentUpdateService()
-comment_deletion_service = CommentDeletionService()
+comment_creation_service = CommentCreationService(
+    comment_dao=get_comment_dao(),
+    converter=Converter(CommentModel),
+    file_writer=FileWriter(join("images", "comments"))
+)
+
+fetch_comments_service = FetchCommentsService(
+    comment_dao=get_comment_dao(),
+    converter=Converter(CommentItemModel)
+)
+
+comment_update_service = CommentUpdateService(
+    comment_dao=get_comment_dao(),
+    converter=Converter(CommentModel),
+    file_writer=FileWriter(join("images", "comments")),
+    file_remover=FileRemover(join("images", "comments"))
+)
+
+comment_deletion_service = CommentDeletionService(
+    comment_dao=get_comment_dao(),
+    converter=Converter(CommentModel),
+    file_remover=FileRemover(join("images", "comments"))
+)

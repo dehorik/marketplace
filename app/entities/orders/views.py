@@ -10,7 +10,7 @@ from entities.orders.dependencies import (
     order_update_service,
     order_deletion_service
 )
-from entities.orders.models import OrderModel, OrderCardListModel
+from entities.orders.models import OrderModel, OrderListModel
 from core.settings import ROOT_PATH
 
 
@@ -32,9 +32,9 @@ def get_orders_page(request: Request):
         request=request,
     )
 
-@router.get("/latest", response_model=OrderCardListModel)
+@router.get("/latest", response_model=OrderListModel)
 def get_orders(
-        orders: Annotated[OrderCardListModel, Depends(fetch_orders_service)]
+        orders: Annotated[OrderListModel, Depends(fetch_orders_service)]
 ):
     return orders
 

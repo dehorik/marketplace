@@ -9,23 +9,20 @@ from entities.products.models import (
     ProductCardModel,
     ProductCardListModel
 )
-from auth import AuthorizationService, TokenPayloadModel
+from auth import admin_dependency, TokenPayloadModel
 from core.tasks import comments_removal_task, orders_removal_task
 from core.database import ProductDataAccessObject, get_product_dao
 from utils import Converter, FileWriter, FileRemover
 
 
-user_dependency = AuthorizationService(min_role_id=1)
-admin_dependency = AuthorizationService(min_role_id=2)
-superuser_dependency = AuthorizationService(min_role_id=3)
-
-
 class ProductCreationService:
+    """Создание товара"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel),
-            file_writer: FileWriter = FileWriter(join("images", "products"))
+            product_dao: ProductDataAccessObject,
+            converter: Converter,
+            file_writer: FileWriter
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -54,10 +51,12 @@ class ProductCreationService:
 
 
 class FetchProductsService:
+    """Получение последних созданных товаров"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductCardModel)
+            product_dao: ProductDataAccessObject,
+            converter: Converter
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -83,10 +82,12 @@ class FetchProductsService:
 
 
 class ProductSearchService:
+    """Поиск товара"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductCardModel)
+            product_dao: ProductDataAccessObject,
+            converter: Converter
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -114,10 +115,12 @@ class ProductSearchService:
 
 
 class FetchProductService:
+    """Получение товара"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ExtendedProductModel)
+            product_dao: ProductDataAccessObject,
+            converter: Converter
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -140,11 +143,13 @@ class FetchProductService:
 
 
 class ProductUpdateService:
+    """Обновление данных товара"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel),
-            file_writer: FileWriter = FileWriter(join("images", "products"))
+            product_dao: ProductDataAccessObject,
+            converter: Converter,
+            file_writer: FileWriter
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -187,11 +192,13 @@ class ProductUpdateService:
 
 
 class ProductDeletionService:
+    """Удаление товара"""
+
     def __init__(
             self,
-            product_dao: ProductDataAccessObject = get_product_dao(),
-            converter: Converter = Converter(ProductModel),
-            file_remover: FileRemover = FileRemover(join("images", "products"))
+            product_dao: ProductDataAccessObject,
+            converter: Converter,
+            file_remover: FileRemover
     ):
         self.product_data_access_obj = product_dao
         self.converter = converter
@@ -224,9 +231,35 @@ def check_file(file: UploadFile) -> bool:
     return file.content_type.split('/')[0] == 'image'
 
 
-product_creation_service = ProductCreationService()
-fetch_product_service = FetchProductService()
-product_update_service = ProductUpdateService()
-product_deletion_service = ProductDeletionService()
-fetch_products_service = FetchProductsService()
-product_search_service = ProductSearchService()
+product_creation_service = ProductCreationService(
+    product_dao=get_product_dao(),
+    converter=Converter(ProductModel),
+    file_writer=FileWriter(join("images", "products"))
+)
+
+fetch_products_service = FetchProductsService(
+    product_dao=get_product_dao(),
+    converter=Converter(ProductCardModel)
+)
+
+product_search_service = ProductSearchService(
+    product_dao=get_product_dao(),
+    converter=Converter(ProductCardModel)
+)
+
+fetch_product_service = FetchProductService(
+    product_dao=get_product_dao(),
+    converter=Converter(ExtendedProductModel)
+)
+
+product_update_service = ProductUpdateService(
+    product_dao=get_product_dao(),
+    converter=Converter(ProductModel),
+    file_writer=FileWriter(join("images", "products"))
+)
+
+product_deletion_service = ProductDeletionService(
+    product_dao=get_product_dao(),
+    converter=Converter(ProductModel),
+    file_remover=FileRemover(join("images", "products"))
+)

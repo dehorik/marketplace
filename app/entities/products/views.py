@@ -43,7 +43,6 @@ def search_product(
 ):
     return products
 
-
 @router.get("/{product_id}", response_class=HTMLResponse)
 def get_product(
         request: Request,

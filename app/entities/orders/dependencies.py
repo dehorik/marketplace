@@ -10,10 +10,9 @@ from entities.orders.models import (
     OrderCreationRequest,
     OrderUpdateRequest,
     OrderModel,
-    OrderCardModel,
-    OrderCardListModel
+    OrderListModel
 )
-from auth import AuthorizationService, TokenPayloadModel
+from auth import user_dependency, TokenPayloadModel
 from core.tasks import (
     order_creation_notification_task,
     order_update_notification_task
@@ -23,16 +22,13 @@ from utils import Converter, FileRemover
 from core.settings import ROOT_PATH
 
 
-user_dependency = AuthorizationService(min_role_id=1)
-admin_dependency = AuthorizationService(min_role_id=2)
-superuser_dependency = AuthorizationService(min_role_id=3)
-
-
 class OrderCreationService:
+    """Создание заказа"""
+
     def __init__(
             self,
-            order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderModel)
+            order_dao: OrderDataAccessObject,
+            converter: Converter
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
@@ -69,10 +65,12 @@ class OrderCreationService:
 
 
 class FetchOrdersService:
+    """Получение последних заказов пользователя"""
+
     def __init__(
             self,
-            order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderCardModel)
+            order_dao: OrderDataAccessObject,
+            converter: Converter
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
@@ -80,9 +78,14 @@ class FetchOrdersService:
     def __call__(
             self,
             payload: Annotated[TokenPayloadModel, Depends(user_dependency)],
-            amount: Annotated[int, Query(ge=0)] = 9,
+            amount: Annotated[int, Query(ge=0)] = 15,
             last_id: Annotated[int | None, Query(ge=1)] = None
-    ) -> OrderCardListModel:
+    ) -> OrderListModel:
+        """
+        :param amount: количество заказов
+        :param last_id: order_id последнего подгруженного заказа
+        """
+
         orders = self.order_data_access_obj.read(
             user_id=payload.sub,
             amount=amount,
@@ -90,14 +93,16 @@ class FetchOrdersService:
         )
         orders = self.converter.fetchmany(orders)
 
-        return OrderCardListModel(orders=orders)
+        return OrderListModel(orders=orders)
 
 
 class OrderUpdateService:
+    """Обновление данных заказа"""
+
     def __init__(
             self,
-            order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderModel)
+            order_dao: OrderDataAccessObject,
+            converter: Converter
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
@@ -129,11 +134,13 @@ class OrderUpdateService:
 
 
 class OrderDeletionService:
+    """Удаление заказа"""
+
     def __init__(
             self,
-            order_dao: OrderDataAccessObject = get_order_dao(),
-            converter: Converter = Converter(OrderModel),
-            file_remover: FileRemover = FileRemover(join("images", "orders"))
+            order_dao: OrderDataAccessObject,
+            converter: Converter,
+            file_remover: FileRemover
     ):
         self.order_data_access_obj = order_dao
         self.converter = converter
@@ -158,7 +165,23 @@ class OrderDeletionService:
             )
 
 
-order_creation_service = OrderCreationService()
-fetch_orders_service = FetchOrdersService()
-order_update_service = OrderUpdateService()
-order_deletion_service = OrderDeletionService()
+order_creation_service = OrderCreationService(
+    order_dao=get_order_dao(),
+    converter=Converter(OrderModel)
+)
+
+fetch_orders_service = FetchOrdersService(
+    order_dao=get_order_dao(),
+    converter=Converter(OrderModel)
+)
+
+order_update_service = OrderUpdateService(
+    order_dao=get_order_dao(),
+    converter=Converter(OrderModel)
+)
+
+order_deletion_service = OrderDeletionService(
+    order_dao=get_order_dao(),
+    converter=Converter(OrderModel),
+    file_remover=FileRemover(join("images", "orders"))
+)
