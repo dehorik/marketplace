@@ -1,6 +1,8 @@
-from typing import List
 from datetime import datetime, timezone
+from typing import List
+
 from psycopg2 import connect
+from psycopg2.errors import DuplicateTable
 from psycopg2.extensions import cursor
 
 from auth.hashing_psw import get_password_hash
@@ -16,6 +18,7 @@ def create_role_table(cur: cursor) -> None:
             );
         """
     )
+
 
 def create_users_table(cur: cursor) -> None:
     cur.execute(
@@ -35,6 +38,7 @@ def create_users_table(cur: cursor) -> None:
         """
     )
 
+
 def create_product_table(cur: cursor) -> None:
     cur.execute(
         """
@@ -48,6 +52,7 @@ def create_product_table(cur: cursor) -> None:
             );
         """
     )
+
 
 def create_comment_table(cur: cursor) -> None:
     cur.execute(
@@ -71,6 +76,7 @@ def create_comment_table(cur: cursor) -> None:
             );    
         """
     )
+
 
 def create_orders_table(cur: cursor) -> None:
     cur.execute(
@@ -97,6 +103,7 @@ def create_orders_table(cur: cursor) -> None:
         """
     )
 
+
 def create_archived_orders_table(cur: cursor) -> None:
     cur.execute(
         """
@@ -116,6 +123,7 @@ def create_archived_orders_table(cur: cursor) -> None:
         """
     )
 
+
 def create_cart_item_table(cur: cursor) -> None:
     cur.execute(
         """
@@ -134,6 +142,7 @@ def create_cart_item_table(cur: cursor) -> None:
             ); 
         """
     )
+
 
 def create_triggers(cur: cursor) -> None:
     cur.execute(
@@ -244,6 +253,7 @@ def create_triggers(cur: cursor) -> None:
         """
     )
 
+
 def create_roles(cur: cursor, role_names: List[List[str]]) -> None:
     cur.executemany(
         """
@@ -254,6 +264,7 @@ def create_roles(cur: cursor, role_names: List[List[str]]) -> None:
         """,
         role_names
     )
+
 
 def create_superuser_account(cur: cursor) -> None:
     password_hash = get_password_hash(config.SUPERUSER_PASSWORD)
@@ -288,28 +299,32 @@ def init_database() -> None:
     )
     cur = connection.cursor()
 
-    create_role_table(cur)
-    create_users_table(cur)
-    create_product_table(cur)
-    create_comment_table(cur)
-    create_orders_table(cur)
-    create_archived_orders_table(cur)
-    create_cart_item_table(cur)
-    create_triggers(cur)
+    try:
+        create_role_table(cur)
+        create_users_table(cur)
+        create_product_table(cur)
+        create_comment_table(cur)
+        create_orders_table(cur)
+        create_archived_orders_table(cur)
+        create_cart_item_table(cur)
+        create_triggers(cur)
 
-    create_roles(
-        cur,
-        [
-            ["Пользователь"],
-            ["Администратор"],
-            ["Суперпользователь"]
-        ]
-    )
-    create_superuser_account(cur)
-
-    connection.commit()
-    cur.close()
-    connection.close()
+        create_roles(
+            cur,
+            [
+                ["Пользователь"],
+                ["Администратор"],
+                ["Суперпользователь"]
+            ]
+        )
+        create_superuser_account(cur)
+    except DuplicateTable:
+        pass
+    else:
+        connection.commit()
+    finally:
+        cur.close()
+        connection.close()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
 from os.path import join
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 ROOT_PATH = str(Path(__file__).resolve().parent.parent.parent)
-DOTENV_FILE_PATH = join(ROOT_PATH, ".env")
 
 
 class Settings(BaseSettings):
@@ -38,10 +37,5 @@ class Settings(BaseSettings):
     SUPERUSER_USERNAME: str
     SUPERUSER_PASSWORD: str
 
-    model_config = SettingsConfigDict(env_file=DOTENV_FILE_PATH)
-
 
 config = Settings()
-
-config.PRIVATE_KEY_PATH = join(ROOT_PATH, config.PRIVATE_KEY_PATH)
-config.PUBLIC_KEY_PATH = join(ROOT_PATH, config.PUBLIC_KEY_PATH)

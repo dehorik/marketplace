@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    env_file: .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - PRIVATE_KEY_PATH=/certificates/jwt-private.pem
+      - PUBLIC_KEY_PATH=/certificates/jwt-public.pem
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - app_network
+    volumes:
+      - marketplace_images_comments:/marketplace/images/comments
+      - marketplace_images_orders:/marketplace/images/orders
+      - marketplace_images_products:/marketplace/images/products
+      - marketplace_images_users:/marketplace/images/users
+      - ./certificates:/certificates
+    ports:
+      - 80:80
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    env_file: .env
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_USER_PASSWORD}
+    networks:
+      - app_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.0.0
+    container_name: redis
+    networks:
+      - app_network
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+networks:
+  app_network:
+    driver: bridge
+
+
+volumes:
+  marketplace_images_comments:
+  marketplace_images_orders:
+  marketplace_images_products:
+  marketplace_images_users:
+  postgres_data:
